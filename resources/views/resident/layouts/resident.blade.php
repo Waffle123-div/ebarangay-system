@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Portal - E-Barangay Cogon East</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/ebarangay-theme.css') }}">
+    
+    <style>
+        body { font-family: var(--font-body); background-color: var(--color-bg); }
+        .top-navbar { background: var(--color-surface); padding: 12px 40px; border-bottom: 1px solid var(--color-border); }
+        .main-content { padding: 20px 0; }
+        .card-custom { border: 0; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+        .header-title { font-weight: 700; color: var(--color-text); font-family: var(--font-heading); }
+        .header-subtitle { color: var(--color-text-light); font-size: 14px; }
+        .btn-link { text-decoration: none; }
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
+    </style>
+</head>
+<body>
+
+    <nav class="top-navbar d-flex justify-content-between align-items-center sticky-top shadow-sm">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-primary rounded-3 d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
+                <i class="fa-solid fa-hotel text-white" style="font-size: 14px;"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 14px; line-height: 1;">E-Barangay System</div>
+                <div class="text-muted" style="font-size: 11px;">Barangay Cogon East</div>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-4">
+            <div class="dropdown">
+                <a class="text-decoration-none position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="markNotificationsAsRead()">
+                    <i class="fa-regular fa-bell text-muted" style="font-size: 1.2rem; cursor: pointer;"></i>
+                    @if(auth()->check() && auth()->user()->unreadNotifications->count() > 0)
+                        <span class="position-absolute translate-middle badge rounded-pill bg-danger shadow-sm" id="notification-badge" style="top: 0px; start: 90%; font-size: 0.6rem;">
+                            {{ auth()->user()->unreadNotifications->count() }}
+                        </span>
+                    @endif
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; border-radius: 12px; overflow: hidden;">
+                    <div class="bg-primary text-white px-3 py-2 fw-bold d-flex justify-content-between align-items-center">
+                        <span>Notifications</span>
+                    </div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        @if(auth()->check())
+                            @forelse(auth()->user()->notifications as $notification)
+                                <div class="px-3 py-3 border-bottom {{ $notification->read_at === null ? 'bg-light' : 'bg-white' }}">
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">
+                                        <i class="fa-solid fa-circle-check text-success me-1"></i> {{ $notification->data['document_type'] ?? 'Document Update' }}
+                                    </div>
+                                    <div class="text-muted mt-1" style="font-size: 13px;">{{ $notification->data['message'] ?? 'The status of your document has been updated.' }}</div>
+                                    <div class="mt-2 text-primary" style="font-size: 11px; font-weight: 600;">
+                                        TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="px-3 py-4 text-center text-muted small">
+                                    <i class="fa-regular fa-bell-slash fa-2x mb-2 text-light"></i><br>
+                                    No new notifications
+                                </div>
+                            @endforelse
+                        @endif
+                    </div>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
+                    <div class="bg-light text-muted rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width: 35px; height: 35px; font-size: 12px;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold text-dark" style="font-size: 13px;">{{ auth()->user()?->name ?? 'Resident' }}</div>
+                        <div class="text-muted" style="font-size: 11px;">Resident</div>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-3">
+                    <li>
+                        <form method="POST" action="{{ route('resident.logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left;">
+                                <i class="fa-solid fa-right-from-bracket me-2 text-muted"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        @yield('content')
+    </div>
+
+    @if(session('is_locked'))
+        <div class="modal d-block" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(12px);" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-0 bg-danger bg-opacity-10 text-danger py-4 px-4 justify-content-center flex-column">
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-lock fs-4"></i>
+                        </div>
+                        <h5 class="modal-title fw-bold mb-0">Session Locked</h5>
+                        <p class="small text-muted mb-0 mt-2 text-center">You have been inactive. Enter your 6-digit PIN to resume.</p>
+                    </div>
+                    <div class="modal-body p-4">
+                        @error('security_pin')
+                            <div class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small py-2 rounded-3 text-center fw-bold">{{ $message }}</div>
+                        @enderror
+                        <form action="{{ route('resident.session.unlock') }}" method="POST">
+                            @csrf
+                            <div class="mb-4">
+                                <input type="password" name="security_pin" class="form-control form-control-lg text-center fw-bold rounded-3 bg-light border-0" 
+                                       maxlength="6" inputmode="numeric" pattern="[0-9]*" 
+                                       placeholder="● ● ● ● ● ●" style="letter-spacing: 8px;" required autofocus>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100 py-3 rounded-3 fw-bold shadow-sm">
+                                <i class="fa-solid fa-unlock-keyhole me-2"></i> Unlock Session
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>document.body.style.overflow = 'hidden';</script>
+    @else
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let idleTime = 0;
+                const timeoutThreshold = 600000; 
+                function resetIdleTime() { idleTime = 0; }
+                window.onload = resetIdleTime;
+                document.onmousemove = resetIdleTime;
+                document.onkeypress = resetIdleTime;
+                document.ontouchstart = resetIdleTime;
+                function checkIdleTime() {
+                    idleTime += 1000;
+                    if (idleTime >= timeoutThreshold) {
+                        fetch("{{ route('resident.session.lock') }}", {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                        }).then(() => { window.location.reload(); });
+                    }
+                }
+                setInterval(checkIdleTime, 1000);
+            });
+        </script>
+    @endif
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function markNotificationsAsRead() {
+            let badge = document.getElementById('notification-badge');
+            if (badge && badge.style.display !== 'none') {
+                badge.style.display = 'none';
+                fetch('{{ route("resident.notifications.read") }}', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                }).catch(error => console.error('Error marking notifications read:', error));
+            }
+        }
+    </script>
+
+    <!-- E-BARANGAY AI FISHERMAN CHATBOT -->
+    @if(!session('is_locked'))
+        <div id="ai-chat-container">
+            <div id="ai-chat-window">
+                <div class="chat-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white rounded-circle d-flex justify-content-center align-items-center p-1 shadow-sm" style="width: 55px; height: 55px;">
+                            <img src="{{ asset('images/fisherman.png') }}" alt="Istong" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        <div class="header-titles">
+                            <h5 class="m-0 fw-bold">Istong</h5>
+                            <small style="opacity: 0.9;">Barangay Fisherman Assistant</small>
+                        </div>
+                    </div>
+                    <button id="close-chat-btn">&times;</button>
+                </div>
+                <div class="chat-disclaimer">
+                    <small><i class="fa-solid fa-circle-info me-1"></i> Information only. No official documents issued here.</small>
+                </div>
+                <div id="chat-body">
+                    <div class="message bot-message">
+                        Kumusta! Ako ang inyong Fisherman Assistant nga si Istong. Unsa may matabang nako nimo karon kabahin sa atong barangay?
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Pangutana dinhi..." autocomplete="off">
+                    <button id="send-chat-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="ai-toggle-btn">
+                <div class="ai-badge">
+                    <i class="fa-solid fa-robot"></i> AI Chat
+                </div>
+                <img src="{{ asset('images/fisherman.png') }}" alt="Fisherman Mascot" class="mascot-img">
+            </button>
+        </div>
+    @endif
+
+    <style>
+        #ai-chat-container { position: fixed; bottom: 25px; right: 25px; z-index: 9999; font-family: var(--font-body); }
+        
+        #ai-toggle-btn { 
+            background-color: transparent; 
+            border: none; 
+            border-radius: 0; 
+            width: 110px; 
+            height: 110px; 
+            cursor: grab; 
+            box-shadow: none; 
+            transition: transform 0.1s ease; 
+            float: right; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 0; 
+            overflow: visible; 
+            position: relative; 
+            animation: floatMascot 3s ease-in-out infinite; 
+        }
+        
+        #ai-toggle-btn:active { cursor: grabbing; animation: none; } 
+        #ai-toggle-btn:hover { transform: scale(1.05); }
+
+        .ai-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--gradient-primary);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 2px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .mascot-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 6px rgba(0,0,0,0.25)); 
+        }
+
+        @keyframes floatMascot {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        /* CHAT WINDOW DESIGN UPGRADES */
+        #ai-chat-window { 
+            display: none; 
+            width: 360px; 
+            height: 520px; 
+            background-color: #f4f6f9; 
+            border-radius: 1.2rem; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            margin-bottom: 15px; 
+            flex-direction: column; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            overflow: hidden; 
+        }
+        
+        .chat-header { 
+            background: var(--gradient-primary); 
+            color: #ffffff;
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: none; 
+        }
+        
+        .header-titles h5 { font-size: 16px; color: #ffffff; margin-bottom: 2px; letter-spacing: 0.3px; }
+        .header-titles small { color: #ffffff; font-size: 12px; }
+        
+        #close-chat-btn { 
+            background: rgba(255, 255, 255, 0.2); 
+            border: none; 
+            color: #ffffff; 
+            font-size: 20px; 
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        #close-chat-btn:hover { background: rgba(255, 255, 255, 0.4); }
+        
+        .chat-disclaimer { 
+            background-color: #ffffff; 
+            color: var(--color-text-light); 
+            font-size: 11px; 
+            padding: 8px 20px; 
+            border-bottom: 1px solid #e9ecef; 
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            z-index: 2;
+        }
+        
+        #chat-body { 
+            flex-grow: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        
+        .message { 
+            max-width: 85%; 
+            padding: 12px 16px; 
+            font-size: 14px; 
+            line-height: 1.5; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08); 
+        }
+        
+        .bot-message { 
+            background-color: #ffffff; 
+            color: var(--color-text); 
+            align-self: flex-start; 
+            border-radius: 12px 12px 12px 4px; 
+            border: 1px solid #e9ecef;
+        }
+        
+        .user-message { 
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: white; 
+            align-self: flex-end; 
+            border-radius: 12px 12px 4px 12px; 
+        }
+        
+        .chat-input-area { 
+            padding: 15px; 
+            background-color: #ffffff; 
+            border-top: 1px solid #e9ecef; 
+            display: flex; 
+            gap: 10px; 
+            z-index: 2;
+        }
+        
+        #chat-input { 
+            flex-grow: 1; 
+            background-color: #f4f6f9; 
+            border: 1px solid transparent; 
+            color: var(--color-text); 
+            border-radius: 25px; 
+            padding: 12px 20px; 
+            outline: none; 
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        #chat-input:focus { 
+            background-color: #ffffff;
+            border-color: var(--color-primary-light); 
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+        }
+        
+        #chat-input::placeholder { color: #adb5bd; }
+        
+        #send-chat-btn { 
+            background: var(--gradient-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            width: 45px; 
+            height: 45px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.3);
+            font-size: 16px;
+        }
+        
+        #send-chat-btn:hover { 
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(30, 64, 175, 0.4);
+        }
+    </style>
+
+    @if(!session('is_locked'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleBtn = document.getElementById('ai-toggle-btn');
+            const closeBtn = document.getElementById('close-chat-btn');
+            const chatWindow = document.getElementById('ai-chat-window');
+            const sendBtn = document.getElementById('send-chat-btn');
+            const chatInput = document.getElementById('chat-input');
+            const chatBody = document.getElementById('chat-body');
+            const chatContainer = document.getElementById('ai-chat-container');
+
+            let isDragging = false;
+            let hasDragged = false;
+            let startX, startY, initialLeft, initialTop;
+
+            function dragStart(e) {
+                isDragging = true;
+                hasDragged = false; 
+                
+                if (e.type === 'touchstart') {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                } else {
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
+
+                const rect = chatContainer.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+
+                chatContainer.style.bottom = 'auto';
+                chatContainer.style.right = 'auto';
+                chatContainer.style.left = initialLeft + 'px';
+                chatContainer.style.top = initialTop + 'px';
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+                
+                let currentX, currentY;
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX;
+                    currentY = e.touches[0].clientY;
+                    e.preventDefault(); 
+                } else {
+                    currentX = e.clientX;
+                    currentY = e.clientY;
+                }
+
+                const diffX = currentX - startX;
+                const diffY = currentY - startY;
+
+                if (Math.abs(diffX) > 3 || Math.abs(diffY) > 3) {
+                    hasDragged = true;
+                }
+
+                let newLeft = initialLeft + diffX;
+                let newTop = initialTop + diffY;
+
+                const maxLeft = window.innerWidth - toggleBtn.offsetWidth;
+                const maxTop = window.innerHeight - toggleBtn.offsetHeight;
+                
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                chatContainer.style.left = newLeft + 'px';
+                chatContainer.style.top = newTop + 'px';
+            }
+
+            function dragEnd(e) {
+                isDragging = false;
+            }
+
+            toggleBtn.addEventListener('mousedown', dragStart);
+            toggleBtn.addEventListener('touchstart', dragStart, {passive: false});
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, {passive: false});
+
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+
+            toggleBtn.addEventListener('click', (e) => { 
+                if (hasDragged) {
+                    e.preventDefault();
+                    return;
+                }
+
+                chatContainer.dataset.draggedLeft = chatContainer.style.left;
+                chatContainer.dataset.draggedTop = chatContainer.style.top;
+
+                chatWindow.style.display = 'flex'; 
+                toggleBtn.style.display = 'none'; 
+                
+                if (chatContainer.style.left && chatContainer.style.left !== 'auto') {
+                    const rect = chatWindow.getBoundingClientRect();
+                    let currentLeft = chatContainer.offsetLeft;
+                    let currentTop = chatContainer.offsetTop;
+                    let needsNudge = false;
+
+                    if (rect.right > window.innerWidth) {
+                        currentLeft -= (rect.right - window.innerWidth + 20);
+                        needsNudge = true;
+                    }
+                    if (rect.left < 0) {
+                        currentLeft += Math.abs(rect.left) + 20;
+                        needsNudge = true;
+                    }
+                    if (rect.bottom > window.innerHeight) {
+                        currentTop -= (rect.bottom - window.innerHeight + 20);
+                        needsNudge = true;
+                    }
+                    if (rect.top < 0) {
+                        currentTop += Math.abs(rect.top) + 20;
+                        needsNudge = true;
+                    }
+
+                    if (needsNudge) {
+                        chatContainer.style.left = Math.max(0, currentLeft) + 'px';
+                        chatContainer.style.top = Math.max(0, currentTop) + 'px';
+                    }
+                }
+            });
+
+            closeBtn.addEventListener('click', () => { 
+                chatWindow.style.display = 'none'; 
+                toggleBtn.style.display = 'flex'; 
+                
+                if (chatContainer.dataset.draggedLeft && chatContainer.dataset.draggedLeft !== 'auto') {
+                    chatContainer.style.left = chatContainer.dataset.draggedLeft;
+                    chatContainer.style.top = chatContainer.dataset.draggedTop;
+                }
+            });
+
+            let conversationHistory = [];
+
+            async function sendMessage() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                
+                appendMessage(text, 'user-message');
+                chatInput.value = '';
+                
+                conversationHistory.push({ role: 'user', content: text });
+                
+                if (conversationHistory.length > 10) {
+                    conversationHistory = conversationHistory.slice(conversationHistory.length - 10);
+                }
+
+                const loadingId = appendLoading();
+                
+                try {
+                    const response = await fetch("{{ route('chatbot.message') }}", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": "{{ csrf_token() }}" },
+                        body: JSON.stringify({ history: conversationHistory })
+                    });
+                    
+                    const data = await response.json();
+                    document.getElementById(loadingId).remove();
+                    
+                    appendMessage(data.reply, 'bot-message');
+                    
+                    if (data.reply !== "Error: Could not connect to the server." && !data.reply.includes("Pasensya")) {
+                        conversationHistory.push({ role: 'assistant', content: data.reply });
+                    }
+                    
+                } catch (error) {
+                    document.getElementById(loadingId).remove();
+                    appendMessage("Pasensya, naputol ang koneksyon. Palihug sulayi usab.", 'bot-message');
+                    
+                    conversationHistory.pop();
+                }
+            }
+
+            sendBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') sendMessage(); });
+            
+            function appendMessage(text, className) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `message ${className}`;
+                msgDiv.innerText = text;
+                chatBody.appendChild(msgDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            
+            function appendLoading() {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `message bot-message`;
+                msgDiv.id = `loading-${Date.now()}`;
+                msgDiv.innerText = 'Naghunahuna...';
+                chatBody.appendChild(msgDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+                return msgDiv.id;
+            }
+        });
+    </script>
+    @endif
+</body>
+</html>

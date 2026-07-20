@@ -1,0 +1,149 @@
+/* ========================================
+   E-BARANGAY SYSTEM — Shared Theme
+   Color palette from landing page
+   ======================================== */
+
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* --- CSS Custom Properties (Design Tokens) --- */
+:root {
+  /* Primary Colors — Professional Blue */
+  --color-primary: #1E40AF;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1E3A5F;
+  --color-primary-50: #EFF6FF;
+  --color-primary-100: #DBEAFE;
+  --color-primary-200: #BFDBFE;
+
+  /* Secondary Colors — Warm Gold */
+  --color-secondary: #D97706;
+  --color-secondary-light: #F59E0B;
+  --color-secondary-dark: #B45309;
+
+  /* Accent Colors */
+  --color-accent-teal: #0EA5E9;
+  --color-accent-orange: #EA580C;
+  --color-accent-rose: #E11D48;
+
+  /* Neutrals */
+  --color-bg: #F9FAFB;
+  --color-bg-alt: #F0F4FA;
+  --color-surface: #FFFFFF;
+  --color-surface-glass: rgba(255, 255, 255, 0.7);
+  --color-text: #1F2937;
+  --color-text-light: #6B7280;
+  --color-text-inverse: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+
+  /* Status Colors */
+  --color-status-pending: #F59E0B;
+  --color-status-processing: #3B82F6;
+  --color-status-approved: #10B981;
+  --color-status-ready: #059669;
+  --color-status-rejected: #EF4444;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #1E3A5F 0%, #1E40AF 50%, #3B82F6 100%);
+  --gradient-hero: linear-gradient(160deg, #0F2B4C 0%, #1E3A5F 40%, #1E40AF 100%);
+  --gradient-gold: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Bootstrap Overrides --- */
+
+/* Override Bootstrap's primary color */
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+.btn-outline-primary {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.btn-outline-primary:hover {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+/* Text utilities */
+.text-primary { color: var(--color-primary) !important; }
+.text-dark { color: var(--color-text) !important; }
+.text-muted { color: var(--color-text-light) !important; }
+
+/* Background utilities */
+.bg-primary { background-color: var(--color-primary) !important; }
+
+/* Nav pills (tabs) */
+.nav-pills .nav-link.active {
+  background-color: var(--color-primary) !important;
+}
+
+/* Badge */
+.badge.bg-primary { background-color: var(--color-primary) !important; }
+
+/* Alert */
+.alert-primary {
+  background-color: var(--color-primary-50) !important;
+  border-color: var(--color-primary-100) !important;
+  color: var(--color-primary) !important;
+}
+.alert-success {
+  background-color: #ecfdf5 !important;
+  border-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+/* Links */
+a.text-primary:hover { color: var(--color-primary-dark) !important; }
+
+/* Form focus */
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-primary-light) !important;
+  box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.15) !important;
+}
+
+/* Dropdown */
+.dropdown-item.active, .dropdown-item:active {
+  background-color: var(--color-primary-50) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Progress bar */
+.progress-bar {
+  background-color: var(--color-primary) !important;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.page-link { color: var(--color-primary) !important; }
