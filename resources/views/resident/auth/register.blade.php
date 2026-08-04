@@ -74,7 +74,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('resident.register.submit') }}">
+                        <form method="POST" action="{{ route('resident.register.submit') }}" id="registerForm">
                             @csrf
                             
                             <div class="mb-3 text-start">
@@ -117,7 +117,7 @@
 
                             <div class="d-flex gap-2 mt-4">
                                 <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="showGateway()">Back</button>
-                                <button type="submit" class="btn btn-success w-50 rounded-3 py-2 fw-semibold">Next</button>
+                                <button type="submit" id="btnSubmitRegister" class="btn btn-success w-50 rounded-3 py-2 fw-semibold">Next</button>
                             </div>
                         </form>
                     </div>
@@ -141,6 +141,14 @@
         @if ($errors->any())
             showManualForm();
         @endif
+
+        document.getElementById('registerForm')?.addEventListener('submit', function() {
+            const btn = document.getElementById('btnSubmitRegister');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Registering...';
+            }
+        });
     </script>
 </body>
 </html>

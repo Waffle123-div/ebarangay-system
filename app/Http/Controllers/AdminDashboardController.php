@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
 use App\Models\User;
+use App\Models\ActivityLog;
 use PhpOffice\PhpWord\TemplateProcessor; 
 use Illuminate\Support\Facades\Mail;     
 use Illuminate\Support\Facades\Http;     
 use App\Mail\AccountApproved;    
 use App\Mail\DocumentReady;        
 use Carbon\Carbon;
-use App\Mail\AccountRejectedMail;                       
+use App\Mail\AccountRejectedMail;
+use Illuminate\Support\Facades\Hash;
 
 class AdminDashboardController extends Controller
 {
@@ -29,7 +31,10 @@ class AdminDashboardController extends Controller
     public function destroy($id)
     {
         $request = DocumentRequest::findOrFail($id);
+        $trackingNumber = $request->tracking_number;
         $request->delete();
+
+        ActivityLog::record('request_deleted', "Permanently deleted document request #{$trackingNumber}.");
 
         return back()->with('success', 'Request deleted permanently.');
     }
@@ -59,6 +64,8 @@ class AdminDashboardController extends Controller
         $user = User::findOrFail($id);
         $user->update(['status' => 'active']);
 
+        ActivityLog::record('account_approved', "Approved resident account for {$user->name} (ID: {$user->user_id}).");
+
         if ($user->email) {
             Mail::to($user->email)->send(new AccountApproved($user));
         }
@@ -79,15 +86,14 @@ class AdminDashboardController extends Controller
 
     public function rejectAccount($id) 
     {
-        // Your existing code that finds the user and updates their status
         $user = User::findOrFail($id);
         $user->status = 'Rejected';
         $user->save();
 
-        // ADD THIS NEW LINE RIGHT HERE:
+        ActivityLog::record('account_rejected', "Rejected resident account for {$user->name} (ID: {$user->user_id}).");
+
         Mail::to($user->email)->send(new AccountRejectedMail($user->name));
 
-        // Your existing redirect
         return redirect()->back()->with('success', 'Account Rejected');
     }
 
@@ -100,7 +106,6 @@ class AdminDashboardController extends Controller
                                 ->count();
         $adminUsers = User::where('role', 'Admin')->count();
 
-        // 1. Calculate counts for the User navigation tabs
         $tabCounts = [
             'All' => User::count(),
             'Resident' => User::where('role', 'Resident')->count(),
@@ -110,12 +115,10 @@ class AdminDashboardController extends Controller
         $currentRole = $request->role ?? 'All';
         $query = User::orderBy('created_at', 'desc');
 
-        // 2. Filter by Role Tab
         if ($currentRole !== 'All') {
             $query->where('role', $currentRole);
         }
 
-        // 3. Search Bar Logic
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -154,11 +157,14 @@ class AdminDashboardController extends Controller
             'role'  => 'required|in:Admin,Resident',
         ]);
 
+        $oldRole = $user->role;
         $user->update([
             'name'  => $request->name,
             'email' => $request->email,
             'role'  => $request->role,
         ]);
+
+        ActivityLog::record('user_updated', "Updated user {$user->name}: role changed from {$oldRole} to {$request->role}.");
 
         return back()->with('success', 'User "' . $user->name . '" has been updated successfully.');
     }
@@ -170,9 +176,11 @@ class AdminDashboardController extends Controller
         if (in_array(strtolower($user->status), ['active'])) {
             $user->status = 'inactive';
             $message = 'User "' . $user->name . '" has been deactivated.';
+            ActivityLog::record('user_deactivated', "Deactivated account for user {$user->name}.");
         } else {
             $user->status = 'active';
             $message = 'User "' . $user->name . '" has been reactivated.';
+            ActivityLog::record('user_reactivated', "Reactivated account for user {$user->name}.");
         }
 
         $user->save();
@@ -278,6 +286,134 @@ class AdminDashboardController extends Controller
     }
 
     // ==========================================
+    // ADMIN SETTINGS
+    // ==========================================
+
+    public function adminSettings()
+    {
+        $user = auth()->user();
+        return view('admin.settings', compact('user'));
+    }
+
+    public function updateAdminProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->name  = $request->input('name');
+        $user->email = $request->input('email');
+        $user->save();
+
+        ActivityLog::record('profile_updated', "Admin updated their profile information.");
+
+        return back()->with('success', 'Profile information updated successfully!');
+    }
+
+    public function updateAdminPassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password'          => 'required',
+            'new_password'              => 'required|min:8|confirmed',
+            'new_password_confirmation' => 'required',
+        ]);
+
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return back()->withErrors(['current_password' => 'The current password you entered is incorrect.'])->withInput();
+        }
+
+        $user->password = Hash::make($request->input('new_password'));
+        $user->save();
+
+        ActivityLog::record('password_changed', "Admin changed their account password.");
+
+        return back()->with('password_success', 'Password changed successfully!');
+    }
+
+    // ==========================================
+    // ACTIVITY LOGS
+    // ==========================================
+
+    public function activityLogs(Request $request)
+    {
+        $query = ActivityLog::with('user')->latest();
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $logs = $query->paginate(25)->withQueryString();
+        $actionTypes = ActivityLog::distinct()->pluck('action')->sort()->values();
+
+        return view('admin.activity_logs', compact('logs', 'actionTypes'));
+    }
+
+    // ==========================================
+    // ADMIN NOTIFICATIONS (AJAX)
+    // ==========================================
+
+    public function getAdminNotifications()
+    {
+        $user = auth()->user();
+        $unreadCount = $user->unreadNotifications()->count();
+        $notifications = $user->notifications()->latest()->take(10)->get()->map(function ($n) {
+            return [
+                'id'         => $n->id,
+                'message'    => $n->data['message'] ?? '',
+                'link'       => $n->data['link'] ?? '#',
+                'type'       => $n->data['type'] ?? 'info',
+                'read'       => !is_null($n->read_at),
+                'created_at' => $n->created_at->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'unread_count'  => $unreadCount,
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function markAdminNotificationsRead(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($request->filled('notification_id')) {
+            $notification = $user->notifications()->find($request->notification_id);
+            if ($notification) {
+                $notification->markAsRead();
+            }
+        } else {
+            $user->unreadNotifications->markAsRead();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    // ==========================================
     // THE PIPELINE: ACTION METHODS
     // ==========================================
 
@@ -290,6 +426,8 @@ class AdminDashboardController extends Controller
             $request->save();
         }
 
+        ActivityLog::record('request_accepted', "Accepted document request #{$request->tracking_number} ({$request->document_type}) for {$request->resident_name}.");
+
         return back()->with('success', 'Request accepted and moved to Processing.');
     }
 
@@ -298,6 +436,8 @@ class AdminDashboardController extends Controller
         $docRequest = DocumentRequest::findOrFail($id);
         $docRequest->status = 'Rejected';
         $docRequest->save();
+
+        ActivityLog::record('request_rejected', "Rejected document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
 
         return back()->with('success', 'Request has been rejected.');
     }
@@ -312,6 +452,8 @@ class AdminDashboardController extends Controller
             $request->status = 'Processing';
         }
         $request->save();
+
+        ActivityLog::record('document_generated', "Generated Word document for request #{$request->tracking_number} ({$request->document_type}).");
 
         $templateFile = '';
         $outputName = '';
@@ -358,6 +500,8 @@ class AdminDashboardController extends Controller
         $request->status = 'Ready';
         $request->save();
 
+        ActivityLog::record('request_ready', "Marked request #{$request->tracking_number} as Ready for Pick-up.");
+
         if ($request->resident_email) {
             Mail::to($request->resident_email)->send(new DocumentReady($request));
         }
@@ -381,6 +525,8 @@ class AdminDashboardController extends Controller
         $request = DocumentRequest::findOrFail($id);
         $request->status = 'Completed';
         $request->save();
+
+        ActivityLog::record('request_completed', "Marked request #{$request->tracking_number} as Completed (claimed by resident).");
 
         return back()->with('success', 'Document marked as Completed!');
     }

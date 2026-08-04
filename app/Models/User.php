@@ -18,19 +18,53 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var list<string>
      */
-   protected $fillable = [
-    'user_id', // Make sure this is here!
-    'name',
-    'email',
-    'password',
-    'google_id', // Make sure this is here too!
-    'role',
-    'status',
-    'birthdate',            // <-- Add this!
-    'gender',   
-    'id_type',          // <-- Add this!
-    'proof_of_residency',   // <-- Add this! (This is why your image was blocked)
-];
+    protected $fillable = [
+        'user_id',
+        'name',
+        'username',
+        'email',
+        'phone_number',
+        'password',
+        'google_id',
+        'role',
+        'status',
+
+        // Personal info
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
+        'birthdate',
+        'gender',
+        'civil_status',
+        'nationality',
+        'occupation',
+
+        // Profile picture
+        'profile_picture',
+
+        // Address
+        'house_number',
+        'street',
+        'barangay_address',
+        'municipality',
+        'province',
+        'zip_code',
+
+        // Valid ID
+        'id_type',
+        'id_photo',
+        'id_expiry_date',
+        'id_verified_at',
+        'id_uploaded_at',
+
+        // Proof of residency (legacy)
+        'proof_of_residency',
+
+        // Security
+        'two_factor_enabled',
+        'security_pin',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -40,6 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'security_pin',
     ];
 
     /**
@@ -51,7 +86,19 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'two_factor_enabled' => 'boolean',
+            'id_expiry_date'    => 'date',
+            'id_verified_at'    => 'datetime',
+            'id_uploaded_at'    => 'datetime',
         ];
+    }
+
+    /**
+     * Activity log entries for this user.
+     */
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class)->latest();
     }
 }

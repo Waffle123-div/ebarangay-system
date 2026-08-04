@@ -79,8 +79,12 @@ class GoogleController extends Controller
                     // 'email_verified_at' is omitted so they are FORCED to verify
                 ]);
 
-                // Trigger the Verification Email
-                event(new Registered($newUser));
+                // Trigger the Verification Email safely without hanging
+                try {
+                    event(new Registered($newUser));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Google registration email verification failed to send: ' . $e->getMessage());
+                }
 
                 // Log them in so the system knows who is waiting
                 Auth::login($newUser);

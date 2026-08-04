@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
-use Illuminate\Support\Facades\Auth; // <-- Added this so we can check Auth::user()
+use App\Models\User;
+use App\Models\ActivityLog;
+use App\Notifications\NewDocumentRequestNotification;
+use Illuminate\Support\Facades\Auth;
 
 class ResidentDashboardController extends Controller
 {
@@ -89,6 +92,15 @@ class ResidentDashboardController extends Controller
         $newRequest->status = 'Pending';
         $newRequest->save();
 
+        // Log this activity
+        ActivityLog::record('request_submitted', "Resident {$request->input('full_name')} submitted a new {$request->input('document_type')} request (#{$newRequest->tracking_number}).", Auth::id());
+
+        // Notify all admin users
+        $admins = User::where('role', 'Admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new NewDocumentRequestNotification($newRequest));
+        }
+
         return redirect()->route('resident.dashboard')->with('success', 'Document request submitted successfully!');
     }
 
@@ -124,5 +136,88 @@ class ResidentDashboardController extends Controller
         $lastUpdate = DocumentRequest::where('resident_email', auth()->user()->email)->max('updated_at');
 
         return response()->json(['last_update' => $lastUpdate]);
+    }
+
+    /**
+     * Display the Activity Logs page for the authenticated resident.
+     */
+    public function activityLogs(Request $request)
+    {
+        if (trim(strtolower(Auth::user()->status)) !== 'active') {
+            return redirect()->route('resident.pending');
+        }
+
+        $user = Auth::user();
+        $query = ActivityLog::where('user_id', $user->id)->latest();
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->action);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%");
+            });
+        }
+
+        $logs = $query->paginate(20)->withQueryString();
+        $actionTypes = ActivityLog::where('user_id', $user->id)->distinct()->pluck('action')->sort()->values();
+
+        return view('resident.activity_logs', compact('logs', 'actionTypes'));
+    }
+
+    /**
+     * View official transaction receipt for a document request.
+     */
+    public function viewReceipt($id)
+    {
+        if (trim(strtolower(Auth::user()->status)) !== 'active') {
+            return redirect()->route('resident.pending');
+        }
+
+        $user = Auth::user();
+        $docRequest = DocumentRequest::findOrFail($id);
+
+        // Security check: verify this request belongs to the logged-in resident
+        if ($docRequest->resident_email !== $user->email && isset($docRequest->user_id) && $docRequest->user_id != $user->id) {
+            abort(403, 'Unauthorized access to transaction receipt.');
+        }
+
+        // Calculate fee schedule
+        $feeMap = [
+            'Barangay Clearance'        => 50.00,
+            'Certificate of Residency'   => 50.00,
+            'Business Permit'           => 150.00,
+            'Certificate of Indigency'  => 0.00,
+        ];
+
+        $feeAmount = $feeMap[$docRequest->document_type] ?? 50.00;
+        $receiptNumber = 'RCT-' . date('Y', strtotime($docRequest->created_at)) . '-' . str_pad($docRequest->id, 6, '0', STR_PAD_LEFT);
+
+        return view('resident.receipt', compact('docRequest', 'user', 'feeAmount', 'receiptNumber'));
+    }
+
+    /**
+     * Download or print official transaction receipt.
+     */
+    public function downloadReceipt($id)
+    {
+        if (trim(strtolower(Auth::user()->status)) !== 'active') {
+            return redirect()->route('resident.pending');
+        }
+
+        $user = Auth::user();
+        $docRequest = DocumentRequest::findOrFail($id);
+
+        if ($docRequest->resident_email !== $user->email && isset($docRequest->user_id) && $docRequest->user_id != $user->id) {
+            abort(403, 'Unauthorized access to transaction receipt.');
+        }
+
+        // Log receipt download action
+        ActivityLog::record('receipt_viewed', "Viewed transaction receipt for request #{$docRequest->tracking_number} ({$docRequest->document_type}).", Auth::id());
+
+        return $this->viewReceipt($id);
     }
 }

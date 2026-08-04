@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Notifications\NewUserRegistrationNotification;
 
 class ResidentCompletionController extends Controller
 {
@@ -67,6 +69,12 @@ class ResidentCompletionController extends Controller
 
         // Update the User in the Database
         $user->update($updateData);
+
+        // Notify all admin users about the new pending registration
+        $admins = User::where('role', 'Admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new NewUserRegistrationNotification($user));
+        }
 
         // STRICT LOGOUT: Kick them out to Waiting Room 2!
         Auth::logout();

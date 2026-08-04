@@ -127,13 +127,13 @@
                                     
                                     <a href="{{ route('admin.requests') }}" class="text-primary text-decoration-none fw-bold">View</a>
 
-                                    <form action="{{ route('admin.requests.approve', $request->id) }}" method="POST" class="m-0 p-0">
+                                    <form action="{{ route('admin.requests.accept', $request->id) }}" method="POST" class="m-0 p-0">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="btn btn-link p-0 text-success text-decoration-none fw-bold shadow-none" style="font-size: 14px;">Approve</button>
                                     </form>
 
-                                    <form action="{{ route('admin.requests.cancel', $request->id) }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this document request?');">
+                                    <form action="{{ route('admin.requests.reject', $request->id) }}" method="POST" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this document request?');">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="btn btn-link p-0 text-danger text-decoration-none fw-bold shadow-none" style="font-size: 14px;">Reject</button>

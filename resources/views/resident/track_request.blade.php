@@ -165,6 +165,12 @@
                                                     <span class="fw-bold text-dark small">{{ $req->status }}</span>
                                                 </div>
                                             </div>
+
+                                            <div class="mt-3">
+                                                <a href="{{ route('resident.receipt.view', $req->id) }}" class="btn btn-outline-primary btn-sm rounded-3 w-100 fw-bold">
+                                                    <i class="fa-solid fa-receipt me-1"></i> View Official Receipt
+                                                </a>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-6 ps-md-4">

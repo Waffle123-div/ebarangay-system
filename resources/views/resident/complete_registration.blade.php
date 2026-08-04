@@ -165,7 +165,7 @@
 
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(2)">Back</button>
-                                <button type="submit" class="btn btn-success w-50 rounded-3 py-2 fw-semibold">Submit</button>
+                                <button type="submit" id="btnSubmitComplete" class="btn btn-success w-50 rounded-3 py-2 fw-semibold">Submit</button>
                             </div>
                         </div>
 
@@ -178,6 +178,14 @@
     </div>
 
     <script>
+        document.getElementById('multiStepForm')?.addEventListener('submit', function() {
+            const btn = document.getElementById('btnSubmitComplete');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Submitting...';
+            }
+        });
+
         function goToStep(stepNumber) {
             
             // Validate Step 1 (Only runs if they are a Google user)

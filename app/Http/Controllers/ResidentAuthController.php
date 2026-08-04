@@ -243,8 +243,12 @@ class ResidentAuthController extends Controller
         Auth::login($user);
 
         if ($actualEmail) {
-            // Email flow
-            event(new Registered($user));
+            // Email flow: Send verification email safely without hanging request
+            try {
+                event(new Registered($user));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Registration email verification failed to send: ' . $e->getMessage());
+            }
             return redirect()->route('verification.notice');
         } else {
             // Phone flow: Generate a 5-digit number
@@ -256,15 +260,19 @@ class ResidentAuthController extends Controller
                 ['token' => $code, 'created_at' => now()]
             );
 
-            // THE FIX: Trigger the real SMS through Semaphore
+            // THE FIX: Trigger the real SMS through Semaphore with a 5s timeout
             $message = "E-Barangay: {$code} is your verification code. Please do not share this with anyone.";
 
-            Http::post('https://api.semaphore.co/api/v4/messages', [
-                'apikey' => env('SEMAPHORE_API_KEY'),
-                'number' => $actualPhone,
-                'message' => $message,
-                'sendername' => 'SEMAPHORE' // Free accounts must use SEMAPHORE as the sender name
-            ]);
+            try {
+                Http::timeout(5)->post('https://api.semaphore.co/api/v4/messages', [
+                    'apikey' => env('SEMAPHORE_API_KEY'),
+                    'number' => $actualPhone,
+                    'message' => $message,
+                    'sendername' => 'SEMAPHORE' // Free accounts must use SEMAPHORE as the sender name
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Registration SMS failed to send: ' . $e->getMessage());
+            }
 
             return redirect()->route('verify_phone.notice')->with('phone_number', $actualPhone);
         }

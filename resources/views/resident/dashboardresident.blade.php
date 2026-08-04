@@ -45,7 +45,7 @@
         </div>
 
         <div class="col-md-4">
-            <a href="#" class="text-decoration-none">
+            <a href="{{ route('resident.request.track') }}" class="text-decoration-none">
                 <div class="card card-custom card-hover p-4">
                     <div class="bg-warning bg-opacity-10 text-warning rounded-3 d-flex justify-content-center align-items-center mb-3 shadow-sm" style="width: 45px; height: 45px;">
                         <i class="fa-solid fa-rotate-left"></i>
@@ -94,7 +94,12 @@
     </div>
 
     <div class="card card-custom p-4">
-        <h6 class="fw-bold mb-4">Recent Activity</h6>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h6 class="fw-bold mb-0">Recent Activity</h6>
+            <a href="{{ route('resident.activity-logs') }}" class="text-primary text-decoration-none small fw-bold">
+                View Full Log <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+        </div>
         <div class="table-responsive">
             <table class="table table-borderless align-middle">
                 <tbody>
@@ -111,16 +116,21 @@
                         </td>
                         <td>
                             <div class="fw-bold text-dark small">{{ $request->document_type }}</div>
-                            <div class="text-muted" style="font-size: 11px;">Submitted on {{ $request->created_at->format('M d, Y') }}</div>
+                            <div class="text-muted" style="font-size: 11px;">Submitted on {{ $request->created_at->format('M d, Y') }} • ID: {{ $request->tracking_number }}</div>
                         </td>
                         <td class="text-end">
-                            @if($request->status == 'Approved')
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Approved</span>
-                            @elseif($request->status == 'Pending')
-                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Pending</span>
-                            @else
-                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ $request->status }}</span>
-                            @endif
+                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                @if($request->status == 'Approved')
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Approved</span>
+                                @elseif($request->status == 'Pending')
+                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Pending</span>
+                                @else
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ $request->status }}</span>
+                                @endif
+                                <a href="{{ route('resident.receipt.view', $request->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" style="font-size: 12px;" title="View Receipt">
+                                    <i class="fa-solid fa-receipt me-1"></i> Receipt
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @empty

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ResidentDashboardController;
+use App\Http\Controllers\ResidentSettingsController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\ResidentAuthController;
 use App\Http\Controllers\Auth\GoogleController;
@@ -65,9 +66,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     // Document Generation Route
     Route::get('/requests/generate/{id}', [AdminDashboardController::class, 'generateWord'])->name('requests.generate');
     
-    // Action Button Routes
-    Route::patch('/requests/{id}/approve', [AdminDashboardController::class, 'approve'])->name('requests.approve');
-    Route::patch('/requests/{id}/cancel', [AdminDashboardController::class, 'cancel'])->name('requests.cancel');
+    // Action Button Routes (legacy placeholder routes removed — use .accept and .reject)
     Route::delete('/requests/{id}', [AdminDashboardController::class, 'destroy'])->name('requests.destroy');
 
     // --- NEW PIPELINE ROUTES (Accept/Reject Gateway) ---
@@ -85,6 +84,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::get('/users/{id}', [AdminDashboardController::class, 'viewUser'])->name('users.view');
     Route::patch('/users/{id}/update', [AdminDashboardController::class, 'updateUser'])->name('users.update');
     Route::patch('/users/{id}/toggle-status', [AdminDashboardController::class, 'toggleUserStatus'])->name('users.toggle-status');
+
+    // Activity Logs
+    Route::get('/activity-logs', [AdminDashboardController::class, 'activityLogs'])->name('activity-logs');
+
+    // Admin Settings
+    Route::get('/settings', [AdminDashboardController::class, 'adminSettings'])->name('settings');
+    Route::post('/settings/profile', [AdminDashboardController::class, 'updateAdminProfile'])->name('settings.profile');
+    Route::post('/settings/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('settings.password');
+
+    // Admin Notifications (AJAX)
+    Route::get('/notifications', [AdminDashboardController::class, 'getAdminNotifications'])->name('notifications.get');
+    Route::post('/notifications/mark-read', [AdminDashboardController::class, 'markAdminNotificationsRead'])->name('notifications.read');
 });
 
 // ==========================================
@@ -100,8 +111,13 @@ Route::middleware('auth')->group(function () {
     })->name('verification.notice');
 
     Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('success', 'A new verification link has been sent to your email address.');
+        try {
+            $request->user()->sendEmailVerificationNotification();
+            return back()->with('success', 'A new verification link has been sent to your email address.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Resend verification email failed: ' . $e->getMessage());
+            return back()->with('success', 'Verification email request processed. Please check your inbox.');
+        }
     })->middleware('throttle:6,1')->name('verification.send');
 
     // NEW: Phone Verification Routes
@@ -209,6 +225,27 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
 
     // When the resident clicks the bell, the red badge needs to disappear.
     Route::post('/notifications/mark-read', [ResidentDashboardController::class, 'markNotificationsRead'])->name('notifications.read');
+
+    // ==========================================
+    // RESIDENT ACTIVITY LOGS & RECEIPTS
+    // ==========================================
+    Route::get('/activity-logs', [ResidentDashboardController::class, 'activityLogs'])->name('activity-logs');
+    Route::get('/receipt/{id}', [ResidentDashboardController::class, 'viewReceipt'])->name('receipt.view');
+    Route::get('/receipt/{id}/download', [ResidentDashboardController::class, 'downloadReceipt'])->name('receipt.download');
+
+    // ==========================================
+    // RESIDENT SETTINGS ROUTES
+    // ==========================================
+    Route::get('/settings', [ResidentSettingsController::class, 'index'])->name('settings');
+    Route::post('/settings/profile', [ResidentSettingsController::class, 'updateProfile'])->name('settings.profile');
+    Route::post('/settings/account', [ResidentSettingsController::class, 'updateAccount'])->name('settings.account');
+    Route::post('/settings/password', [ResidentSettingsController::class, 'updatePassword'])->name('settings.password');
+    Route::post('/settings/security', [ResidentSettingsController::class, 'updateSecurity'])->name('settings.security');
+    Route::post('/settings/id', [ResidentSettingsController::class, 'uploadId'])->name('settings.id');
+    Route::post('/settings/logout-others', [ResidentSettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
+    Route::post('/settings/logout-all', [ResidentSettingsController::class, 'logoutAllDevices'])->name('settings.logout-all');
+    Route::post('/settings/deactivate', [ResidentSettingsController::class, 'deactivateAccount'])->name('settings.deactivate');
+    Route::delete('/settings/delete', [ResidentSettingsController::class, 'deleteAccount'])->name('settings.delete');
 
 });
 

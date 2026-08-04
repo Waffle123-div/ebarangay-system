@@ -10,92 +10,219 @@
     <link rel="stylesheet" href="{{ asset('css/ebarangay-theme.css') }}">
     
     <style>
-        body { font-family: var(--font-body); background-color: var(--color-bg); }
-        .top-navbar { background: var(--color-surface); padding: 12px 40px; border-bottom: 1px solid var(--color-border); }
-        .main-content { padding: 20px 0; }
+        :root {
+            --sidebar-width: 250px;
+        }
+
+        body { font-family: var(--font-body); background-color: var(--color-bg); overflow-x: hidden; }
+        
+        #resident-wrapper { display: flex; width: 100%; min-height: 100vh; }
+        
+        /* Resident Sidebar Styling */
+        #resident-sidebar-wrapper {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--color-surface);
+            border-right: 1px solid var(--color-border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem 1.5rem 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .resident-sidebar-list .list-group-item {
+            border: none;
+            padding: 0.9rem 1.5rem;
+            color: var(--color-text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-left: 4px solid transparent;
+            transition: var(--transition-fast);
+            background: transparent;
+        }
+        
+        .resident-sidebar-list .list-group-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .resident-sidebar-list .list-group-item:hover {
+            background-color: var(--color-primary-50);
+            color: var(--color-primary);
+        }
+
+        .resident-sidebar-list .list-group-item.active {
+            background-color: var(--color-primary-50);
+            color: var(--color-primary);
+            border-left: 4px solid var(--color-primary);
+        }
+
+        /* Content Area */
+        #resident-content-wrapper {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .top-navbar {
+            background: var(--color-surface);
+            padding: 12px 30px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .main-content { padding: 20px; flex-grow: 1; }
         .card-custom { border: 0; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
         .header-title { font-weight: 700; color: var(--color-text); font-family: var(--font-heading); }
         .header-subtitle { color: var(--color-text-light); font-size: 14px; }
         .btn-link { text-decoration: none; }
         h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
+
+        /* Responsive Mobile Drawer */
+        @media (max-width: 991.98px) {
+            #resident-sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #resident-wrapper.toggled #resident-sidebar-wrapper {
+                margin-left: 0;
+            }
+            #resident-content-wrapper {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <nav class="top-navbar d-flex justify-content-between align-items-center sticky-top shadow-sm">
-        <div class="d-flex align-items-center gap-2">
-            <div class="bg-primary rounded-3 d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
-                <i class="fa-solid fa-hotel text-white" style="font-size: 14px;"></i>
-            </div>
-            <div>
-                <div class="fw-bold text-dark" style="font-size: 14px; line-height: 1;">E-Barangay System</div>
-                <div class="text-muted" style="font-size: 11px;">Barangay Cogon East</div>
-            </div>
-        </div>
-        
-        <div class="d-flex align-items-center gap-4">
-            <div class="dropdown">
-                <a class="text-decoration-none position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="markNotificationsAsRead()">
-                    <i class="fa-regular fa-bell text-muted" style="font-size: 1.2rem; cursor: pointer;"></i>
-                    @if(auth()->check() && auth()->user()->unreadNotifications->count() > 0)
-                        <span class="position-absolute translate-middle badge rounded-pill bg-danger shadow-sm" id="notification-badge" style="top: 0px; start: 90%; font-size: 0.6rem;">
-                            {{ auth()->user()->unreadNotifications->count() }}
-                        </span>
-                    @endif
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; border-radius: 12px; overflow: hidden;">
-                    <div class="bg-primary text-white px-3 py-2 fw-bold d-flex justify-content-between align-items-center">
-                        <span>Notifications</span>
-                    </div>
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        @if(auth()->check())
-                            @forelse(auth()->user()->notifications as $notification)
-                                <div class="px-3 py-3 border-bottom {{ $notification->read_at === null ? 'bg-light' : 'bg-white' }}">
-                                    <div class="fw-bold text-dark" style="font-size: 14px;">
-                                        <i class="fa-solid fa-circle-check text-success me-1"></i> {{ $notification->data['document_type'] ?? 'Document Update' }}
-                                    </div>
-                                    <div class="text-muted mt-1" style="font-size: 13px;">{{ $notification->data['message'] ?? 'The status of your document has been updated.' }}</div>
-                                    <div class="mt-2 text-primary" style="font-size: 11px; font-weight: 600;">
-                                        TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="px-3 py-4 text-center text-muted small">
-                                    <i class="fa-regular fa-bell-slash fa-2x mb-2 text-light"></i><br>
-                                    No new notifications
-                                </div>
-                            @endforelse
-                        @endif
-                    </div>
-                </ul>
+    <div id="resident-wrapper">
+        {{-- Resident Sidebar --}}
+        <div id="resident-sidebar-wrapper">
+            <div class="sidebar-brand d-flex align-items-center gap-2">
+                <div class="bg-primary rounded-3 d-flex justify-content-center align-items-center" style="width: 38px; height: 38px;">
+                    <i class="fa-solid fa-hotel text-white" style="font-size: 16px;"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark mb-0" style="font-size: 14px; line-height: 1.1;">E-Barangay</h5>
+                    <small class="text-muted" style="font-size: 11px;">Resident Portal</small>
+                </div>
             </div>
 
-            <div class="dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
-                    <div class="bg-light text-muted rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width: 35px; height: 35px; font-size: 12px;">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-bold text-dark" style="font-size: 13px;">{{ auth()->user()?->name ?? 'Resident' }}</div>
-                        <div class="text-muted" style="font-size: 11px;">Resident</div>
-                    </div>
+            <div class="list-group list-group-flush pt-3 resident-sidebar-list">
+                <a href="{{ route('resident.dashboard') }}" class="list-group-item list-group-item-action {{ Route::is('resident.dashboard') ? 'active' : '' }}">
+                    <i class="fa-solid fa-th-large"></i> Dashboard
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-3">
-                    <li>
-                        <form method="POST" action="{{ route('resident.logout') }}">
-                            @csrf
-                            <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left;">
-                                <i class="fa-solid fa-right-from-bracket me-2 text-muted"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+                <a href="{{ route('resident.request.create') }}" class="list-group-item list-group-item-action {{ Route::is('resident.request.create') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-circle-plus"></i> Request Document
+                </a>
+                <a href="{{ route('resident.request.track') }}" class="list-group-item list-group-item-action {{ Route::is('resident.request.track') ? 'active' : '' }}">
+                    <i class="fa-solid fa-magnifying-glass"></i> Track Requests
+                </a>
+                <a href="{{ route('resident.activity-logs') }}" class="list-group-item list-group-item-action {{ Route::is('resident.activity-logs') ? 'active' : '' }}">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Activity Logs
+                </a>
+                <a href="{{ route('resident.settings') }}" class="list-group-item list-group-item-action {{ Route::is('resident.settings') ? 'active' : '' }}">
+                    <i class="fa-solid fa-sliders"></i> Settings
+                </a>
             </div>
         </div>
-    </nav>
 
-    <div class="main-content">
-        @yield('content')
+        {{-- Main Page Content Wrapper --}}
+        <div id="resident-content-wrapper">
+            <nav class="top-navbar d-flex justify-content-between align-items-center sticky-top shadow-sm">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light btn-sm border-0 d-lg-none" id="menu-toggle" aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars fs-5"></i>
+                    </button>
+                    <div>
+                        <div class="fw-bold text-dark" style="font-size: 14px; line-height: 1;">Barangay Cogon East</div>
+                        <div class="text-muted" style="font-size: 11px;">E-Barangay Citizen Services</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-4">
+                    <div class="dropdown">
+                        <a class="text-decoration-none position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="markNotificationsAsRead()">
+                            <i class="fa-regular fa-bell text-muted" style="font-size: 1.2rem; cursor: pointer;"></i>
+                            @if(auth()->check() && auth()->user()->unreadNotifications->count() > 0)
+                                <span class="position-absolute translate-middle badge rounded-pill bg-danger shadow-sm" id="notification-badge" style="top: 0px; start: 90%; font-size: 0.6rem;">
+                                    {{ auth()->user()->unreadNotifications->count() }}
+                                </span>
+                            @endif
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0 mt-2" aria-labelledby="notificationDropdown" style="width: 320px; border-radius: 12px; overflow: hidden;">
+                            <div class="bg-primary text-white px-3 py-2 fw-bold d-flex justify-content-between align-items-center">
+                                <span>Notifications</span>
+                            </div>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                @if(auth()->check())
+                                    @forelse(auth()->user()->notifications as $notification)
+                                        <div class="px-3 py-3 border-bottom {{ $notification->read_at === null ? 'bg-light' : 'bg-white' }}">
+                                            <div class="fw-bold text-dark" style="font-size: 14px;">
+                                                <i class="fa-solid fa-circle-check text-success me-1"></i> {{ $notification->data['document_type'] ?? 'Document Update' }}
+                                            </div>
+                                            <div class="text-muted mt-1" style="font-size: 13px;">{{ $notification->data['message'] ?? 'The status of your document has been updated.' }}</div>
+                                            <div class="mt-2 text-primary" style="font-size: 11px; font-weight: 600;">
+                                                TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="px-3 py-4 text-center text-muted small">
+                                            <i class="fa-regular fa-bell-slash fa-2x mb-2 text-light"></i><br>
+                                            No new notifications
+                                        </div>
+                                    @endforelse
+                                @endif
+                            </div>
+                        </ul>
+                    </div>
+
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
+                            <div class="bg-light text-muted rounded-circle d-flex justify-content-center align-items-center fw-bold" style="width: 35px; height: 35px; font-size: 12px;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="text-end d-none d-sm-block">
+                                <div class="fw-bold text-dark" style="font-size: 13px;">{{ auth()->user()?->name ?? 'Resident' }}</div>
+                                <div class="text-muted" style="font-size: 11px;">Resident</div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-3">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('resident.settings') }}">
+                                    <i class="fa-solid fa-sliders text-muted"></i>
+                                    Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <form method="POST" action="{{ route('resident.logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left;">
+                                        <i class="fa-solid fa-right-from-bracket me-2 text-muted"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="main-content">
+                @yield('content')
+            </div>
+        </div>
     </div>
 
     @if(session('is_locked'))
@@ -603,5 +730,18 @@
         });
     </script>
     @endif
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const menuToggle = document.getElementById("menu-toggle");
+            const residentWrapper = document.getElementById("resident-wrapper");
+            if (menuToggle && residentWrapper) {
+                menuToggle.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    residentWrapper.classList.toggle("toggled");
+                });
+            }
+        });
+    </script>
 </body>
 </html>
