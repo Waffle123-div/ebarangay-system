@@ -152,11 +152,11 @@
                         </td>
                         <td>
                             @if(in_array(strtolower($user->status), ['active']))
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="fa-solid fa-circle text-success" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Active</span>
-                            @elseif($user->status == 'pending_approval')
-                                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill"><i class="fa-solid fa-circle text-warning" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Pending</span>
-                            @else
-                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-circle text-danger" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Inactive</span>
+                                <span class="status-badge status-active"><i class="fa-solid fa-circle" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Active</span>
+                                @elseif($user->status == 'pending_approval')
+                                <span class="status-badge status-pending-approval"><i class="fa-solid fa-circle" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Pending</span>
+                                @else
+                                <span class="status-badge status-inactive"><i class="fa-solid fa-circle" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Inactive</span>
                             @endif
                         </td>
                         <td>{{ $user->created_at->format('M d, Y') }}</td>
@@ -364,11 +364,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const status = this.dataset.status.toLowerCase();
             let badgeHtml = '';
             if (status === 'active') {
-                badgeHtml = '<span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Active</span>';
+                badgeHtml = '<span class="status-badge status-active">Active</span>';
             } else if (status === 'pending_approval') {
-                badgeHtml = '<span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>';
+                badgeHtml = '<span class="status-badge status-pending-approval">Pending</span>';
             } else {
-                badgeHtml = '<span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Inactive</span>';
+                badgeHtml = '<span class="status-badge status-inactive">Inactive</span>';
             }
             document.getElementById('viewUserStatus').innerHTML = badgeHtml;
 

@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
+use App\Models\CommunityConcern;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Notifications\NewDocumentRequestNotification;
+use App\Notifications\NewCommunityConcernNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ResidentDashboardController extends Controller
 {
@@ -219,5 +222,80 @@ class ResidentDashboardController extends Controller
         ActivityLog::record('receipt_viewed', "Viewed transaction receipt for request #{$docRequest->tracking_number} ({$docRequest->document_type}).", Auth::id());
 
         return $this->viewReceipt($id);
+    }
+
+    /**
+     * Display the logged-in resident's community concerns.
+     */
+    public function communityConcerns()
+    {
+        if (trim(strtolower(Auth::user()->status)) !== 'active') {
+            return redirect()->route('resident.pending');
+        }
+
+        $concerns = CommunityConcern::where('user_id', Auth::id())
+            ->latest()
+            ->get();
+
+        return view('resident.community_concerns', compact('concerns'));
+    }
+
+    /**
+     * Store a new community concern submitted by the resident.
+     */
+    public function storeConcern(Request $request)
+    {
+        if (trim(strtolower(Auth::user()->status)) !== 'active') {
+            return redirect()->route('resident.pending');
+        }
+
+        $validated = $request->validate([
+            'title'         => 'required|string|max:200',
+            'category'      => ['required', Rule::in(CommunityConcern::categories())],
+            'description'   => 'required|string|max:5000',
+            'location'      => 'required|string|max:255',
+            'incident_date' => 'nullable|date|before_or_equal:today',
+            'photo'         => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+        ]);
+
+        $user = Auth::user();
+        $photoPath = null;
+
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('concern_attachments', 'public');
+        }
+
+        $concern = CommunityConcern::create([
+            'concern_id'      => 'CON-' . date('Y') . '-' . str_pad((string) mt_rand(1, 99999), 5, '0', STR_PAD_LEFT),
+            'user_id'         => $user->id,
+            'resident_name'   => $user->name,
+            'resident_email'  => $user->email,
+            'contact_number'  => $user->phone_number,
+            'address'         => $user->formattedAddress() ?: null,
+            'title'           => $validated['title'],
+            'category'        => $validated['category'],
+            'description'     => $validated['description'],
+            'location'        => $validated['location'],
+            'incident_date'   => $validated['incident_date'] ?? null,
+            'photo_path'      => $photoPath,
+            'status'          => 'Pending',
+        ]);
+
+        ActivityLog::record(
+            'concern_submitted',
+            "Resident {$user->name} submitted community concern #{$concern->concern_id} ({$concern->category}).",
+            $user->id
+        );
+
+        $admins = User::where('role', 'Admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new NewCommunityConcernNotification($concern));
+        }
+
+        if ($request->input('redirect_to') === 'welcome') {
+            return redirect()->to(route('welcome') . '#concerns')->with('success', 'Your community concern has been submitted successfully!');
+        }
+
+        return redirect()->route('resident.concerns')->with('success', 'Your community concern has been submitted successfully!');
     }
 }

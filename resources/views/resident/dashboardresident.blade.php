@@ -121,11 +121,11 @@
                         <td class="text-end">
                             <div class="d-flex align-items-center justify-content-end gap-2">
                                 @if($request->status == 'Approved')
-                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Approved</span>
-                                @elseif($request->status == 'Pending')
-                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3">Pending</span>
-                                @else
-                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ $request->status }}</span>
+                                    <span class="status-badge status-approved">Approved</span>
+                                    @elseif($request->status == 'Pending')
+                                    <span class="status-badge status-pending">Pending</span>
+                                    @else
+                                    <span class="status-badge status-processing">{{ $request->status }}</span>
                                 @endif
                                 <a href="{{ route('resident.receipt.view', $request->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" style="font-size: 12px;" title="View Receipt">
                                     <i class="fa-solid fa-receipt me-1"></i> Receipt

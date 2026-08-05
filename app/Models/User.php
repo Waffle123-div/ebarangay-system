@@ -101,4 +101,21 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ActivityLog::class)->latest();
     }
+
+    public function communityConcerns()
+    {
+        return $this->hasMany(CommunityConcern::class)->latest();
+    }
+
+    public function formattedAddress(): string
+    {
+        return collect([
+            $this->house_number,
+            $this->street,
+            $this->barangay_address,
+            $this->municipality,
+            $this->province,
+            $this->zip_code,
+        ])->filter()->implode(', ');
+    }
 }

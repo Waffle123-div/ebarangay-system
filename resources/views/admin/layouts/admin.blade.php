@@ -160,6 +160,7 @@
         }
         .notif-icon.type-new_request    { background: #dbeafe; color: #2563eb; }
         .notif-icon.type-new_registration { background: #dcfce7; color: #16a34a; }
+        .notif-icon.type-new_concern    { background: #fef3c7; color: #d97706; }
         .notif-icon.type-info           { background: #f3f4f6; color: #6b7280; }
 
         .notif-msg { font-size: 13px; color: #374151; line-height: 1.5; }
@@ -198,6 +199,9 @@
                 </a>
                 <a href="{{ route('admin.requests') }}" class="list-group-item list-group-item-action {{ Route::is('admin.requests') ? 'active' : '' }}">
                     <i class="fa-solid fa-file-alt"></i> Requests
+                </a>
+                <a href="{{ route('admin.concerns') }}" class="list-group-item list-group-item-action {{ Route::is('admin.concerns') ? 'active' : '' }}">
+                    <i class="fa-solid fa-bullhorn"></i> Community Concern
                 </a>
                 <a href="{{ route('admin.users') }}" class="list-group-item list-group-item-action {{ Route::is('admin.users') ? 'active' : '' }}">
                     <i class="fa-solid fa-users"></i> Users
@@ -321,6 +325,7 @@
         const typeIcons = {
             'new_request':      'fa-file-lines',
             'new_registration': 'fa-user-plus',
+            'new_concern':      'fa-bullhorn',
             'info':             'fa-info',
         };
 

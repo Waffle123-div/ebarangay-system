@@ -110,15 +110,15 @@
                             
                             <td class="border-bottom py-3">
                                 @if($request->status == 'Approved')
-                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill fw-semibold">Approved</span>
+                                    <span class="status-badge status-approved">Approved</span>
                                 @elseif($request->status == 'Pending')
-                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-semibold">Pending</span>
+                                    <span class="status-badge status-pending">Pending</span>
                                 @elseif($request->status == 'Under Review')
-                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-semibold">Under Review</span>
+                                    <span class="status-badge status-under-review">Under Review</span>
                                 @elseif($request->status == 'Cancelled' || $request->status == 'Rejected')
-                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-1 rounded-pill fw-semibold">Rejected</span>
+                                    <span class="status-badge status-rejected">Rejected</span>
                                 @else
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1 rounded-pill fw-semibold">{{ $request->status }}</span>
+                                    <span class="status-badge status-inactive">{{ $request->status }}</span>
                                 @endif
                             </td>
                             

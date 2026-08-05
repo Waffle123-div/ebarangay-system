@@ -34,6 +34,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Welcome page accessible while logged in (for Home sidebar link)
+Route::get('/home', function () {
+    return view('welcome');
+})->name('welcome');
+
 // ==========================================
 // GOOGLE AUTHENTICATION ROUTES
 // ==========================================
@@ -87,6 +92,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 
     // Activity Logs
     Route::get('/activity-logs', [AdminDashboardController::class, 'activityLogs'])->name('activity-logs');
+
+    // Community Concerns
+    Route::get('/concerns', [AdminDashboardController::class, 'concerns'])->name('concerns');
+    Route::patch('/concerns/{id}', [AdminDashboardController::class, 'updateConcern'])->name('concerns.update');
 
     // Admin Settings
     Route::get('/settings', [AdminDashboardController::class, 'adminSettings'])->name('settings');
@@ -212,6 +221,10 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     Route::get('/', [ResidentDashboardController::class, 'index'])->name('dashboard');
     Route::get('/request-document', [ResidentDashboardController::class, 'createRequest'])->name('request.create');
     Route::get('/track-request', [ResidentDashboardController::class, 'trackRequest'])->name('request.track');
+
+    // Community Concerns
+    Route::get('/community-concerns', [ResidentDashboardController::class, 'communityConcerns'])->name('concerns');
+    Route::post('/community-concerns', [ResidentDashboardController::class, 'storeConcern'])->name('concern.store');
     
     // Form Submission Route
     Route::post('/request-document', [ResidentDashboardController::class, 'store'])->name('request.store');

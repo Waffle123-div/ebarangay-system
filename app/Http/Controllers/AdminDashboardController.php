@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
+use App\Models\CommunityConcern;
+use App\Models\CommunityConcernRemark;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Notifications\ConcernStatusUpdatedNotification;
 use PhpOffice\PhpWord\TemplateProcessor; 
 use Illuminate\Support\Facades\Mail;     
 use Illuminate\Support\Facades\Http;     
@@ -14,6 +17,8 @@ use App\Mail\DocumentReady;
 use Carbon\Carbon;
 use App\Mail\AccountRejectedMail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class AdminDashboardController extends Controller
 {
@@ -529,5 +534,103 @@ class AdminDashboardController extends Controller
         ActivityLog::record('request_completed', "Marked request #{$request->tracking_number} as Completed (claimed by resident).");
 
         return back()->with('success', 'Document marked as Completed!');
+    }
+
+    public function concerns(Request $request)
+    {
+        $query = CommunityConcern::with(['user', 'remarks.admin', 'updatedByAdmin'])->orderBy('created_at', 'desc');
+
+        if ($request->filled('status') && $request->status !== 'All') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('concern_id', 'like', "%{$search}%")
+                  ->orWhere('resident_name', 'like', "%{$search}%")
+                  ->orWhere('title', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+
+        $concerns = $query->get();
+        $currentStatus = $request->status ?? 'All';
+
+        $statusCounts = [
+            'All' => CommunityConcern::count(),
+            'Pending' => CommunityConcern::where('status', 'Pending')->count(),
+            'Under Review' => CommunityConcern::where('status', 'Under Review')->count(),
+            'In Progress' => CommunityConcern::where('status', 'In Progress')->count(),
+            'Resolved' => CommunityConcern::where('status', 'Resolved')->count(),
+            'Rejected' => CommunityConcern::where('status', 'Rejected')->count(),
+        ];
+
+        return view('admin.concerns.index', compact('concerns', 'currentStatus', 'statusCounts'));
+    }
+
+    public function updateConcern(Request $request, $id)
+    {
+        $concern = CommunityConcern::findOrFail($id);
+
+        $validated = $request->validate([
+            'status'        => ['required', Rule::in(CommunityConcern::statuses())],
+            'admin_remarks' => 'nullable|string|max:5000',
+        ]);
+
+        $previousStatus = $concern->status;
+        $concern->status = $validated['status'];
+        $concern->updated_by = auth()->id();
+
+        if (!empty($validated['admin_remarks'])) {
+            $concern->admin_remarks = $validated['admin_remarks'];
+
+            CommunityConcernRemark::create([
+                'community_concern_id' => $concern->id,
+                'admin_id'             => auth()->id(),
+                'remark'               => $validated['admin_remarks'],
+            ]);
+        }
+
+        $concern->save();
+
+        ActivityLog::record(
+            'concern_updated',
+            "Updated community concern #{$concern->concern_id} to {$concern->status}."
+        );
+
+        $resident = User::find($concern->user_id);
+        if ($resident) {
+            $message = $this->buildConcernNotificationMessage($concern, $previousStatus, $validated['admin_remarks'] ?? null);
+            $resident->notify(new ConcernStatusUpdatedNotification($concern, $message));
+        }
+
+        return back()->with('success', 'Community concern updated successfully.');
+    }
+
+    private function buildConcernNotificationMessage(CommunityConcern $concern, string $previousStatus, ?string $remarks): string
+    {
+        if ($remarks) {
+            return 'Barangay Staff replied to your concern: "' . $remarks . '"';
+        }
+
+        if ($concern->status === 'Under Review' && $previousStatus !== 'Under Review') {
+            return 'Your concern is now Under Review.';
+        }
+
+        if ($concern->status === 'In Progress') {
+            return 'Your concern is now In Progress.';
+        }
+
+        if ($concern->status === 'Resolved') {
+            return 'Your concern has been marked as Resolved.';
+        }
+
+        if ($concern->status === 'Rejected') {
+            return 'Your concern has been marked as Rejected.';
+        }
+
+        return 'Your community concern status has been updated to ' . $concern->status . '.';
     }
 }

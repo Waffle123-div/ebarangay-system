@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="description" content="E-Barangay: Web-Based Document Request and Tracking System for Barangay Cogon East, Carmen, Cebu. Request barangay documents online, track your requests in real-time, and access community services.">
   <title>E-Barangay — Document Request & Tracking System | Barangay Cogon East, Carmen, Cebu</title>
 
@@ -47,18 +48,110 @@
         <a href="#how-it-works">How It Works</a>
         <a href="#services">Documents</a>
         <a href="#news">News</a>
+        <a href="#concerns">Community Concern</a>
         <a href="#emergency">Emergency</a>
       </nav>
 
       <div class="nav-cta">
-        <a href="{{ route('resident.login') }}" class="btn btn-outline-nav" id="loginBtn">
-          <i class="icon-log-in"></i>
-          Log In
-        </a>
-        <a href="{{ route('resident.register') }}" class="btn btn-primary" id="signupBtn">
-          <i class="icon-user-plus"></i>
-          Sign Up
-        </a>
+        @php
+          $navUser = auth()->user();
+          $isLoggedInResident = $navUser && trim(strtolower($navUser->role)) !== 'admin';
+          $navInitials = collect(explode(' ', trim($navUser?->name ?? '')))
+              ->filter()
+              ->take(2)
+              ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+              ->implode('');
+        @endphp
+
+        @if($isLoggedInResident)
+          <div class="welcome-user-nav">
+            <div class="welcome-notif-wrap" id="welcomeNotifWrap">
+              <button type="button" class="welcome-icon-btn" id="welcomeNotifBtn" aria-label="Notifications" title="Notifications">
+                <i class="icon-bell"></i>
+                @if($navUser->unreadNotifications->count() > 0)
+                  <span class="welcome-badge" id="welcomeNotifBadge">{{ $navUser->unreadNotifications->count() }}</span>
+                @endif
+              </button>
+              <div class="welcome-dropdown welcome-notif-dropdown" id="welcomeNotifDropdown">
+                <div class="welcome-dropdown-header">
+                  <span>Notifications</span>
+                </div>
+                <div class="welcome-dropdown-body">
+                  @forelse($navUser->notifications->take(8) as $notification)
+                    @php
+                      $notifType = $notification->data['type'] ?? 'document';
+                      $notifTitle = $notifType === 'concern_update'
+                          ? ($notification->data['title'] ?? 'Community Concern Update')
+                          : ($notification->data['document_type'] ?? 'Document Update');
+                      $notifMeta = $notifType === 'concern_update'
+                          ? ('ID: ' . ($notification->data['concern_id'] ?? 'N/A'))
+                          : ('TRK: ' . ($notification->data['tracking_number'] ?? 'N/A'));
+                    @endphp
+                    <div class="welcome-notif-item {{ $notification->read_at === null ? 'unread' : '' }}">
+                      <div class="welcome-notif-title">{{ $notifTitle }}</div>
+                      <div class="welcome-notif-message">{{ $notification->data['message'] ?? 'You have a new update.' }}</div>
+                      <div class="welcome-notif-meta">{{ $notifMeta }} • {{ $notification->created_at->diffForHumans() }}</div>
+                    </div>
+                  @empty
+                    <div class="welcome-dropdown-empty">
+                      <i class="icon-bell-off"></i>
+                      <span>No new notifications</span>
+                    </div>
+                  @endforelse
+                </div>
+              </div>
+            </div>
+
+            <div class="welcome-profile-wrap" id="welcomeProfileWrap">
+              <button type="button" class="welcome-profile-btn" id="welcomeProfileBtn" aria-label="Open profile menu">
+                @if($navUser->profile_picture)
+                  <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-avatar">
+                @else
+                  <span class="welcome-profile-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
+                @endif
+                <span class="welcome-profile-name">{{ $navUser->name }}</span>
+                <i class="icon-chevron-down welcome-profile-chevron"></i>
+              </button>
+              <div class="welcome-dropdown welcome-profile-dropdown" id="welcomeProfileDropdown">
+                <div class="welcome-profile-card">
+                  @if($navUser->profile_picture)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-card-avatar">
+                  @else
+                    <span class="welcome-profile-card-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
+                  @endif
+                  <div>
+                    <div class="welcome-profile-card-name">{{ $navUser->name }}</div>
+                    <div class="welcome-profile-card-email">{{ $navUser->email ?? 'No email provided' }}</div>
+                  </div>
+                </div>
+                <div class="welcome-dropdown-menu">
+                  <a href="{{ route('resident.settings') }}" class="welcome-dropdown-link">
+                    <i class="icon-user"></i> My Profile
+                  </a>
+                  <a href="{{ route('resident.dashboard') }}" class="welcome-dropdown-link">
+                    <i class="icon-home"></i> My Dashboard
+                  </a>
+                  <form method="POST" action="{{ route('resident.logout') }}" class="welcome-logout-form">
+                    @csrf
+                    <button type="submit" class="welcome-dropdown-link welcome-dropdown-logout">
+                      <i class="icon-log-out"></i> Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        @else
+          <a href="{{ route('resident.login') }}" class="btn btn-outline-nav" id="loginBtn">
+            <i class="icon-log-in"></i>
+            Log In
+          </a>
+          <a href="{{ route('resident.register') }}" class="btn btn-primary" id="signupBtn">
+            <i class="icon-user-plus"></i>
+            Sign Up
+          </a>
+        @endif
+
         <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
           <i class="icon-moon dark-icon-moon"></i>
           <i class="icon-sun dark-icon-sun"></i>
@@ -472,68 +565,6 @@
 
 
   <!-- ============================
-       COMMUNITY CONCERNS
-       ============================ -->
-  <section class="concerns-section" id="concerns">
-    <div class="container">
-      <div class="concerns-content fade-in-up">
-        <div class="concerns-text">
-          <div class="section-label">Community Feature</div>
-          <h2 class="section-title">Submit a Community Concern</h2>
-          <p class="section-subtitle">
-            Have an issue or concern in your purok? Report it online and barangay officials 
-            will monitor and address it. Together, we build a better Cogon East.
-          </p>
-          <div class="concern-types">
-            <div class="concern-type">
-              <i class="icon-construction"></i>
-              <span>Infrastructure</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-shield-alert"></i>
-              <span>Peace & Order</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-leaf"></i>
-              <span>Sanitation</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-lightbulb"></i>
-              <span>Utilities</span>
-            </div>
-          </div>
-        </div>
-        <div class="concerns-form-card">
-          <form id="concernForm">
-            <div class="form-group">
-              <label for="concernName"><i class="icon-user"></i> Your Name</label>
-              <input type="text" id="concernName" placeholder="Juan Dela Cruz" required>
-            </div>
-            <div class="form-group">
-              <label for="concernType"><i class="icon-tag"></i> Type of Concern</label>
-              <select id="concernType" required>
-                <option value="">Select category...</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="Peace & Order">Peace & Order</option>
-                <option value="Sanitation">Sanitation & Cleanliness</option>
-                <option value="Utilities">Utilities (Water, Electricity)</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="concernDetails"><i class="icon-message-square"></i> Details</label>
-              <textarea id="concernDetails" rows="4" placeholder="Describe your concern..." required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">
-              <i class="icon-send"></i> Submit Concern
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================
        NEWS & ANNOUNCEMENTS
        ============================ -->
   <section class="news-section" id="news">
@@ -584,6 +615,121 @@
             <h3>Community Assembly — June 15 at 2PM</h3>
             <p>All residents are invited to the quarterly community assembly at the Barangay Hall covered court. Discussion on the digital transformation initiative.</p>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       COMMUNITY CONCERNS
+       ============================ -->
+  <section class="concerns-section" id="concerns">
+    <div class="container">
+      <div class="concerns-content fade-in-up">
+        <div class="concerns-text">
+          <div class="section-label">Community Feature</div>
+          <h2 class="section-title">Submit a Community Concern</h2>
+          <p class="section-subtitle">
+            Have an issue or concern in your purok? Report it online and barangay officials 
+            will monitor and address it. Together, we build a better Cogon East.
+          </p>
+          <div class="concern-types">
+            <div class="concern-type">
+              <i class="icon-construction"></i>
+              <span>Infrastructure</span>
+            </div>
+            <div class="concern-type">
+              <i class="icon-shield-alert"></i>
+              <span>Peace & Order</span>
+            </div>
+            <div class="concern-type">
+              <i class="icon-leaf"></i>
+              <span>Sanitation</span>
+            </div>
+            <div class="concern-type">
+              <i class="icon-lightbulb"></i>
+              <span>Utilities</span>
+            </div>
+          </div>
+        </div>
+        <div class="concerns-form-card">
+          @php
+            $authUser = auth()->user();
+            $isResident = $authUser && trim(strtolower($authUser->role)) !== 'admin';
+            $categories = \App\Models\CommunityConcern::categories();
+            $guestLocked = !$isResident;
+          @endphp
+
+          @if($errors->any())
+            <div class="concern-form-alert">
+              <strong>Please fix the following:</strong>
+              <ul>
+                @foreach($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          @if($guestLocked)
+            <div class="concern-auth-notice">
+              <i class="icon-lock"></i>
+              <span>Please log in to submit a Community Concern.</span>
+            </div>
+          @endif
+
+          <form id="concernForm"
+                class="concern-form {{ $guestLocked ? 'concern-form-locked' : '' }}"
+                @if($isResident)
+                  action="{{ route('resident.concern.store') }}"
+                  method="POST"
+                  enctype="multipart/form-data"
+                @else
+                  data-require-auth="true"
+                  data-login-url="{{ route('resident.login') }}"
+                @endif>
+            @if($isResident)
+              @csrf
+              <input type="hidden" name="redirect_to" value="welcome">
+            @endif
+
+            <div class="concern-form-grid concern-form-grid-2">
+              <div class="form-group">
+                <label for="concernTitle"><i class="icon-file-text"></i> Concern Title</label>
+                <input type="text" id="concernTitle" name="title" value="{{ old('title') }}" placeholder="Brief title of your concern" {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>
+              </div>
+              <div class="form-group">
+                <label for="concernType"><i class="icon-tag"></i> Concern Category</label>
+                <select id="concernType" name="category" {{ $isResident ? 'required' : 'disabled tabindex=-1' }}>
+                  <option value="">Select category...</option>
+                  @foreach($categories as $category)
+                    <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="concernDetails"><i class="icon-message-square"></i> Description</label>
+              <textarea id="concernDetails" name="description" rows="3" placeholder="Describe your concern in detail..." {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>{{ old('description') }}</textarea>
+            </div>
+            <div class="concern-form-grid concern-form-grid-2">
+              <div class="form-group">
+                <label for="concernLocation"><i class="icon-map-pin"></i> Location</label>
+                <input type="text" id="concernLocation" name="location" value="{{ old('location') }}" placeholder="Purok, Street Name, Landmark" {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>
+              </div>
+              <div class="form-group">
+                <label for="concernDate"><i class="icon-calendar"></i> Date of Incident <small>(Optional)</small></label>
+                <input type="date" id="concernDate" name="incident_date" value="{{ old('incident_date') }}" max="{{ date('Y-m-d') }}" {{ $isResident ? '' : 'readonly disabled tabindex=-1' }}>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="concernPhoto"><i class="icon-image"></i> Photo Attachment <small>(JPG, JPEG, PNG — Max 5MB)</small></label>
+              <input type="file" id="concernPhoto" name="photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" {{ $isResident ? '' : 'disabled tabindex=-1' }}>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="icon-send"></i> Submit Concern
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -738,12 +884,26 @@
     <div class="toast-icon"><i class="icon-check-circle"></i></div>
     <div class="toast-content">
       <h4 id="toastTitle">Success!</h4>
-      <p id="toastMessage">Your request has been submitted successfully.</p>
+      <p id="toastMessage">{{ session('success', 'Your request has been submitted successfully.') }}</p>
     </div>
     <button class="toast-close" id="toastClose"><i class="icon-x"></i></button>
   </div>
 
   <!-- JavaScript (Updated for Laravel) -->
   <script src="{{ asset('js/app.js') }}"></script>
+  @if(session('success'))
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const toast = document.getElementById('toast');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMessage = document.getElementById('toastMessage');
+      if (toast && toastTitle && toastMessage) {
+        toastTitle.textContent = 'Success!';
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 5000);
+      }
+    });
+  </script>
+  @endif
 </body>
 </html>

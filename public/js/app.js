@@ -155,17 +155,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Community Concern Form
   // ============================
   const concernForm = document.getElementById('concernForm');
-  if (concernForm) {
+  if (concernForm && concernForm.dataset.requireAuth === 'true') {
     concernForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      
-      // Show a warning toast telling the guest to log in or register
-      showToast(
-        'Authentication Required',
-        'Please log in or sign up for an account first to submit a community concern.',
-        true // Triggers the yellow warning alert
-      );
+      window.location.href = concernForm.dataset.loginUrl || '/resident/login';
     });
+
+    concernForm.querySelectorAll('input, select, textarea').forEach((field) => {
+      field.addEventListener('keydown', (e) => e.preventDefault());
+      field.addEventListener('paste', (e) => e.preventDefault());
+    });
+  }
+
+  // ============================
+  // Smooth scroll with header offset
+  // ============================
+  const scrollToSection = (targetEl) => {
+    if (!targetEl) return;
+    const headerOffset = header ? header.offsetHeight + 16 : 96;
+    const targetTop = targetEl.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+  };
+
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+
+      const targetEl = document.querySelector(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        scrollToSection(targetEl);
+      }
+    });
+  });
+
+  if (window.location.hash) {
+    const hashTarget = document.querySelector(window.location.hash);
+    if (hashTarget) {
+      setTimeout(() => scrollToSection(hashTarget), 150);
+    }
   }
 
   // ============================
@@ -283,22 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================
-  // Smooth scroll for all anchor links
-  // ============================
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-      if (targetId === '#') return;
-
-      const targetEl = document.querySelector(targetId);
-      if (targetEl) {
-        e.preventDefault();
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
-
-  // ============================
   // Animated counter for hero stats
   // ============================
   const animateCounters = () => {
@@ -367,6 +380,56 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       htmlEl.setAttribute('data-theme', 'dark');
       localStorage.setItem('ebarangay_dark_mode', 'dark');
+    }
+  });
+
+  // ============================
+  // Welcome page — authenticated resident nav
+  // ============================
+  const welcomeNotifWrap = document.getElementById('welcomeNotifWrap');
+  const welcomeNotifBtn = document.getElementById('welcomeNotifBtn');
+  const welcomeProfileWrap = document.getElementById('welcomeProfileWrap');
+  const welcomeProfileBtn = document.getElementById('welcomeProfileBtn');
+  const welcomeNotifBadge = document.getElementById('welcomeNotifBadge');
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+
+  const closeWelcomeMenus = () => {
+    welcomeNotifWrap?.classList.remove('open');
+    welcomeProfileWrap?.classList.remove('open');
+  };
+
+  welcomeNotifBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !welcomeNotifWrap.classList.contains('open');
+    closeWelcomeMenus();
+    if (willOpen) {
+      welcomeNotifWrap.classList.add('open');
+      if (welcomeNotifBadge && csrfMeta) {
+        welcomeNotifBadge.remove();
+        fetch('/resident/notifications/mark-read', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': csrfMeta.getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        }).catch(() => {});
+      }
+    }
+  });
+
+  welcomeProfileBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !welcomeProfileWrap.classList.contains('open');
+    closeWelcomeMenus();
+    if (willOpen) {
+      welcomeProfileWrap.classList.add('open');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#welcomeNotifWrap') && !e.target.closest('#welcomeProfileWrap')) {
+      closeWelcomeMenus();
     }
   });
 

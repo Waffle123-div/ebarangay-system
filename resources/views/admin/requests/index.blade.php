@@ -203,17 +203,17 @@
                         <td>
                             <div id="status-badge-{{ $request->id }}">
                                 @if($request->status == 'Completed')
-                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Completed</span>
+                                    <span class="status-badge status-completed">Completed</span>
                                 @elseif($request->status == 'Ready')
-                                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">Ready for Pickup</span>
+                                    <span class="status-badge status-ready">Ready for Pickup</span>
                                 @elseif($request->status == 'Processing')
-                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Processing</span>
+                                    <span class="status-badge status-processing">Processing</span>
                                 @elseif($request->status == 'Under Review')
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill">Under Review</span>
+                                    <span class="status-badge status-under-review">Under Review</span>
                                 @elseif($request->status == 'Rejected')
-                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Rejected</span>
+                                    <span class="status-badge status-rejected">Rejected</span>
                                 @else
-                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
+                                    <span class="status-badge status-pending">Pending</span>
                                 @endif
                             </div>
                         </td>
@@ -377,7 +377,7 @@
     function markAsProcessing(id) {
         let badgeContainer = document.getElementById('status-badge-' + id);
         if(badgeContainer) {
-            badgeContainer.innerHTML = '<span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Processing</span>';
+            badgeContainer.innerHTML = '<span class="status-badge status-processing">Processing</span>';
         }
         
         let modalStatus = document.getElementById('modal-status-' + id);

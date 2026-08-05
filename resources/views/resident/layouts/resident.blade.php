@@ -120,6 +120,9 @@
             </div>
 
             <div class="list-group list-group-flush pt-3 resident-sidebar-list">
+                <a href="{{ route('welcome') }}" class="list-group-item list-group-item-action {{ Route::is('welcome') ? 'active' : '' }}">
+                    <i class="fa-solid fa-house"></i> Welcome
+                </a>
                 <a href="{{ route('resident.dashboard') }}" class="list-group-item list-group-item-action {{ Route::is('resident.dashboard') ? 'active' : '' }}">
                     <i class="fa-solid fa-th-large"></i> Dashboard
                 </a>

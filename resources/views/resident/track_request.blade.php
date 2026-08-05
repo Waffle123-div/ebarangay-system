@@ -121,15 +121,15 @@
                                         </div>
                                         <div>
                                             @if($step == -1)
-                                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Rejected</span>
+                                                <span class="status-badge status-rejected">Rejected</span>
                                             @elseif($step == 5)
-                                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Completed</span>
+                                                <span class="status-badge status-completed">Completed</span>
                                             @elseif($step == 4)
-                                                <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">Ready</span>
+                                                <span class="status-badge status-ready">Ready for Pickup</span>
                                             @elseif($step == 1)
-                                                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">Pending</span>
+                                                <span class="status-badge status-pending">Pending</span>
                                             @else
-                                                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">Processing</span>
+                                                <span class="status-badge status-processing">Processing</span>
                                             @endif
                                         </div>
                                     </div>

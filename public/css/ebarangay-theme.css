@@ -98,16 +98,126 @@
 .text-dark { color: var(--color-text) !important; }
 .text-muted { color: var(--color-text-light) !important; }
 
-/* Background utilities */
+/* Background utilities — only solid fills, NOT opacity variants */
 .bg-primary { background-color: var(--color-primary) !important; }
+
+/* Fix: allow Bootstrap's bg-opacity modifier to work.
+   The solid .bg-primary override above kills bg-opacity-10/25 etc, so
+   we explicitly restore the opacity-backed pattern for elements that need it. */
+.bg-primary.bg-opacity-10 { background-color: rgba(30, 64, 175, 0.10) !important; }
+.bg-primary.bg-opacity-25 { background-color: rgba(30, 64, 175, 0.25) !important; }
+
+/* Restore Bootstrap opacity variants for all standard badge/icon colors
+   (warning, danger, success, info, secondary are not globally overridden
+    here, but listed for completeness and future-proofing) */
 
 /* Nav pills (tabs) */
 .nav-pills .nav-link.active {
   background-color: var(--color-primary) !important;
 }
 
-/* Badge */
-.badge.bg-primary { background-color: var(--color-primary) !important; }
+/* Badge — solid primary only when no opacity modifier present */
+.badge.bg-primary:not(.bg-opacity-10):not(.bg-opacity-25) {
+  background-color: var(--color-primary) !important;
+}
+
+/* =====================================================
+   STATUS BADGES — single reusable system
+   Used in: admin requests, admin concerns,
+            resident track requests, resident concerns,
+            admin dashboard, resident dashboard,
+            account approvals, users list.
+   ===================================================== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35em 0.85em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  border-radius: 9999px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* Pending — amber */
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* Under Review — sky blue */
+.status-under-review {
+  background-color: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+/* In Progress — indigo/cyan */
+.status-in-progress {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+/* Processing — blue (same family as In Progress) */
+.status-processing {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Ready / Ready for Pickup — purple */
+.status-ready {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+/* Approved / Resolved — green */
+.status-approved,
+.status-resolved {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Completed — teal-green */
+.status-completed {
+  background-color: #ecfdf5;
+  color: #064e3b;
+  border: 1px solid #6ee7b7;
+}
+
+/* Rejected — red */
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Active (user status) — green */
+.status-active {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Inactive / Deactivated — slate */
+.status-inactive {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Pending Approval (user account) */
+.status-pending-approval {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
 
 /* Alert */
 .alert-primary {
