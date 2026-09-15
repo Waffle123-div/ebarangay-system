@@ -44,12 +44,22 @@
             <div class="row g-4 mb-5">
                 <div class="col-md-6">
                     <label class="form-label text-muted small fw-semibold">Document Type</label>
+                    @php
+                        $selectedDocType = request('document_type');
+                        $documentTypes = [
+                            'Barangay Clearance',
+                            'Certificate of Indigency',
+                            'Certificate of Residency',
+                            'Business Clearance',
+                            'Business Permit',
+                            'Barangay ID',
+                        ];
+                    @endphp
                     <select name="document_type" class="form-select px-3 py-2 border-secondary border-opacity-50 text-dark">
-                        <option selected disabled>Select document type</option>
-                        <option value="Barangay Clearance">Barangay Clearance</option>
-                        <option value="Certificate of Indigency">Certificate of Indigency</option>
-                        <option value="Certificate of Residency">Certificate of Residency</option>
-                        <option value="Business Permit">Business Permit</option>
+                        <option value="" disabled {{ $selectedDocType ? '' : 'selected' }}>Select document type</option>
+                        @foreach($documentTypes as $docType)
+                            <option value="{{ $docType }}" {{ $selectedDocType === $docType ? 'selected' : '' }}>{{ $docType }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-6">

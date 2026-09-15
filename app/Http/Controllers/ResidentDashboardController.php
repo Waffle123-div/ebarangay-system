@@ -237,7 +237,11 @@ class ResidentDashboardController extends Controller
             ->latest()
             ->get();
 
-        return view('resident.community_concerns', compact('concerns'));
+        $authUser = Auth::user();
+        $categories = CommunityConcern::categories();
+        $residentAddress = $authUser->formattedAddress() ?: 'Not provided';
+
+        return view('resident.community_concerns', compact('concerns', 'authUser', 'categories', 'residentAddress'));
     }
 
     /**
@@ -247,6 +251,10 @@ class ResidentDashboardController extends Controller
     {
         if (trim(strtolower(Auth::user()->status)) !== 'active') {
             return redirect()->route('resident.pending');
+        }
+
+        if (trim(strtolower(Auth::user()->role)) === 'admin') {
+            abort(403, 'Admins cannot submit community concerns from the resident portal.');
         }
 
         $validated = $request->validate([

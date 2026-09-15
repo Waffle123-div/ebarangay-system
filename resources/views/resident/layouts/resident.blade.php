@@ -132,6 +132,9 @@
                 <a href="{{ route('resident.request.track') }}" class="list-group-item list-group-item-action {{ Route::is('resident.request.track') ? 'active' : '' }}">
                     <i class="fa-solid fa-magnifying-glass"></i> Track Requests
                 </a>
+                <a href="{{ route('resident.concerns') }}" class="list-group-item list-group-item-action {{ Route::is('resident.concerns') ? 'active' : '' }}">
+                    <i class="fa-solid fa-bullhorn"></i> Community Concern
+                </a>
                 <a href="{{ route('resident.activity-logs') }}" class="list-group-item list-group-item-action {{ Route::is('resident.activity-logs') ? 'active' : '' }}">
                     <i class="fa-solid fa-clock-rotate-left"></i> Activity Logs
                 </a>

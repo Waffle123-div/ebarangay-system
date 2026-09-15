@@ -52,10 +52,27 @@ class ResidentAuthController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
+            $this->rememberIntendedUrl($request->input('intended'));
+
             if (trim(strtolower($user->role)) === 'admin') {
-                return redirect()->route('admin.dashboard'); 
-            } 
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => true, 'redirect' => route('admin.dashboard')]);
+                }
+                return redirect()->route('admin.dashboard');
+            }
+
+            if ($request->expectsJson()) {
+                return $this->smartRedirectJson($user);
+            }
+
             return $this->smartRedirect($user);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided credentials do not match our records.',
+            ], 422);
         }
 
         return back()->withErrors([
@@ -395,5 +412,51 @@ class ResidentAuthController extends Controller
             Auth::logout();
             return redirect()->route('resident.login')->withErrors(['email' => 'Your account access has been revoked or denied.']);
         }
+    }
+
+    private function smartRedirectJson($user)
+    {
+        $status = trim(strtolower($user->status));
+
+        if ($status === 'active') {
+            return response()->json([
+                'success' => true,
+                'redirect' => session()->pull('url.intended', route('resident.dashboard')),
+            ]);
+        }
+
+        if ($status === 'pending_approval') {
+            return response()->json(['success' => true, 'redirect' => route('resident.pending')]);
+        }
+
+        if ($status === 'incomplete') {
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json(['success' => true, 'redirect' => route('verification.notice')]);
+            }
+            return response()->json(['success' => true, 'redirect' => route('register.complete')]);
+        }
+
+        Auth::logout();
+        return response()->json([
+            'success' => false,
+            'message' => 'Your account access has been revoked or denied.',
+        ], 422);
+    }
+
+    private function rememberIntendedUrl(?string $intended): void
+    {
+        if (!is_string($intended) || $intended === '') {
+            return;
+        }
+
+        if (!str_starts_with($intended, '/resident/request-document') && $intended !== '/home') {
+            return;
+        }
+
+        if (str_contains($intended, '://') || str_contains($intended, '..')) {
+            return;
+        }
+
+        session()->put('url.intended', $intended);
     }
 }

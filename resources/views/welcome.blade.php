@@ -17,8 +17,19 @@
 
   <!-- Styles (Updated for Laravel) -->
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+  @unless(app()->environment('local'))
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  @endunless
 </head>
-<body>
+@php
+  $welcomeUser = auth()->user();
+  $welcomeIsResident = $welcomeUser && trim(strtolower($welcomeUser->role)) !== 'admin';
+@endphp
+<body
+  data-is-resident="{{ $welcomeIsResident ? '1' : '0' }}"
+  data-login-url="{{ route('resident.login') }}"
+  data-request-url="{{ route('resident.request.create') }}"
+>
 
   <!-- Animated Background Blobs -->
   <div class="bg-blobs" aria-hidden="true">
@@ -190,7 +201,7 @@
           and skip the long queues at the barangay hall.
         </p>
         <div class="hero-actions">
-          <a href="#services" class="btn btn-gold btn-lg">
+          <a href="{{ route('resident.request.create') }}" class="btn btn-gold btn-lg request-doc-btn">
             <i class="icon-file-plus"></i>
             Request Document Now
           </a>
@@ -671,65 +682,15 @@
             </div>
           @endif
 
-          @if($guestLocked)
-            <div class="concern-auth-notice">
-              <i class="icon-lock"></i>
-              <span>Please log in to submit a Community Concern.</span>
-            </div>
-          @endif
-
-          <form id="concernForm"
-                class="concern-form {{ $guestLocked ? 'concern-form-locked' : '' }}"
-                @if($isResident)
-                  action="{{ route('resident.concern.store') }}"
-                  method="POST"
-                  enctype="multipart/form-data"
-                @else
-                  data-require-auth="true"
-                  data-login-url="{{ route('resident.login') }}"
-                @endif>
-            @if($isResident)
-              @csrf
-              <input type="hidden" name="redirect_to" value="welcome">
-            @endif
-
-            <div class="concern-form-grid concern-form-grid-2">
-              <div class="form-group">
-                <label for="concernTitle"><i class="icon-file-text"></i> Concern Title</label>
-                <input type="text" id="concernTitle" name="title" value="{{ old('title') }}" placeholder="Brief title of your concern" {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>
-              </div>
-              <div class="form-group">
-                <label for="concernType"><i class="icon-tag"></i> Concern Category</label>
-                <select id="concernType" name="category" {{ $isResident ? 'required' : 'disabled tabindex=-1' }}>
-                  <option value="">Select category...</option>
-                  @foreach($categories as $category)
-                    <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>{{ $category }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="concernDetails"><i class="icon-message-square"></i> Description</label>
-              <textarea id="concernDetails" name="description" rows="3" placeholder="Describe your concern in detail..." {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>{{ old('description') }}</textarea>
-            </div>
-            <div class="concern-form-grid concern-form-grid-2">
-              <div class="form-group">
-                <label for="concernLocation"><i class="icon-map-pin"></i> Location</label>
-                <input type="text" id="concernLocation" name="location" value="{{ old('location') }}" placeholder="Purok, Street Name, Landmark" {{ $isResident ? 'required' : 'readonly tabindex=-1' }}>
-              </div>
-              <div class="form-group">
-                <label for="concernDate"><i class="icon-calendar"></i> Date of Incident <small>(Optional)</small></label>
-                <input type="date" id="concernDate" name="incident_date" value="{{ old('incident_date') }}" max="{{ date('Y-m-d') }}" {{ $isResident ? '' : 'readonly disabled tabindex=-1' }}>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="concernPhoto"><i class="icon-image"></i> Photo Attachment <small>(JPG, JPEG, PNG — Max 5MB)</small></label>
-              <input type="file" id="concernPhoto" name="photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" {{ $isResident ? '' : 'disabled tabindex=-1' }}>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">
-              <i class="icon-send"></i> Submit Concern
-            </button>
-          </form>
+          @include('partials.community-concern-form', [
+              'formId' => 'concernForm',
+              'context' => 'welcome',
+              'isResident' => $isResident,
+              'guestLocked' => $guestLocked,
+              'authUser' => $authUser,
+              'categories' => $categories,
+              'showResidentInfo' => false,
+          ])
         </div>
       </div>
     </div>
@@ -877,6 +838,60 @@
       <i class="icon-message-circle chat-icon-open"></i>
       <i class="icon-x chat-icon-close"></i>
     </button>
+  </div>
+
+  <!-- Login Required Modal -->
+  <div class="modal-overlay" id="authRequiredModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <i class="icon-lock"></i>
+        </div>
+        <div>
+          <h3 id="authRequiredTitle">Login Required</h3>
+          <p id="authRequiredMessage">Please log in to continue.</p>
+        </div>
+        <button class="modal-close" id="authRequiredClose" aria-label="Close modal">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="authRequiredDescription" class="text-muted" style="margin: 0; line-height: 1.6;">
+          You need to log in first before continuing.
+        </p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="authRequiredCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="authRequiredLogin">
+          <i class="icon-log-in"></i> Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resident Login Modal -->
+  <div class="modal-overlay" id="residentLoginModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <i class="icon-user"></i>
+        </div>
+        <div>
+          <h3>Welcome Back</h3>
+          <p>Log in to your resident portal</p>
+        </div>
+        <button class="modal-close" id="residentLoginClose" aria-label="Close modal">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        @include('partials.resident-login-form', [
+            'formId' => 'welcomeResidentLoginForm',
+            'ajaxMode' => true,
+            'errorContainerId' => 'welcomeLoginError',
+        ])
+      </div>
+    </div>
   </div>
 
   <!-- Success Toast -->

@@ -1550,6 +1550,51 @@ h1, h2, h3, h4, h5, h6 {
   padding: var(--space-6);
 }
 
+#residentLoginModal .modal {
+  max-width: 460px;
+}
+
+.welcome-login-forgot {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.welcome-login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: var(--color-text-light);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.welcome-login-divider span {
+  flex-shrink: 0;
+}
+
+.welcome-login-divider::before,
+.welcome-login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.welcome-login-register {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.welcome-login-register a {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
 /* Form Styles */
 .form-group {
   margin-bottom: var(--space-4);
@@ -1945,6 +1990,7 @@ h1, h2, h3, h4, h5, h6 {
 .concern-auth-notice {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-4);
@@ -1954,6 +2000,11 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-primary-dark);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+.concern-auth-login {
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .concern-form-alert {

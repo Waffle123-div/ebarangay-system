@@ -14,6 +14,14 @@ class GoogleController extends Controller
     // 1. Redirect to Google's OAuth page
     public function redirectToGoogle(Request $request)
     {
+        $intended = $request->query('intended');
+    if (is_string($intended)
+        && (str_starts_with($intended, '/resident/request-document') || $intended === '/home')
+        && !str_contains($intended, '://')
+        && !str_contains($intended, '..')) {
+            $request->session()->put('url.intended', $intended);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -40,7 +48,7 @@ class GoogleController extends Controller
                 // ==========================================
                 if (trim(strtolower($user->status)) === 'active') {
                     Auth::login($user);
-                    return redirect()->route('resident.dashboard');
+                    return redirect()->intended(route('resident.dashboard'));
 
                 } elseif (trim(strtolower($user->status)) === 'pending_approval') {
                     return redirect()->route('resident.pending');

@@ -98,58 +98,216 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================
-  // Document Request Modal
+  // Auth helpers (Welcome Page)
+  // ============================
+  const bodyEl = document.body;
+  const isResident = bodyEl?.dataset.isResident === '1';
+  const loginUrl = bodyEl?.dataset.loginUrl || '/resident/login';
+  const requestUrl = bodyEl?.dataset.requestUrl || '/resident/request-document';
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+
+  const authRequiredModal = document.getElementById('authRequiredModal');
+  const authRequiredTitle = document.getElementById('authRequiredTitle');
+  const authRequiredMessage = document.getElementById('authRequiredMessage');
+  const authRequiredDescription = document.getElementById('authRequiredDescription');
+  const authRequiredClose = document.getElementById('authRequiredClose');
+  const authRequiredCancel = document.getElementById('authRequiredCancel');
+  const authRequiredLogin = document.getElementById('authRequiredLogin');
+  const residentLoginModal = document.getElementById('residentLoginModal');
+  const residentLoginClose = document.getElementById('residentLoginClose');
+  const welcomeLoginForm = document.getElementById('welcomeResidentLoginForm');
+  const welcomeLoginError = document.getElementById('welcomeLoginError');
+  const welcomeGoogleLogin = document.getElementById('welcomeGoogleLogin');
+  let pendingAfterLoginUrl = '';
+
+  const toRelativeUrl = (url) => {
+    if (!url) return '';
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return `${parsed.pathname}${parsed.search}`;
+    } catch {
+      return url;
+    }
+  };
+
+  const openAuthRequiredModal = (title, message, description, afterLoginUrl = '') => {
+    if (!authRequiredModal) return;
+
+    pendingAfterLoginUrl = afterLoginUrl || '';
+    if (authRequiredTitle) authRequiredTitle.textContent = title;
+    if (authRequiredMessage) authRequiredMessage.textContent = message;
+    if (authRequiredDescription) authRequiredDescription.textContent = description;
+
+    authRequiredModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeAuthRequiredModal = () => {
+    if (!authRequiredModal) return;
+    authRequiredModal.classList.remove('open');
+    if (!residentLoginModal?.classList.contains('open')) {
+      document.body.style.overflow = '';
+    }
+  };
+
+  const openResidentLoginModal = () => {
+    if (!residentLoginModal) return;
+
+    const intendedInput = document.getElementById('welcomeResidentLoginFormIntended');
+    const relativeIntended = toRelativeUrl(pendingAfterLoginUrl);
+    if (intendedInput) intendedInput.value = relativeIntended;
+
+    if (welcomeGoogleLogin) {
+      const googleBase = welcomeGoogleLogin.getAttribute('href')?.split('?')[0] || '/auth/google';
+      const googleUrl = new URL(googleBase, window.location.origin);
+      googleUrl.searchParams.set('action', 'login');
+      if (relativeIntended) googleUrl.searchParams.set('intended', relativeIntended);
+      welcomeGoogleLogin.href = `${googleUrl.pathname}${googleUrl.search}`;
+    }
+
+    if (welcomeLoginError) {
+      welcomeLoginError.hidden = true;
+      welcomeLoginError.textContent = '';
+    }
+
+    residentLoginModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('welcomeResidentLoginFormEmail')?.focus();
+  };
+
+  const closeResidentLoginModal = () => {
+    if (!residentLoginModal) return;
+    residentLoginModal.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  if (authRequiredClose) authRequiredClose.addEventListener('click', closeAuthRequiredModal);
+  if (authRequiredCancel) authRequiredCancel.addEventListener('click', closeAuthRequiredModal);
+  if (authRequiredModal) {
+    authRequiredModal.addEventListener('click', (e) => {
+      if (e.target === authRequiredModal) closeAuthRequiredModal();
+    });
+  }
+  if (authRequiredLogin) {
+    authRequiredLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeAuthRequiredModal();
+      openResidentLoginModal();
+    });
+  }
+  if (residentLoginClose) residentLoginClose.addEventListener('click', closeResidentLoginModal);
+  if (residentLoginModal) {
+    residentLoginModal.addEventListener('click', (e) => {
+      if (e.target === residentLoginModal) closeResidentLoginModal();
+    });
+  }
+
+  if (welcomeLoginForm) {
+    welcomeLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('welcomeResidentLoginFormSubmit');
+      if (submitBtn) submitBtn.disabled = true;
+
+      if (welcomeLoginError) {
+        welcomeLoginError.hidden = true;
+        welcomeLoginError.textContent = '';
+      }
+
+      try {
+        const response = await fetch(welcomeLoginForm.action, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfMeta?.getAttribute('content') || '',
+          },
+          body: new FormData(welcomeLoginForm),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const firstError = data.errors ? Object.values(data.errors).flat()[0] : null;
+          const message = firstError || data.message || 'Invalid email or password.';
+          if (welcomeLoginError) {
+            welcomeLoginError.textContent = message;
+            welcomeLoginError.hidden = false;
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          return;
+        }
+
+        window.location.href = data.redirect || pendingAfterLoginUrl || requestUrl;
+      } catch {
+        if (welcomeLoginError) {
+          welcomeLoginError.textContent = 'Unable to log in right now. Please try again.';
+          welcomeLoginError.hidden = false;
+        }
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
+
+  // ============================
+  // Document Request (auth-gated)
   // ============================
   const modal = document.getElementById('requestModal');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalSubtitle = document.getElementById('modalSubtitle');
   const modalClose = document.getElementById('modalClose');
   const cancelRequest = document.getElementById('cancelRequest');
   const requestForm = document.getElementById('requestForm');
 
-  let selectedDocType = '';
+  const closeRequestModal = () => {
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    if (requestForm) requestForm.reset();
+  };
 
-  // Open modal from "Request Now" buttons
+  const continueToRequestDocument = (docType = '') => {
+    return docType
+      ? `${requestUrl}?document_type=${encodeURIComponent(docType)}`
+      : requestUrl;
+  };
+
   document.querySelectorAll('.request-doc-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      selectedDocType = btn.dataset.doc;
-      modalTitle.textContent = `Request: ${selectedDocType}`;
-      modalSubtitle.textContent = `Fill out the form below to request a ${selectedDocType}`;
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      e.stopImmediatePropagation();
+
+      const selectedDocType = btn.dataset.doc || '';
+      const targetUrl = continueToRequestDocument(selectedDocType);
+
+      if (!isResident) {
+        pendingAfterLoginUrl = targetUrl;
+        openResidentLoginModal();
+        return;
+      }
+
+      window.location.href = targetUrl;
     });
   });
 
-  // Close modal
-  const closeModal = () => {
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
-    requestForm.reset();
-  };
+  if (modal && requestForm) {
+    if (modalClose) modalClose.addEventListener('click', closeRequestModal);
+    if (cancelRequest) cancelRequest.addEventListener('click', closeRequestModal);
 
-  modalClose.addEventListener('click', closeModal);
-  cancelRequest.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeRequestModal();
+    });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
+    requestForm.addEventListener('submit', (e) => {
+      e.preventDefault();
 
-  // Handle form submission
-  requestForm.addEventListener('submit', (e) => {
-    e.preventDefault();
+      if (!isResident) {
+        closeRequestModal();
+        pendingAfterLoginUrl = requestUrl;
+        openResidentLoginModal();
+        return;
+      }
 
-    // Show a warning toast telling the guest to log in or register
-    showToast(
-      'Authentication Required',
-      'Please log in or sign up for an account first to request a document.',
-      true // Triggers the yellow warning alert
-    );
-
-    // Close the modal so they see the warning clearly
-    closeModal();
-  });
-
+      window.location.href = requestUrl;
+    });
+  }
 
   // ============================
   // Community Concern Form
@@ -158,7 +316,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (concernForm && concernForm.dataset.requireAuth === 'true') {
     concernForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      window.location.href = concernForm.dataset.loginUrl || '/resident/login';
+      openAuthRequiredModal(
+        'Login Required',
+        'Please log in to submit a community concern.',
+        'You need to log in first before submitting a community concern.',
+        '/home'
+      );
     });
 
     concernForm.querySelectorAll('input, select, textarea').forEach((field) => {
@@ -179,6 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
+      if (this.classList.contains('request-doc-btn')) return;
+
       const targetId = this.getAttribute('href');
       if (targetId === '#') return;
 
@@ -391,7 +556,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeProfileWrap = document.getElementById('welcomeProfileWrap');
   const welcomeProfileBtn = document.getElementById('welcomeProfileBtn');
   const welcomeNotifBadge = document.getElementById('welcomeNotifBadge');
-  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
 
   const closeWelcomeMenus = () => {
     welcomeNotifWrap?.classList.remove('open');

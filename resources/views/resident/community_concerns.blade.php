@@ -18,18 +18,20 @@
     @endif
 
     <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{{ route('welcome') }}#concerns" class="btn btn-primary rounded-3 px-4">
+        <button type="button" class="btn btn-primary rounded-3 px-4" data-bs-toggle="modal" data-bs-target="#submitConcernModal">
             <i class="fa-solid fa-plus me-1"></i> Submit New Concern
-        </a>
+        </button>
     </div>
 
     @if($concerns->isEmpty())
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
             <div class="text-muted mb-3"><i class="fa-solid fa-bullhorn fs-1"></i></div>
             <h5 class="fw-bold text-dark">No Concerns Submitted Yet</h5>
-            <p class="text-muted small mb-0">You haven't submitted any community concerns. Report an issue from the welcome page.</p>
+            <p class="text-muted small mb-0">You haven't submitted any community concerns yet. Click below to report an issue in your community.</p>
             <div class="mt-4">
-                <a href="{{ route('welcome') }}#concerns" class="btn btn-primary rounded-3 px-4">Submit a Concern</a>
+                <button type="button" class="btn btn-primary rounded-3 px-4" data-bs-toggle="modal" data-bs-target="#submitConcernModal">
+                    <i class="fa-solid fa-plus me-1"></i> Submit a Concern
+                </button>
             </div>
         </div>
     @else
@@ -169,4 +171,54 @@
         </div>
     </div>
 @endforeach
+
+{{-- Submit New Concern Modal --}}
+<div class="modal fade" id="submitConcernModal" tabindex="-1" aria-labelledby="submitConcernModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="submitConcernModalLabel">Submit New Concern</h5>
+                    <p class="text-muted small mb-0">Report a community issue directly from your resident portal.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                @if($errors->any())
+                    <div class="alert alert-danger rounded-3 mb-4">
+                        <strong>Please fix the following:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @include('partials.community-concern-form', [
+                    'formId' => 'submitConcernForm',
+                    'context' => 'modal',
+                    'isResident' => true,
+                    'guestLocked' => false,
+                    'authUser' => $authUser,
+                    'categories' => $categories,
+                    'residentAddress' => $residentAddress,
+                    'showResidentInfo' => false,
+                    'idPrefix' => 'modal',
+                ])
+            </div>
+        </div>
+    </div>
+</div>
+
+@if($errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('submitConcernModal');
+        if (modalEl) {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+    });
+</script>
+@endif
 @endsection
