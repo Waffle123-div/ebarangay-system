@@ -17,9 +17,18 @@
 
   <!-- Styles (Updated for Laravel) -->
   <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-  @unless(app()->environment('local'))
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  @endunless
+  @if(env('RECAPTCHA_SITE_KEY'))
+  <script>
+    window.welcomeRecaptchaReady = false;
+    window.onWelcomeRecaptchaLoad = function () {
+      window.welcomeRecaptchaReady = true;
+      if (typeof window.renderWelcomeRecaptcha === 'function') {
+        window.renderWelcomeRecaptcha();
+      }
+    };
+  </script>
+  <script src="https://www.google.com/recaptcha/api.js?onload=onWelcomeRecaptchaLoad&render=explicit" async defer></script>
+  @endif
 </head>
 @php
   $welcomeUser = auth()->user();

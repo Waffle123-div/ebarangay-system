@@ -119,6 +119,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeLoginError = document.getElementById('welcomeLoginError');
   const welcomeGoogleLogin = document.getElementById('welcomeGoogleLogin');
   let pendingAfterLoginUrl = '';
+  let welcomeRecaptchaWidgetId = null;
+
+  window.renderWelcomeRecaptcha = function () {
+    const el = document.getElementById('welcomeResidentLoginFormRecaptcha');
+    if (!el || typeof grecaptcha === 'undefined' || typeof grecaptcha.render !== 'function') {
+      return;
+    }
+
+    try {
+      if (welcomeRecaptchaWidgetId === null) {
+        welcomeRecaptchaWidgetId = grecaptcha.render(el, { sitekey: el.dataset.sitekey });
+      } else {
+        grecaptcha.reset(welcomeRecaptchaWidgetId);
+      }
+    } catch (err) {
+      // Widget may already be rendered; reset instead.
+      if (welcomeRecaptchaWidgetId !== null) {
+        grecaptcha.reset(welcomeRecaptchaWidgetId);
+      }
+    }
+  };
 
   const toRelativeUrl = (url) => {
     if (!url) return '';
@@ -173,6 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
     residentLoginModal.classList.add('open');
     document.body.style.overflow = 'hidden';
     document.getElementById('welcomeResidentLoginFormEmail')?.focus();
+
+    if (window.welcomeRecaptchaReady) {
+      window.renderWelcomeRecaptcha();
+    }
   };
 
   const closeResidentLoginModal = () => {
@@ -234,6 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
             welcomeLoginError.hidden = false;
           }
           if (submitBtn) submitBtn.disabled = false;
+          if (welcomeRecaptchaWidgetId !== null && typeof grecaptcha !== 'undefined') {
+            grecaptcha.reset(welcomeRecaptchaWidgetId);
+          }
           return;
         }
 

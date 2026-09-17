@@ -39,9 +39,14 @@
         @endif
     </div>
 
-    @if(!app()->environment('local'))
+    @php $recaptchaSiteKey = env('RECAPTCHA_SITE_KEY'); @endphp
+    @if($recaptchaSiteKey)
         <div class="{{ $ajaxMode ? 'form-group' : 'mb-3 d-flex justify-content-center' }}">
-            <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+            @if($ajaxMode)
+                <div id="{{ $formId }}Recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+            @else
+                <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+            @endif
         </div>
     @endif
 

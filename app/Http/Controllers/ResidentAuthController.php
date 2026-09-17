@@ -34,19 +34,21 @@ class ResidentAuthController extends Controller
             'password' => ['required'],
         ];
 
-        if (!app()->environment('local')) {
+        if (filled(env('RECAPTCHA_SECRET_KEY'))) {
             $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) {
                 $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
                     'secret' => env('RECAPTCHA_SECRET_KEY'),
                     'response' => $value,
                 ]);
                 if (! $response->json('success')) {
-                    $fail('Please complete the CAPTCHA to prove you are a human.');
+                    $fail('Please complete the reCAPTCHA verification.');
                 }
             }];
         }
 
-        $credentials = $request->validate($rules);
+        $credentials = $request->validate($rules, [
+            'g-recaptcha-response.required' => 'Please complete the reCAPTCHA verification.',
+        ]);
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();

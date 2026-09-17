@@ -257,6 +257,12 @@
                                 <i class="fa-solid fa-unlock-keyhole me-2"></i> Unlock Session
                             </button>
                         </form>
+                        <form action="{{ route('resident.logout') }}" method="POST" class="mt-2">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary w-100 py-2 rounded-3 fw-bold">
+                                <i class="fa-solid fa-right-from-bracket me-2"></i> Log Out
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -265,23 +271,43 @@
     @else
         <script>
             document.addEventListener("DOMContentLoaded", function() {
-                let idleTime = 0;
-                const timeoutThreshold = 600000; 
-                function resetIdleTime() { idleTime = 0; }
-                window.onload = resetIdleTime;
-                document.onmousemove = resetIdleTime;
-                document.onkeypress = resetIdleTime;
-                document.ontouchstart = resetIdleTime;
-                function checkIdleTime() {
-                    idleTime += 1000;
-                    if (idleTime >= timeoutThreshold) {
-                        fetch("{{ route('resident.session.lock') }}", {
-                            method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json', 'Accept': 'application/json' }
-                        }).then(() => { window.location.reload(); });
-                    }
+                const timeoutThreshold = 600000;
+                let lockTimer;
+                let lockRequestSent = false;
+                let lastActivity = 0;
+
+                function lockSession() {
+                    if (lockRequestSent) return;
+                    lockRequestSent = true;
+
+                    fetch("{{ route('resident.session.lock') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    }).then(response => {
+                        if (response.ok) window.location.reload();
+                    }).catch(() => {
+                        lockRequestSent = false;
+                        resetIdleTimer();
+                    });
                 }
-                setInterval(checkIdleTime, 1000);
+
+                function resetIdleTimer() {
+                    const now = Date.now();
+                    if (now - lastActivity < 1000) return;
+                    lastActivity = now;
+                    clearTimeout(lockTimer);
+                    lockTimer = setTimeout(lockSession, timeoutThreshold);
+                }
+
+                ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(eventName => {
+                    document.addEventListener(eventName, resetIdleTimer, { passive: eventName === 'scroll' || eventName === 'touchstart' });
+                });
+
+                resetIdleTimer();
             });
         </script>
     @endif
