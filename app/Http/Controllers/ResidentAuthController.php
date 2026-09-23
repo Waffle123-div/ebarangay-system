@@ -30,7 +30,7 @@ class ResidentAuthController extends Controller
     public function login(Request $request)
     {
         $rules = [
-            'email' => ['required', 'email'],
+            'email' => ['required'], // Can be email or phone number now
             'password' => ['required'],
         ];
 
@@ -46,11 +46,22 @@ class ResidentAuthController extends Controller
             }];
         }
 
-        $credentials = $request->validate($rules, [
+        $request->validate($rules, [
             'g-recaptcha-response.required' => 'Please complete the reCAPTCHA verification.',
         ]);
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        $loginInput = $request->input('email'); 
+
+        // Determine if input is an email or a phone number
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+
+        // If it's a phone number, clean it up just like we did during registration
+        if ($field === 'phone_number') {
+            $loginInput = preg_replace('/[^0-9]/', '', $loginInput);
+        }
+
+        // Attempt authentication using the resolved column name
+        if (Auth::attempt([$field => $loginInput, 'password' => $request->password])) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -83,7 +94,7 @@ class ResidentAuthController extends Controller
     }
 
     // ==========================================
-    // FORGOT PASSWORD
+    // FORGOT PASSWORD (UPDATED FOR SMS)
     // ==========================================
     
     public function showForgotPasswordForm()
@@ -93,8 +104,9 @@ class ResidentAuthController extends Controller
 
     public function searchAccount(Request $request)
     {
+        // THE FIX: Changed 'email' to 'login_id' to match the updated view
         $rules = [
-            'email' => ['required', 'email'],
+            'login_id' => ['required'],
         ];
 
         if (!app()->environment('local')) {
@@ -111,34 +123,73 @@ class ResidentAuthController extends Controller
 
         $request->validate($rules);
 
-        $user = User::where('email', $request->email)->first();
+        // THE FIX: Determine if they entered an email or phone number
+        $loginInput = $request->input('login_id');
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+
+        if ($field === 'phone_number') {
+            $loginInput = preg_replace('/[^0-9]/', '', $loginInput);
+        }
+
+        $user = User::where($field, $loginInput)->first();
 
         if (!$user) {
-            return back()->withErrors(['email' => 'We could not find an account matching that email address. Please try again.'])->withInput();
+            return back()->withErrors(['login_id' => 'We could not find an account matching that information. Please try again.'])->withInput();
         }
 
         if (trim(strtolower($user->status)) !== 'active') {
-            return back()->withErrors(['email' => 'Your account has not been approved by the admin yet. Password recovery is only available for fully active accounts.'])->withInput();
+            return back()->withErrors(['login_id' => 'Your account has not been approved by the admin yet. Password recovery is only available for fully active accounts.'])->withInput();
         }
 
-        return view('resident.auth.forgot_password_confirm', compact('user'));
+        // Pass BOTH the user and the exact identifier they typed in
+        return view('resident.auth.forgot_password_confirm', compact('user'))->with('identifier', $loginInput);
     }
 
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => 'required|email|exists:users,email']);
-        $user = User::where('email', $request->email)->first();
+        // THE FIX: Removed the "|email|exists:users,email" rule so phone numbers don't get rejected!
+        $request->validate(['email' => 'required']); 
+        
+        $identifier = $request->input('email');
+        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+        $user = User::where($field, $identifier)->first();
 
-        $code = strtoupper(Str::random(5));
+        if (!$user) {
+             return redirect()->route('resident.forgot_password')->withErrors(['login_id' => 'Invalid request.']);
+        }
 
+        // THE FIX: Generate a 5-digit number instead of letters so it's easy to text
+        $code = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+
+        // Store it in the tokens table (it's safe to store a phone number in the 'email' column temporarily)
         DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $request->email],
+            ['email' => $identifier],
             ['token' => $code, 'created_at' => now()]
         );
 
-        Mail::to($request->email)->send(new ResetPasswordCodeMail($code, $user->name));
+        if ($field === 'email') {
+            // SEND EMAIL
+            Mail::to($identifier)->send(new ResetPasswordCodeMail($code, $user->name));
+        } else {
+            // SEND SMS VIA TEXTBEE
+            $message = "E-Barangay: {$code} is your password reset code. Please do not share this with anyone.";
+            $formattedPhone = preg_replace('/^09/', '+639', $identifier);
 
-        return redirect()->route('resident.forgot_password.verify')->with('reset_email', $request->email);
+            try {
+                $response = Http::withHeaders([
+                    'x-api-key' => config('services.textbee.api_key'),
+                    'Content-Type' => 'application/json'
+                ])->timeout(10)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                    'deviceId'   => config('services.textbee.device_id'),
+                    'recipients' => [$formattedPhone],
+                    'message'    => $message
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Password Reset SMS error: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->route('resident.forgot_password.verify')->with('reset_email', $identifier);
     }
 
     public function showVerifyCodeForm(Request $request)
@@ -151,8 +202,9 @@ class ResidentAuthController extends Controller
 
     public function verifyCode(Request $request)
     {
+        // THE FIX: Removed |email validation rule here too
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required',
             'code' => 'required|array|size:5',
         ]);
 
@@ -176,25 +228,48 @@ class ResidentAuthController extends Controller
             return redirect()->route('resident.login');
         }
 
-        $user = User::where('email', session('verified_email'))->first();
-        return view('resident.auth.reset_password', ['user' => $user])->with('verified_email', session('verified_email'));
+        $identifier = session('verified_email');
+        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+        $user = User::where($field, $identifier)->first();
+
+        return view('resident.auth.reset_password', ['user' => $user])->with('verified_email', $identifier);
     }
 
     public function resetPassword(Request $request)
     {
+        // THE FIX: Removed |email validation rule
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required',
             'password' => 'required|min:8|confirmed',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $identifier = $request->email;
+        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+        $user = User::where($field, $identifier)->first();
+        
         $user->update([
             'password' => Hash::make($request->password)
         ]);
 
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        DB::table('password_reset_tokens')->where('email', $identifier)->delete();
 
-        Mail::to($request->email)->send(new PasswordChangedMail($user->name));
+        if ($field === 'email') {
+            Mail::to($identifier)->send(new PasswordChangedMail($user->name));
+        } else {
+            // SEND SUCCESS SMS
+            $message = "E-Barangay: Your account password has been successfully changed.";
+            $formattedPhone = preg_replace('/^09/', '+639', $identifier);
+            try {
+                Http::withHeaders([
+                    'x-api-key' => config('services.textbee.api_key'),
+                    'Content-Type' => 'application/json'
+                ])->timeout(10)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                    'deviceId'   => config('services.textbee.device_id'),
+                    'recipients' => [$formattedPhone],
+                    'message'    => $message
+                ]);
+            } catch (\Throwable $e) {}
+        }
 
         return redirect()->route('resident.forgot_password.success');
     }
@@ -279,18 +354,27 @@ class ResidentAuthController extends Controller
                 ['token' => $code, 'created_at' => now()]
             );
 
-            // THE FIX: Trigger the real SMS through Semaphore with a 5s timeout
+            // Trigger the real SMS through your physical Tecno phone via Textbee
             $message = "E-Barangay: {$code} is your verification code. Please do not share this with anyone.";
 
+            // FORCE INTERNATIONAL FORMAT: Change 09... to +639...
+            $formattedPhone = preg_replace('/^09/', '+639', $actualPhone);
+
             try {
-                Http::timeout(5)->post('https://api.semaphore.co/api/v4/messages', [
-                    'apikey' => env('SEMAPHORE_API_KEY'),
-                    'number' => $actualPhone,
-                    'message' => $message,
-                    'sendername' => 'SEMAPHORE' // Free accounts must use SEMAPHORE as the sender name
+                $response = Http::withHeaders([
+                    'x-api-key' => config('services.textbee.api_key'),
+                    'Content-Type' => 'application/json'
+                ])->timeout(10)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                    'deviceId'   => config('services.textbee.device_id'),
+                    'recipients' => [$formattedPhone],
+                    'message'    => $message
                 ]);
+
+                if (!$response->successful()) {
+                    \Illuminate\Support\Facades\Log::error('Textbee API Error: ' . json_encode($response->json()));
+                }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Registration SMS failed to send: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Registration SMS network error: ' . $e->getMessage());
             }
 
             return redirect()->route('verify_phone.notice')->with('phone_number', $actualPhone);

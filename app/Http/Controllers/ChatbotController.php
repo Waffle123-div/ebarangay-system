@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Log;
 
 class ChatbotController extends Controller
 {
@@ -47,7 +48,6 @@ If they ask something outside of using this website (like math, coding, or outsi
 EOT;
         
         // 3. Construct the Payload Array for the Groq API
-        // Start by injecting the System Prompt as the very first message
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt]
         ];
@@ -55,7 +55,7 @@ EOT;
         // Loop through the history sent from the frontend and append it to our $messages array
         foreach ($history as $msg) {
             $messages[] = [
-                'role' => $msg['role'],       // This will be either 'user' or 'assistant'
+                'role' => $msg['role'],      // This will be either 'user' or 'assistant'
                 'content' => $msg['content']  // The actual text of the message
             ];
         }
@@ -63,16 +63,18 @@ EOT;
         try {
             // 4. Send the entire conversation array to the AI
             $response = Http::withoutVerifying()
-                ->timeout(15) // Slightly higher timeout to handle reading larger histories
+                ->timeout(15)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
                     'Content-Type' => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => 'llama-3.3-70b-versatile', 
+                    'model' => 'openai/gpt-oss-20b', // <-- THE ACTIVE DEVELOPER MODEL
                     'messages' => $messages 
                 ]);
 
             if ($response->failed()) {
+                Log::error('Groq API Error: ' . $response->body());
+
                 return response()->json([
                     'reply' => 'Pasensya, medyo busy ang atong server karon. Palihug sulayi og usab taud-taud.'
                 ]);
@@ -86,7 +88,9 @@ EOT;
             ]);
             
         } catch (\Exception $e) {
-            // Fallback if the internet drops or Groq is down
+            // Log unexpected exceptions (network drops, timeouts, etc.)
+            Log::error('Chat Exception: ' . $e->getMessage());
+
             return response()->json([
                 'reply' => 'Pasensya, naputol ang atong linya sa internet. Palihug susiha ang imong koneksyon ug sulayi pag-usab.'
             ]);

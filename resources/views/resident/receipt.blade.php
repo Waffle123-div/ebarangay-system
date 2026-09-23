@@ -11,14 +11,16 @@
             </a>
         </div>
         <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm">
-                <i class="fa-solid fa-print me-1"></i> Print / Save as PDF
+            <!-- THE FIX: Changed button to trigger the image download script -->
+            <button onclick="downloadReceiptAsImage()" class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm">
+                <i class="fa-solid fa-download me-1"></i> Save as Image
             </button>
         </div>
     </div>
 
     {{-- Official Printable Receipt Document --}}
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden mx-auto printable-receipt" style="max-width: 800px; background: #fff;">
+    <!-- THE FIX: Added id="receiptCard" so html2canvas knows what to target -->
+    <div id="receiptCard" class="card border-0 shadow-lg rounded-4 overflow-hidden mx-auto printable-receipt" style="max-width: 800px; background: #fff;">
         
         {{-- Receipt Header --}}
         <div class="p-4 text-center border-bottom bg-light position-relative" style="border-bottom: 2px solid #000 !important;">
@@ -54,15 +56,17 @@
                 <div class="row g-2">
                     <div class="col-sm-6">
                         <span class="text-muted small">Full Name:</span>
-                        <div class="fw-bold text-dark">{{ $docRequest->resident_name }}</div>
+                        <div class="fw-bold text-dark">
+                            {{ trim($docRequest->first_name . ' ' . $docRequest->middle_initial . ' ' . $docRequest->last_name) ?: auth()->user()->name }}
+                        </div>
                     </div>
                     <div class="col-sm-6">
-                        <span class="text-muted small">Email Address:</span>
-                        <div class="fw-bold text-dark">{{ $docRequest->resident_email ?? 'N/A' }}</div>
+                        <span class="text-muted small">Contact Info:</span>
+                        <div class="fw-bold text-dark">{{ $docRequest->resident_email ?? $docRequest->contact_number ?? 'N/A' }}</div>
                     </div>
                     <div class="col-sm-6 mt-2">
                         <span class="text-muted small">User ID:</span>
-                        <div class="fw-bold text-dark font-monospace">{{ $user->user_id ?? 'N/A' }}</div>
+                        <div class="fw-bold text-dark font-monospace">{{ $docRequest->user_id ?? 'N/A' }}</div>
                     </div>
                     <div class="col-sm-6 mt-2">
                         <span class="text-muted small">Barangay:</span>
@@ -154,10 +158,35 @@
 
 </div>
 
+<!-- THE FIX: Include html2canvas library for screenshot capability -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+function downloadReceiptAsImage() {
+    const receiptCard = document.getElementById('receiptCard');
+    
+    // Use html2canvas to take a snapshot of the element
+    html2canvas(receiptCard, {
+        scale: 2, // Higher scale for better image quality on mobile
+        useCORS: true // Ensures icons/fonts load correctly in the image
+    }).then(canvas => {
+        // Convert the canvas to a data URL (PNG)
+        const image = canvas.toDataURL("image/png");
+        
+        // Create a temporary link element to trigger the download
+        const link = document.createElement('a');
+        link.download = 'Receipt-{{ $receiptNumber }}.png';
+        link.href = image;
+        link.click();
+    });
+}
+</script>
+
 <style>
+/* Kept print styles just in case a user uses standard Ctrl+P */
 @media print {
-    /* Hide top navbar, back button, sidebar, and rest of UI */
-    .top-navbar, .sidebar-wrapper, #sidebar-wrapper, .no-print, nav, footer, .btn {
+    .top-navbar, .sidebar-wrapper, #sidebar-wrapper, .no-print, nav, footer, .btn,
+    [id*="chat"], [class*="chat"], iframe {
         display: none !important;
     }
     body {

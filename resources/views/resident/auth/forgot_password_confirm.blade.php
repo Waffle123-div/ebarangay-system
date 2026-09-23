@@ -40,18 +40,22 @@
                         </div>
                         <hr class="text-muted opacity-25 my-2">
                         <div>
-                            <span class="d-block small text-muted fw-semibold">Registered Email</span>
-                            <span class="d-block fw-semibold text-primary">{{ $user->email }}</span>
+                            <!-- THE FIX: Smart label that checks if it's an email or a phone number -->
+                            <span class="d-block small text-muted fw-semibold">
+                                {{ filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'Registered Email' : 'Mobile Number' }}
+                            </span>
+                            <span class="d-block fw-semibold text-primary">{{ $identifier }}</span>
                         </div>
                     </div>
 
                     <form method="POST" action="{{ route('resident.forgot_password.send') }}">
                         @csrf
                         
-                        <input type="hidden" name="email" value="{{ $user->email }}">
+                        <!-- THE FIX: Pass the exact identifier (email or phone) forward to the next step -->
+                        <input type="hidden" name="email" value="{{ $identifier }}">
 
                         <button type="submit" class="btn btn-primary w-100 rounded-3 py-3 px-4 d-flex justify-content-between align-items-center fw-semibold shadow-sm btn-reset mb-3">
-                            <span>Reset my password</span>
+                            <span>Send recovery code</span>
                             <i class="fa-solid fa-chevron-right opacity-75"></i>
                         </button>
                     </form>

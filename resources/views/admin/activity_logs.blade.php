@@ -138,7 +138,8 @@
             <div class="text-muted small">
                 Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} entries
             </div>
-            {{ $logs->links('vendor.pagination.bootstrap-5') }}
+            {{-- THE FIX: Changed to pagination::bootstrap-5 --}}
+            {{ $logs->links('pagination::bootstrap-5') }}
         </div>
         @endif
     </div>

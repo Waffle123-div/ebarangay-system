@@ -190,11 +190,11 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-3 fw-bold text-uppercase" style="width: 36px; height: 36px; font-size: 13px;">
-                                    {{ substr($request->resident_name, 0, 2) }}
+                                    {{ substr($request->first_name, 0, 1) }}{{ substr($request->last_name, 0, 1) }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark" style="font-size: 14px;">{{ $request->resident_name }}</div>
-                                    <div class="text-muted" style="font-size: 12px;">{{ $request->resident_email ?? 'No email provided' }}</div>
+                                    <div class="fw-bold text-dark" style="font-size: 14px;">{{ $request->first_name }} {{ $request->last_name }}</div>
+                                    <div class="text-muted" style="font-size: 12px;">{{ $request->resident_email ?? $request->contact_number ?? 'No contact info provided' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -318,7 +318,7 @@
                     <div class="row mb-3">
                         <div class="col-8">
                             <span class="text-muted small d-block">Applicant Name</span>
-                            <span class="fw-bold text-dark">{{ $request->resident_name }}</span>
+                            <span class="fw-bold text-dark">{{ $request->first_name }} {{ $request->middle_initial }} {{ $request->last_name }}</span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted small d-block">Age</span>
@@ -326,8 +326,8 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <span class="text-muted small d-block">Email Address</span>
-                        <span class="fw-bold text-dark">{{ $request->resident_email ?? 'N/A' }}</span>
+                        <span class="text-muted small d-block">Contact Info</span>
+                        <span class="fw-bold text-dark">{{ $request->resident_email ?? $request->contact_number ?? 'N/A' }}</span>
                     </div>
                     <div class="mb-3">
                         <span class="text-muted small d-block">Document Requested</span>
@@ -428,7 +428,12 @@
 
         // 2. Real-Time Auto-Refresh Polling (5 Seconds)
         setInterval(function() {
-            if (document.activeElement === searchInput || document.body.classList.contains('modal-open')) {
+            // Stricter checks to ensure we NEVER refresh while a modal is opening/open
+            let isModalOpen = document.body.classList.contains('modal-open') || 
+                              document.querySelector('.modal.show') !== null ||
+                              document.querySelector('.modal-backdrop') !== null;
+
+            if (document.activeElement === searchInput || isModalOpen) {
                 return; 
             }
 
@@ -448,7 +453,6 @@
                     let currentModals = document.getElementById('modals-container');
                     if (newModals && currentModals) currentModals.innerHTML = newModals.innerHTML;
 
-                    // THE FIX: Added 'tab-badge-rejected' to this array so it auto-updates!
                     const elementIdsToUpdate = [
                         'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
                         'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'

@@ -106,7 +106,7 @@
                     @forelse($recentRequests as $request)
                     <tr>
                         <td style="width: 50px;">
-                            @if($request->status == 'Approved')
+                            @if($request->status == 'Approved' || $request->status == 'Completed' || $request->status == 'Ready')
                                 <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;"><i class="fa-solid fa-file-lines"></i></div>
                             @elseif($request->status == 'Pending')
                                 <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;"><i class="fa-solid fa-file-lines"></i></div>
@@ -120,16 +120,21 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex align-items-center justify-content-end gap-2">
-                                @if($request->status == 'Approved')
+                                @if($request->status == 'Completed')
+                                    <span class="status-badge status-completed">Completed</span>
+                                @elseif($request->status == 'Ready')
+                                    <span class="status-badge status-ready">Ready for Pickup</span>
+                                @elseif($request->status == 'Approved')
                                     <span class="status-badge status-approved">Approved</span>
-                                    @elseif($request->status == 'Pending')
+                                @elseif($request->status == 'Pending')
                                     <span class="status-badge status-pending">Pending</span>
-                                    @else
+                                @else
                                     <span class="status-badge status-processing">{{ $request->status }}</span>
                                 @endif
-                                <a href="{{ route('resident.receipt.view', $request->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" style="font-size: 12px;" title="View Receipt">
+                                
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#receiptModal{{ $request->id }}" title="View Receipt">
                                     <i class="fa-solid fa-receipt me-1"></i> Receipt
-                                </a>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -146,6 +151,176 @@
         </div>
     </div>
 </div>
+
+{{-- MODALS LOOP: Generate a receipt modal for each recent request --}}
+@foreach($recentRequests as $request)
+@php
+    $receiptNumber = str_replace('REQ', 'REC', $request->tracking_number);
+    $feeAmount = 0; 
+    if ($request->document_type == 'Barangay Clearance') {
+        $feeAmount = 50;
+    } elseif ($request->document_type == 'Business Permit') {
+        $feeAmount = 150;
+    }
+@endphp
+
+<div class="modal fade" id="receiptModal{{ $request->id }}" tabindex="-1" aria-hidden="true">
+    <!-- THE FIX: Restricted max-width to 650px instead of modal-lg so it looks like a real receipt -->
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            
+            <!-- THE FIX: A proper modal header keeping the buttons neatly aligned inside the modal -->
+            <div class="modal-header bg-light border-bottom d-flex justify-content-between align-items-center py-3 px-4">
+                <h6 class="modal-title fw-bold text-dark mb-0">
+                    <i class="fa-solid fa-file-invoice text-primary me-2"></i> Document Receipt
+                </h6>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" onclick="downloadReceiptAsImage('receiptCard{{ $request->id }}', '{{ $receiptNumber }}')" class="btn btn-primary btn-sm rounded-3 shadow-sm px-3 fw-semibold">
+                        <i class="fa-solid fa-download me-1"></i> Save Image
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <!-- THE RECEIPT DESIGN (Wrapped in ID for html2canvas) -->
+            <!-- THE FIX: Set background to white so the downloaded image has a solid background -->
+            <div id="receiptCard{{ $request->id }}" class="bg-white">
+                
+                {{-- Header --}}
+                <div class="p-4 text-center border-bottom position-relative" style="border-bottom: 2px solid #000 !important; background-color: #f8f9fa;">
+                    <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 22px;">
+                            <i class="fa-solid fa-landmark"></i>
+                        </div>
+                        <div class="text-start">
+                            <div class="text-uppercase text-muted fw-bold small" style="letter-spacing: 1px; font-size: 11px;">Republic of the Philippines</div>
+                            <h5 class="fw-bold text-dark mb-0">Barangay Cogon East</h5>
+                            <div class="text-muted small">E-Barangay System — Official Transaction Receipt</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 text-start">
+                    
+                    {{-- Metadata --}}
+                    <div class="row g-3 mb-4 pb-3 border-bottom">
+                        <div class="col-sm-6">
+                            <span class="text-muted small d-block">RECEIPT NUMBER</span>
+                            <h5 class="fw-bold text-primary mb-0 font-monospace">{{ $receiptNumber }}</h5>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <span class="text-muted small d-block">DATE & TIME</span>
+                            <span class="fw-bold text-dark">{{ $request->created_at->format('F d, Y — h:i A') }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Resident Info --}}
+                    <div class="bg-light rounded-3 p-3 mb-4 border">
+                        <h6 class="fw-bold text-dark mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Resident Information</h6>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="text-muted small">Full Name:</span>
+                                <div class="fw-bold text-dark">
+                                    {{ trim($request->first_name . ' ' . $request->middle_initial . ' ' . $request->last_name) ?: auth()->user()->name }}
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="text-muted small">Contact Info:</span>
+                                <div class="fw-bold text-dark">{{ $request->resident_email ?? $request->contact_number ?? 'N/A' }}</div>
+                            </div>
+                            <div class="col-sm-6 mt-2">
+                                <span class="text-muted small">User ID:</span>
+                                <div class="fw-bold text-dark font-monospace">{{ $request->user_id ?? 'N/A' }}</div>
+                            </div>
+                            <div class="col-sm-6 mt-2">
+                                <span class="text-muted small">Barangay:</span>
+                                <div class="fw-bold text-dark">Barangay Cogon East</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Transaction Details --}}
+                    <h6 class="fw-bold text-dark mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Transaction Details</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="py-2 text-muted small fw-bold">TRACKING NO.</th>
+                                    <th class="py-2 text-muted small fw-bold">DOCUMENT TYPE</th>
+                                    <th class="py-2 text-muted small fw-bold text-end">FEE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold text-dark font-monospace py-3">{{ $request->tracking_number }}</td>
+                                    <td class="fw-bold text-primary py-3">{{ $request->document_type }}</td>
+                                    <td class="fw-bold text-dark text-end py-3">
+                                        @if($feeAmount > 0)
+                                            ₱{{ number_format($feeAmount, 2) }}
+                                        @else
+                                            <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">FREE</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Status --}}
+                    <div class="row align-items-center mb-4">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <div class="p-3 rounded-3 border bg-light">
+                                <span class="text-muted small d-block mb-1">DOCUMENT STATUS</span>
+                                @if($request->status == 'Completed')
+                                    <span class="badge bg-success text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Completed / Claimed</span>
+                                @elseif($request->status == 'Ready')
+                                    <span class="badge bg-info text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-bell me-1"></i> Ready for Pickup</span>
+                                @elseif($request->status == 'Rejected')
+                                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                @else
+                                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-clock me-1"></i> {{ $request->status }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <div class="p-3 rounded-3 border bg-light">
+                                <span class="text-muted small d-block mb-1">TOTAL AMOUNT</span>
+                                <h4 class="fw-bold text-success mb-0">
+                                    @if($feeAmount > 0)
+                                        ₱{{ number_format($feeAmount, 2) }}
+                                    @else
+                                        FREE OF CHARGE
+                                    @endif
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Footer Verification --}}
+                    <div class="border-top pt-4 mt-4 text-center">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="text-start">
+                                <div class="fw-bold text-dark small"><i class="fa-solid fa-shield-halved text-primary me-1"></i> Verified E-Barangay Transaction</div>
+                                <div class="text-muted" style="font-size: 11px;">Generated automatically.</div>
+                            </div>
+                            <div class="text-end font-monospace text-muted small" style="font-size: 10px;">
+                                SYS-VERIFIED: {{ md5($receiptNumber . $request->tracking_number) }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- Bottom Banner --}}
+                <div class="bg-primary text-white text-center py-2 small fw-semibold">
+                    Thank you for using the E-Barangay System — Barangay Cogon East
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+@endforeach
 
 @if(is_null(auth()->user()->security_pin))
     <div class="modal" id="setupPinModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -189,5 +364,25 @@
         });
     </script>
 @endif
+
+<!-- html2canvas library for screenshot capability -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+function downloadReceiptAsImage(targetId, receiptNumber) {
+    const receiptElement = document.getElementById(targetId);
+    
+    html2canvas(receiptElement, {
+        scale: 2, 
+        useCORS: true 
+    }).then(canvas => {
+        const image = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = 'Receipt-' + receiptNumber + '.png';
+        link.href = image;
+        link.click();
+    });
+}
+</script>
 
 @endsection

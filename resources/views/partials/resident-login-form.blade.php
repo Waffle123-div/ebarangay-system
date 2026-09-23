@@ -21,8 +21,8 @@
     <input type="hidden" name="intended" id="{{ $formId }}Intended" value="">
 
     <div class="{{ $ajaxMode ? 'form-group' : 'mb-3 text-start' }}">
-        <label class="{{ $ajaxMode ? '' : 'form-label small fw-semibold mb-1' }}" for="{{ $formId }}Email">Email Address</label>
-        <input type="email" id="{{ $formId }}Email" name="email" class="{{ $ajaxMode ? '' : 'form-control rounded-3' }}" value="{{ old('email') }}" required @if(!$ajaxMode) autofocus @endif>
+        <label class="{{ $ajaxMode ? '' : 'form-label small fw-semibold mb-1' }}" for="{{ $formId }}Email">Email Address or Mobile Number</label>
+        <input type="text" id="{{ $formId }}Email" name="email" class="{{ $ajaxMode ? '' : 'form-control rounded-3' }}" value="{{ old('email') }}" required @if(!$ajaxMode) autofocus @endif>
     </div>
 
     <div class="{{ $ajaxMode ? 'form-group' : 'mb-3 text-start' }}">

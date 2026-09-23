@@ -10,8 +10,8 @@ use App\Models\User;
 use App\Models\ActivityLog;
 use App\Notifications\ConcernStatusUpdatedNotification;
 use PhpOffice\PhpWord\TemplateProcessor; 
-use Illuminate\Support\Facades\Mail;     
-use Illuminate\Support\Facades\Http;     
+use Illuminate\Support\Facades\Mail;    
+use Illuminate\Support\Facades\Http;    
 use App\Mail\AccountApproved;    
 use App\Mail\DocumentReady;        
 use Carbon\Carbon;
@@ -76,14 +76,25 @@ class AdminDashboardController extends Controller
         }
 
         if ($user->phone_number) {
-            $message = "Hello {$user->name}, your E-Barangay account has been approved by the Admin! You can now log in to request documents.";
+            $formattedPhone = preg_replace('/^09/', '+639', $user->phone_number);
+            $message = "Hello {$user->name}, your E-Barangay account has been approved by the Admin! You can now log in to the website.";
             
-            Http::post('https://api.semaphore.co/api/v4/messages', [
-                'apikey' => env('SEMAPHORE_API_KEY'),
-                'number' => $user->phone_number,
-                'message' => $message,
-                'sendername' => 'SEMAPHORE'
-            ]);
+            try {
+                $response = Http::withHeaders([
+                    'x-api-key' => config('services.textbee.api_key'),
+                    'Content-Type' => 'application/json'
+                ])->timeout(10)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                    'deviceId'   => config('services.textbee.device_id'),
+                    'recipients' => [$formattedPhone],
+                    'message'    => $message
+                ]);
+
+                if (!$response->successful()) {
+                    \Illuminate\Support\Facades\Log::error('Approval SMS Textbee Error: ' . json_encode($response->json()));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Approval SMS network error: ' . $e->getMessage());
+            }
         }
 
         return back()->with('success', 'Resident account approved successfully. A notification has been sent.');
@@ -201,8 +212,8 @@ class AdminDashboardController extends Controller
                                         ->whereDate('updated_at', Carbon::today())
                                         ->count();
         $overdueRequests = DocumentRequest::where('status', 'Pending')
-                                          ->where('created_at', '<', Carbon::now()->subDays(3))
-                                          ->count();
+                                        ->where('created_at', '<', Carbon::now()->subDays(3))
+                                        ->count();
 
         $approvedDocs = DocumentRequest::where('status', 'Approved')->get();
         $avgProcessing = 0;

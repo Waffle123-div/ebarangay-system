@@ -36,9 +36,14 @@ return [
     ],
 
     'google' => [
-     'client_id' => env('GOOGLE_CLIENT_ID'),
-     'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-     'redirect' => env('GOOGLE_REDIRECT_URL'),
- ],
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URL'),
+    ],
+
+    'textbee' => [
+        'api_key' => env('TEXTBEE_API_KEY'),
+        'device_id' => env('TEXTBEE_DEVICE_ID'),
+    ],
 
 ];

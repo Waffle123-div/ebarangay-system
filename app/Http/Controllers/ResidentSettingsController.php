@@ -27,7 +27,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     // ACTIVITY LOG HELPER
     // ==========================================
-    private function logActivity(string $action, string $description = ''): void
+    private function logActivity(string $action, string$description = ''): void
     {
         ActivityLog::create([
             'user_id'    => Auth::id(),
@@ -43,7 +43,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function index(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $user = Auth::user();
 
@@ -60,11 +60,11 @@ class ResidentSettingsController extends Controller
                     // Parse a basic device/browser label from user_agent
                     $ua = strtolower($session->user_agent ?? '');
                     $session->device = str_contains($ua, 'mobile') ? 'Mobile' : 'Desktop';
-                    if (str_contains($ua, 'chrome'))       $session->browser = 'Chrome';
-                    elseif (str_contains($ua, 'firefox'))  $session->browser = 'Firefox';
-                    elseif (str_contains($ua, 'safari'))   $session->browser = 'Safari';
-                    elseif (str_contains($ua, 'edge'))     $session->browser = 'Edge';
-                    else                                    $session->browser = 'Unknown';
+                    if (str_contains($ua, 'chrome'))$session->browser = 'Chrome';
+                    elseif (str_contains($ua, 'firefox'))$session->browser = 'Firefox';
+                    elseif (str_contains($ua, 'safari'))$session->browser = 'Safari';
+                    elseif (str_contains($ua, 'edge'))$session->browser = 'Edge';
+                    else                                   $session->browser = 'Unknown';
                     return $session;
                 });
         } catch (\Exception $e) {
@@ -72,13 +72,13 @@ class ResidentSettingsController extends Controller
         }
 
         // Activity logs — latest 30
-        $activityLogs = ActivityLog::where('user_id', $user->id)
+        $activityLogs = ActivityLog::where('user_id',$user->id)
             ->latest()
             ->take(30)
             ->get();
 
         // Active tab (for re-opening after redirect)
-        $activeTab = $request->input('tab', 'profile');
+        $activeTab =$request->input('tab', 'profile');
 
         return view('resident.settings', compact('user', 'sessions', 'activityLogs', 'activeTab'));
     }
@@ -88,7 +88,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function updateProfile(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate([
             'first_name'    => 'required|string|max:100',
@@ -110,7 +110,7 @@ class ResidentSettingsController extends Controller
         ]);
 
         $user = Auth::user();
-        $data = $request->only([
+        $data =$request->only([
             'first_name', 'middle_name', 'last_name', 'suffix', 'gender',
             'civil_status', 'nationality', 'occupation', 'phone_number',
             'house_number', 'street', 'barangay_address', 'municipality', 'province', 'zip_code',
@@ -118,10 +118,8 @@ class ResidentSettingsController extends Controller
 
         // Sync the full `name` field for backward compatibility
         $data['name'] = trim(implode(' ', array_filter([
-            $request->first_name,
-            $request->middle_name,
-            $request->last_name,
-            $request->suffix,
+            $request->first_name,$request->middle_name,
+            $request->last_name,$request->suffix,
         ])));
 
         // Handle profile picture upload
@@ -130,12 +128,11 @@ class ResidentSettingsController extends Controller
             if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
-            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
-            $data['profile_picture'] = $path;
+            $path =$request->file('profile_picture')->store('profile_pictures', 'public');
+            $data['profile_picture'] =$path;
         }
 
-        $user->update($data);
-        $this->logActivity('Profile Updated', 'Personal information and address were updated.');
+        $user->update($data);$this->logActivity('Profile Updated', 'Personal information and address were updated.');
 
         return redirect()->route('resident.settings', ['tab' => 'profile'])
             ->with('success', 'Profile updated successfully!');
@@ -146,7 +143,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function updateAccount(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $user = Auth::user();
 
@@ -156,28 +153,25 @@ class ResidentSettingsController extends Controller
         ]);
 
         $changes = [];
-        $oldEmail = $user->email;
+        $oldEmail =$user->email;
 
         if ($request->filled('username')) {
-            $user->username = $request->username;
+            $user->username =$request->username;
             $changes[] = 'username';
         }
 
-        if ($request->filled('email') && $request->email !== $oldEmail) {
-            $user->email = $request->email;
-            $user->email_verified_at = null; // Require re-verification
-            $changes[] = 'email';
+        if ($request->filled('email') && $request->email !==$oldEmail) {
+            $user->email =$request->email;
+            $user->email_verified_at = null; // Require re-verification$changes[] = 'email';
         }
 
         $user->save();
 
-        if (!empty($changes)) {
-            $this->logActivity('Account Updated', 'Changed: ' . implode(', ', $changes) . '.');
+        if (!empty($changes)) {$this->logActivity('Account Updated', 'Changed: ' . implode(', ', $changes) . '.');
         }
 
         $message = 'Account settings saved.';
-        if (in_array('email', $changes)) {
-            $message = 'Email updated. Please verify your new email address.';
+        if (in_array('email', $changes)) {$message = 'Email updated. Please verify your new email address.';
             return redirect()->route('verification.notice')->with('info', $message);
         }
 
@@ -190,23 +184,30 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function updatePassword(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate([
             'current_password' => 'required',
+            'pin'              => 'required',
             'password'         => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ]);
 
         $user = Auth::user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        // Verify Security PIN
+        if (!Hash::check($request->pin,$user->pin) && $user->pin !==$request->pin) {
+            return back()
+                ->withErrors(['pin' => 'Your security PIN is incorrect.'])
+                ->with('active_tab', 'account');
+        }
+
+        if (!Hash::check($request->current_password,$user->password)) {
             return back()
                 ->withErrors(['current_password' => 'Your current password is incorrect.'])
                 ->with('active_tab', 'account');
         }
 
-        $user->update(['password' => Hash::make($request->password)]);
-        $this->logActivity('Password Changed', 'Account password was successfully changed.');
+        $user->update(['password' => Hash::make($request->password)]);$this->logActivity('Password Changed', 'Account password was successfully changed.');
 
         return redirect()->route('resident.settings', ['tab' => 'account'])
             ->with('success', 'Password changed successfully!');
@@ -217,13 +218,12 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function updateSecurity(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $user  = Auth::user();
-        $enable = (bool) $request->input('two_factor_enabled', false);
+        $enable = (bool)$request->input('two_factor_enabled', false);
 
-        $user->update(['two_factor_enabled' => $enable]);
-        $this->logActivity(
+        $user->update(['two_factor_enabled' => $enable]);$this->logActivity(
             'Security Settings Updated',
             'Two-Factor Authentication was ' . ($enable ? 'enabled' : 'disabled') . '.'
         );
@@ -237,9 +237,10 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function uploadId(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate([
+            'pin'           => 'required',
             'id_type'       => 'required|string|in:National ID,Driver\'s License,Passport,PhilHealth,UMID,Voter\'s ID',
             'id_photo'      => 'required|image|mimes:jpg,jpeg,png,webp,pdf|max:5120',
             'id_expiry_date'=> 'nullable|date|after:today',
@@ -247,12 +248,19 @@ class ResidentSettingsController extends Controller
 
         $user = Auth::user();
 
+        // Verify Security PIN
+        if (!Hash::check($request->pin,$user->pin) && $user->pin !==$request->pin) {
+            return back()
+                ->withErrors(['pin_id' => 'Your security PIN is incorrect.'])
+                ->with('active_tab', 'ids');
+        }
+
         // Remove old ID photo
         if ($user->id_photo && Storage::disk('public')->exists($user->id_photo)) {
             Storage::disk('public')->delete($user->id_photo);
         }
 
-        $path = $request->file('id_photo')->store('valid_ids', 'public');
+        $path =$request->file('id_photo')->store('valid_ids', 'public');
 
         $user->update([
             'id_type'       => $request->id_type,
@@ -273,7 +281,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function logoutOtherDevices(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate(['current_password_sessions' => 'required']);
 
@@ -300,7 +308,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function logoutAllDevices(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate(['current_password_all' => 'required']);
 
@@ -314,8 +322,7 @@ class ResidentSettingsController extends Controller
 
         // Flush and regenerate
         Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->invalidate();$request->session()->regenerateToken();
 
         return redirect()->route('resident.login')
             ->with('success', 'You have been logged out from all devices.');
@@ -326,18 +333,16 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function deactivateAccount(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate(['confirm_deactivate' => 'required|in:DEACTIVATE']);
 
-        $user = Auth::user();
-        $this->logActivity('Account Deactivated', 'Resident requested account deactivation.');
+        $user = Auth::user();$this->logActivity('Account Deactivated', 'Resident requested account deactivation.');
 
         $user->update(['status' => 'deactivated']);
 
         Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->invalidate();$request->session()->regenerateToken();
 
         return redirect()->route('resident.login')
             ->with('info', 'Your account has been deactivated. Contact the barangay office to reactivate.');
@@ -348,7 +353,7 @@ class ResidentSettingsController extends Controller
     // ==========================================
     public function deleteAccount(Request $request)
     {
-        if ($bounce = $this->bouncer()) return $bounce;
+        if ($bounce = $this->bouncer()) return$bounce;
 
         $request->validate([
             'confirm_delete'   => 'required|in:DELETE',
@@ -357,7 +362,7 @@ class ResidentSettingsController extends Controller
 
         $user = Auth::user();
 
-        if (!Hash::check($request->password_delete, $user->password)) {
+        if (!Hash::check($request->password_delete,$user->password)) {
             return back()
                 ->withErrors(['password_delete' => 'Password is incorrect.'])
                 ->with('active_tab', 'manage');
@@ -368,8 +373,7 @@ class ResidentSettingsController extends Controller
         if ($user->id_photo)        Storage::disk('public')->delete($user->id_photo);
 
         Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->invalidate();$request->session()->regenerateToken();
 
         $user->delete();
 

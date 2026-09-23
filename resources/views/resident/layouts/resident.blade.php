@@ -231,35 +231,56 @@
         </div>
     </div>
 
+    {{-- UPDATED SLEEK SESSION LOCK SCREEN --}}
     @if(session('is_locked'))
-        <div class="modal d-block" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(12px);" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header border-0 bg-danger bg-opacity-10 text-danger py-4 px-4 justify-content-center flex-column">
-                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 60px; height: 60px;">
-                            <i class="fa-solid fa-lock fs-4"></i>
+        <div class="modal d-flex align-items-center justify-content-center" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10000;" tabindex="-1">
+            <div class="modal-dialog m-0" style="max-width: 420px; width: 100%; padding: 20px;">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <!-- Top accent bar -->
+                    <div style="height: 5px; background: #dc3545; width: 100%;"></div>
+
+                    <div class="modal-body p-5 text-center bg-white">
+                        <!-- Polished Icon -->
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 76px; height: 76px; border: 4px solid #fff; box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.15) !important;">
+                                <i class="fa-solid fa-lock" style="font-size: 28px;"></i>
+                            </div>
                         </div>
-                        <h5 class="modal-title fw-bold mb-0">Session Locked</h5>
-                        <p class="small text-muted mb-0 mt-2 text-center">You have been inactive. Enter your 6-digit PIN to resume.</p>
-                    </div>
-                    <div class="modal-body p-4">
+
+                        <!-- Refined Text -->
+                        <h4 class="fw-bold text-dark mb-2" style="letter-spacing: -0.5px;">Session Locked</h4>
+                        <p class="text-muted mb-4 px-2" style="font-size: 14px; line-height: 1.5;">Your session timed out due to inactivity. Please enter your 6-digit PIN to resume.</p>
+
+                        <!-- Better Error Message -->
                         @error('security_pin')
-                            <div class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small py-2 rounded-3 text-center fw-bold">{{ $message }}</div>
+                            <div class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger small py-2 px-3 rounded-3 mb-4 fw-semibold d-flex align-items-center justify-content-center gap-2" style="font-size: 13px;">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                {{ $message }}
+                            </div>
                         @enderror
+
+                        <!-- Upgraded Forms -->
                         <form action="{{ route('resident.session.unlock') }}" method="POST">
                             @csrf
                             <div class="mb-4">
-                                <input type="password" name="security_pin" class="form-control form-control-lg text-center fw-bold rounded-3 bg-light border-0" 
-                                       maxlength="6" inputmode="numeric" pattern="[0-9]*" 
-                                       placeholder="● ● ● ● ● ●" style="letter-spacing: 8px;" required autofocus>
+                                <input type="password" name="security_pin"
+                                       class="form-control text-center fw-bold transition-all"
+                                       maxlength="6" inputmode="numeric" pattern="[0-9]*"
+                                       placeholder="••••••"
+                                       style="letter-spacing: 16px; font-size: 1.75rem; background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; height: 64px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); color: #334155; transition: all 0.2s ease;"
+                                       required autofocus
+                                       onfocus="this.style.borderColor='#dc3545'; this.style.backgroundColor='#ffffff'; this.style.boxShadow='0 0 0 4px rgba(220, 53, 69, 0.15)';"
+                                       onblur="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='#f8fafc'; this.style.boxShadow='inset 0 2px 4px rgba(0,0,0,0.02)';">
                             </div>
-                            <button type="submit" class="btn btn-danger w-100 py-3 rounded-3 fw-bold shadow-sm">
+                            <button type="submit" class="btn btn-danger w-100 py-3 rounded-3 fw-bold mb-3" style="font-size: 15px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2); transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-1px)';" onmouseout="this.style.transform='translateY(0)';">
                                 <i class="fa-solid fa-unlock-keyhole me-2"></i> Unlock Session
                             </button>
                         </form>
-                        <form action="{{ route('resident.logout') }}" method="POST" class="mt-2">
+
+                        <form action="{{ route('resident.logout') }}" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary w-100 py-2 rounded-3 fw-bold">
+                            <button type="submit" class="btn btn-light w-100 py-2 rounded-3 fw-bold text-muted" style="border: 1.5px solid #e2e8f0; font-size: 14px; background: #ffffff; transition: all 0.2s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#334155';" onmouseout="this.style.background='#ffffff'; this.style.color='';">
                                 <i class="fa-solid fa-right-from-bracket me-2"></i> Log Out
                             </button>
                         </form>

@@ -660,7 +660,7 @@
                             </div>
                         </div>
                         <div class="settings-card-body">
-                            <form action="{{ route('resident.settings.password') }}" method="POST">
+                            <form action="{{ route('resident.settings.password') }}" method="POST" id="passwordChangeForm">
                                 @csrf
                                 <div class="row g-3">
                                     <div class="col-12">
@@ -1247,6 +1247,34 @@
     </div>
 </div>
 
+{{-- PIN Verification Modal --}}
+<div class="modal fade" id="pinVerificationModal" tabindex="-1" aria-labelledby="pinVerificationModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 py-4 justify-content-center flex-column text-center" style="background: rgba(30,64,175,0.05);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm" style="width:60px;height:60px;background:#fff;color:var(--color-primary);">
+                    <i class="fa-solid fa-shield-halved fs-4"></i>
+                </div>
+                <h5 class="modal-title fw-bold mb-1" id="pinVerificationModalLabel">Owner Verification</h5>
+                <p class="text-muted small mb-0">Please enter your 6-digit security PIN to confirm these changes.</p>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <input type="password" id="modalPinInput" class="form-control form-control-settings text-center fw-bold fs-4 tracking-widest" 
+                           placeholder="••••••" maxlength="6" autocomplete="one-time-code" style="letter-spacing: 6px;">
+                    <div id="pinErrorMsg" class="text-danger small mt-2 d-none">Please enter your 6-digit PIN.</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light flex-grow-1 rounded-3 fw-bold py-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmPinBtn" class="btn btn-primary flex-grow-1 rounded-3 fw-bold py-2 shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Confirm & Proceed
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 {{-- ============================================================
      PAGE SCRIPTS
@@ -1346,7 +1374,32 @@
         }
     }
 
-    // ---- Re-open active tab after redirect ----
+    // ---- PIN Verification Modal Interceptor ----
+    let activeFormToSubmit = null;
+
+    function setupPinInterception(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+
+        form.addEventListener('submit', function(e) {
+            // Check if form already has the pin injected
+            const existingPinInput = form.querySelector('input[name="pin"]');
+            if (existingPinInput && existingPinInput.value.length >= 4) {
+                return;
+            }
+
+            e.preventDefault(); 
+            activeFormToSubmit = form;
+
+            document.getElementById('modalPinInput').value = '';
+            document.getElementById('pinErrorMsg').classList.add('d-none');
+
+            const pinModal = new bootstrap.Modal(document.getElementById('pinVerificationModal'));
+            pinModal.show();
+        });
+    }
+
+    // ---- Re-open active tab after redirect & Setup PIN Interceptors ----
     document.addEventListener('DOMContentLoaded', function () {
         const activeTab = '{{ $activeTab }}';
         const tabEl = document.getElementById('tab-' + activeTab);
@@ -1354,6 +1407,48 @@
             const bsTab = new bootstrap.Tab(tabEl);
             bsTab.show();
         }
+
+        // Setup interceptors for password change and ID upload forms
+        const passwordForm = document.querySelector('form[action*="settings/password"]');
+        const idForm = document.querySelector('form[action*="settings/id"]');
+
+        if (passwordForm) {
+            passwordForm.id = passwordForm.id || 'passwordChangeForm';
+            setupPinInterception(passwordForm.id);
+        }
+        if (idForm) {
+            idForm.id = idForm.id || 'idUploadForm';
+            setupPinInterception(idForm.id);
+        }
+
+        // Handle modal confirmation click
+        document.getElementById('confirmPinBtn').addEventListener('click', function() {
+            const enteredPin = document.getElementById('modalPinInput').value;
+            const errorMsg = document.getElementById('pinErrorMsg');
+
+            if (!enteredPin || enteredPin.length < 4) {
+                errorMsg.textContent = 'Please enter a valid PIN.';
+                errorMsg.classList.remove('d-none');
+                return;
+            }
+
+            if (activeFormToSubmit) {
+                let pinField = activeFormToSubmit.querySelector('input[name="pin"]');
+                if (!pinField) {
+                    pinField = document.createElement('input');
+                    pinField.type = 'hidden';
+                    pinField.name = 'pin';
+                    activeFormToSubmit.appendChild(pinField);
+                }
+                pinField.value = enteredPin;
+
+                const modalEl = document.getElementById('pinVerificationModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                activeFormToSubmit.submit();
+            }
+        });
     });
 </script>
 

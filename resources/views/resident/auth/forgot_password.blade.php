@@ -31,7 +31,7 @@
                         </div>
                         
                         <h6 class="fw-semibold text-primary mb-1">I forgot my account password</h6>
-                        <p class="small text-muted mb-0">Enter your email address to search for your account.</p>
+                        <p class="small text-muted mb-0">Enter your email address or mobile number to search for your account.</p>
                     </div>
 
                     @if (session('status'))
@@ -54,7 +54,8 @@
                         @csrf
                         
                         <div class="mb-4 text-start">
-                            <input type="email" name="email" class="form-control rounded-3" value="{{ old('email') }}" required autofocus>
+                            <!-- THE FIX: Changed type to "text", name to "login_id", and added a placeholder -->
+                            <input type="text" name="login_id" class="form-control rounded-3" value="{{ old('login_id') }}" placeholder="Email or Mobile Number (e.g. 09123456789)" required autofocus>
                         </div>
 
                         <div class="mb-4">
