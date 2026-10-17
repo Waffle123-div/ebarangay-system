@@ -33,12 +33,24 @@ class ActivityLog extends Model
      */
     public static function record(string $action, string $description, ?int $userId = null): void
     {
-        static::create([
-            'user_id'    => $userId ?? (Auth::id() ?? 0),
-            'action'     => $action,
-            'description'=> $description,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
-        ]);
+        $resolvedUserId = $userId ?? Auth::id();
+        if (!$resolvedUserId) {
+            $resolvedUserId = User::where('role', 'Admin')->value('id');
+        }
+        if (!$resolvedUserId) {
+            return;
+        }
+
+        try {
+            static::create([
+                'user_id'    => $resolvedUserId,
+                'action'     => $action,
+                'description'=> $description,
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("ActivityLog recording skipped: " . $e->getMessage());
+        }
     }
 }

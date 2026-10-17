@@ -31,36 +31,99 @@
 
     /* ---- Sidebar Nav ---- */
     .settings-nav .nav-link {
-        border-radius: 10px;
-        padding: 10px 16px;
+        border-radius: 12px;
+        padding: 10px 14px;
         font-weight: 500;
-        font-size: 14px;
-        color: var(--color-text-light, #6b7280);
-        transition: all 0.2s ease;
+        font-size: 14.5px;
+        color: #4b5563;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 4px;
+        gap: 13px;
+        margin-bottom: 5px;
+        border: 1px solid transparent;
+        text-align: left;
+        width: 100%;
+        background: transparent;
     }
-    .settings-nav .nav-link:hover { background: rgba(30,64,175,0.07); color: var(--color-primary); }
+    .settings-nav .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--color-primary);
+    }
+    .settings-nav .nav-link:hover .nav-icon {
+        transform: scale(1.06);
+        background: #e6eef7;
+        color: var(--color-primary);
+        box-shadow: 0 2px 6px rgba(24, 54, 93, 0.08);
+    }
     .settings-nav .nav-link.active {
-        background: rgba(30,64,175,0.12);
+        background: #edf4fd;
         color: var(--color-primary);
         font-weight: 600;
+        border-color: rgba(24, 54, 93, 0.1);
+        box-shadow: 0 1px 3px rgba(24, 54, 93, 0.04);
     }
     .settings-nav .nav-link .nav-icon {
-        width: 30px; height: 30px;
-        border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 13px;
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
         flex-shrink: 0;
-        background: rgba(30,64,175,0.1);
-        color: var(--color-primary);
-        transition: all 0.2s ease;
+        background: #f0f5fa;
+        color: #2b6cb0;
+        border: 1px solid rgba(43, 108, 176, 0.12);
+        box-shadow: 0 1px 2px rgba(24, 54, 93, 0.04);
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    .settings-nav .nav-link .nav-icon i {
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     .settings-nav .nav-link.active .nav-icon {
-        background: var(--color-primary);
-        color: #fff;
+        background: linear-gradient(135deg, #18365D 0%, #2B6CB0 100%);
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(24, 54, 93, 0.28);
+    }
+
+    /* ---- Danger Nav Link (Account Management) ---- */
+    .settings-nav .nav-link.nav-link-danger {
+        color: #dc2626;
+    }
+    .settings-nav .nav-link.nav-link-danger .nav-icon {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.15);
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.04);
+    }
+    .settings-nav .nav-link.nav-link-danger:hover {
+        background: #fff5f5;
+        color: #b91c1c;
+    }
+    .settings-nav .nav-link.nav-link-danger:hover .nav-icon {
+        background: #fee2e2;
+        color: #b91c1c;
+        transform: scale(1.06);
+        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12);
+    }
+    .settings-nav .nav-link.nav-link-danger.active {
+        background: #fef2f2;
+        color: #991b1b;
+        font-weight: 600;
+        border-color: rgba(220, 38, 38, 0.2);
+    }
+    .settings-nav .nav-link.nav-link-danger.active .nav-icon {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     }
 
     /* ---- Section Card ---- */
@@ -79,13 +142,24 @@
         gap: 12px;
     }
     .settings-card-header .section-icon {
-        width: 38px; height: 38px;
-        border-radius: 10px;
-        background: rgba(30,64,175,0.1);
+        width: 44px; height: 44px;
+        border-radius: 12px;
+        background: #f0f5fa;
         color: var(--color-primary);
+        border: 1px solid rgba(43, 108, 176, 0.12);
+        box-shadow: 0 1px 3px rgba(24, 54, 93, 0.04);
         display: flex; align-items: center; justify-content: center;
-        font-size: 16px;
+        font-size: 20px;
         flex-shrink: 0;
+        transition: all 0.2s ease;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    .settings-card-header .section-icon i {
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     .settings-card-header h5 { margin: 0; font-size: 15px; font-weight: 700; color: var(--color-text); }
     .settings-card-header p  { margin: 0; font-size: 12px; color: var(--color-text-light); }
@@ -211,7 +285,12 @@
     /* ---- Danger Zone ---- */
     .danger-card { border: 1.5px solid #fee2e2 !important; background: #fffbfb; }
     .danger-card .settings-card-header { border-bottom-color: #fee2e2; }
-    .danger-card .section-icon { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .danger-card .section-icon {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.15);
+        box-shadow: 0 1px 3px rgba(220, 38, 38, 0.04);
+    }
 
     /* ---- Tab pane transitions ---- */
     .tab-pane { animation: fadeInUp 0.3s ease; }
@@ -225,7 +304,8 @@
 
     /* ---- Responsive ---- */
     @media (max-width: 768px) {
-        .settings-nav .nav-link { font-size: 13px; padding: 9px 12px; }
+        .settings-nav .nav-link { font-size: 13.5px; padding: 9px 12px; gap: 10px; }
+        .settings-nav .nav-link .nav-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 9px; }
         .settings-card-body { padding: 16px; }
     }
 </style>
@@ -279,46 +359,46 @@
                             id="tab-profile" data-bs-toggle="tab" data-bs-target="#pane-profile"
                             type="button" role="tab">
                         <span class="nav-icon"><i class="fa-solid fa-user"></i></span>
-                        Profile Settings
+                        <span>Profile Settings</span>
                     </button>
 
                     <button class="nav-link {{ $activeTab === 'account'  ? 'active' : '' }}"
                             id="tab-account" data-bs-toggle="tab" data-bs-target="#pane-account"
                             type="button" role="tab">
                         <span class="nav-icon"><i class="fa-solid fa-at"></i></span>
-                        Account Settings
+                        <span>Account Settings</span>
                     </button>
 
                     <button class="nav-link {{ $activeTab === 'security' ? 'active' : '' }}"
                             id="tab-security" data-bs-toggle="tab" data-bs-target="#pane-security"
                             type="button" role="tab">
                         <span class="nav-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                        Security
+                        <span>Security</span>
                     </button>
 
                     <button class="nav-link {{ $activeTab === 'ids'      ? 'active' : '' }}"
                             id="tab-ids" data-bs-toggle="tab" data-bs-target="#pane-ids"
                             type="button" role="tab">
                         <span class="nav-icon"><i class="fa-solid fa-id-card"></i></span>
-                        My IDs / Verification
+                        <span>My IDs / Verification</span>
                     </button>
 
                     <button class="nav-link {{ $activeTab === 'activity' ? 'active' : '' }}"
                             id="tab-activity" data-bs-toggle="tab" data-bs-target="#pane-activity"
                             type="button" role="tab">
                         <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
-                        Activity Log
+                        <span>Activity Log</span>
                     </button>
 
-                    <hr class="my-2">
+                    <hr class="my-2" style="border-color: #e5e7eb; opacity: 0.8;">
 
-                    <button class="nav-link {{ $activeTab === 'manage'   ? 'active' : '' }}"
+                    <button class="nav-link nav-link-danger {{ $activeTab === 'manage'   ? 'active' : '' }}"
                             id="tab-manage" data-bs-toggle="tab" data-bs-target="#pane-manage"
                             type="button" role="tab">
-                        <span class="nav-icon" style="background:rgba(239,68,68,0.1);color:#dc2626;">
+                        <span class="nav-icon">
                             <i class="fa-solid fa-triangle-exclamation"></i>
                         </span>
-                        <span style="color:#dc2626;">Account Management</span>
+                        <span>Account Management</span>
                     </button>
 
                 </nav>
@@ -393,29 +473,33 @@
                                         <label class="form-label-sm">First Name *</label>
                                         <input type="text" name="first_name" id="first_name"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('first_name', $user->first_name ?? explode(' ', $user->name)[0] ?? '') }}"
-                                               required placeholder="e.g. Juan">
+                                               required placeholder="e.g. JUAN">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label-sm">Middle Name</label>
                                         <input type="text" name="middle_name" id="middle_name"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('middle_name', $user->middle_name ?? '') }}"
-                                               placeholder="e.g. Santos">
+                                               placeholder="e.g. SANTOS">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label-sm">Last Name *</label>
                                         <input type="text" name="last_name" id="last_name"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('last_name', $user->last_name ?? '') }}"
-                                               required placeholder="e.g. dela Cruz">
+                                               required placeholder="e.g. DELA CRUZ">
                                     </div>
                                     <div class="col-md-1">
                                         <label class="form-label-sm">Suffix</label>
                                         <input type="text" name="suffix" id="suffix"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('suffix', $user->suffix ?? '') }}"
-                                               placeholder="Jr.">
+                                               placeholder="JR.">
                                     </div>
 
                                     <div class="col-md-3">
@@ -455,15 +539,17 @@
                                         <label class="form-label-sm">Nationality</label>
                                         <input type="text" name="nationality" id="nationality"
                                                class="form-control form-control-settings"
-                                               value="{{ old('nationality', $user->nationality ?? 'Filipino') }}"
-                                               placeholder="Filipino">
+                                               style="text-transform: uppercase;"
+                                               value="{{ old('nationality', $user->nationality ?? 'FILIPINO') }}"
+                                               placeholder="FILIPINO">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-sm">Occupation</label>
                                         <input type="text" name="occupation" id="occupation"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('occupation', $user->occupation ?? '') }}"
-                                               placeholder="e.g. Teacher, Farmer, Student...">
+                                               placeholder="e.g. TEACHER, FARMER, STUDENT...">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-sm">Contact Number</label>
@@ -491,6 +577,7 @@
                                         <label class="form-label-sm">House / Unit No.</label>
                                         <input type="text" name="house_number" id="house_number"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('house_number', $user->house_number ?? '') }}"
                                                placeholder="e.g. 12B">
                                     </div>
@@ -498,36 +585,40 @@
                                         <label class="form-label-sm">Street / Sitio</label>
                                         <input type="text" name="street" id="street"
                                                class="form-control form-control-settings"
+                                               style="text-transform: uppercase;"
                                                value="{{ old('street', $user->street ?? '') }}"
-                                               placeholder="e.g. Rizal Street">
+                                               placeholder="e.g. RIZAL STREET">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label-sm">Barangay</label>
                                         <input type="text" name="barangay_address" id="barangay_address"
                                                class="form-control form-control-settings"
-                                               value="{{ old('barangay_address', $user->barangay_address ?? '') }}"
-                                               placeholder="e.g. Cogon East">
+                                               style="text-transform: uppercase;"
+                                               value="{{ old('barangay_address', $user->barangay_address ?? 'COGON EAST') }}"
+                                               placeholder="e.g. COGON EAST">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label-sm">Municipality / City</label>
                                         <input type="text" name="municipality" id="municipality"
                                                class="form-control form-control-settings"
-                                               value="{{ old('municipality', $user->municipality ?? '') }}"
-                                               placeholder="e.g. Cagayan de Oro">
+                                               style="text-transform: uppercase;"
+                                               value="{{ old('municipality', $user->municipality ?? 'CARMEN, CEBU') }}"
+                                               placeholder="e.g. CARMEN, CEBU">
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label-sm">Province</label>
                                         <input type="text" name="province" id="province"
                                                class="form-control form-control-settings"
-                                               value="{{ old('province', $user->province ?? '') }}"
-                                               placeholder="e.g. Misamis Oriental">
+                                               style="text-transform: uppercase;"
+                                               value="{{ old('province', $user->province ?? 'CEBU') }}"
+                                               placeholder="e.g. CEBU">
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label-sm">ZIP Code</label>
                                         <input type="text" name="zip_code" id="zip_code"
                                                class="form-control form-control-settings"
-                                               value="{{ old('zip_code', $user->zip_code ?? '') }}"
-                                               placeholder="9000">
+                                               value="{{ old('zip_code', $user->zip_code ?? '6005') }}"
+                                               placeholder="6005">
                                     </div>
                                 </div>
                             </div>
@@ -1401,6 +1492,21 @@
 
     // ---- Re-open active tab after redirect & Setup PIN Interceptors ----
     document.addEventListener('DOMContentLoaded', function () {
+        // Enforce CapsLock / uppercase on personal details & address inputs
+        const uppercaseSelectors = '#first_name, #middle_name, #last_name, #suffix, #nationality, #occupation, #house_number, #street, #barangay_address, #municipality, #province';
+        document.querySelectorAll(uppercaseSelectors).forEach(el => {
+            el.addEventListener('input', function() {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                if (typeof this.value === 'string') {
+                    this.value = this.value.toUpperCase();
+                }
+                if (start !== null && end !== null) {
+                    this.setSelectionRange(start, end);
+                }
+            });
+        });
+
         const activeTab = '{{ $activeTab }}';
         const tabEl = document.getElementById('tab-' + activeTab);
         if (tabEl) {

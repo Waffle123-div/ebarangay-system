@@ -12,7 +12,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ResetPasswordCodeMail;
 use App\Mail\PasswordChangedMail;
+use App\Mail\RegistrationOtpMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class ResidentAuthController extends Controller
 {
@@ -288,78 +290,90 @@ class ResidentAuthController extends Controller
         return view('resident.auth.register');
     }
 
-    public function register(Request $request)
+    /**
+     * Send OTP for manual registration before Step 2
+     */
+    public function sendRegistrationOtp(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'max:255'], 
-            'password' => ['required', 'min:8', 'confirmed'],
-            'birthdate' => ['required', 'date'],
-            'gender' => ['required', 'string'],
+            'first_name'   => 'nullable|string',
+            'email'        => 'nullable|email',
+            'phone_number' => 'nullable|string',
+            'target_type'  => 'nullable|string|in:email,phone',
         ]);
 
-        $isEmail = filter_var($request->email, FILTER_VALIDATE_EMAIL);
-        
-        $actualEmail = null;
-        $actualPhone = null;
+        $email = $request->email ? trim($request->email) : null;
+        $rawPhone = $request->phone_number ? trim($request->phone_number) : null;
+        $cleanPhone = $rawPhone ? preg_replace('/[^0-9]/', '', $rawPhone) : null;
 
-        if ($isEmail) {
-            $actualEmail = $request->email;
-            if (User::where('email', $actualEmail)->exists()) {
-                return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
-            }
-        } else {
-            $actualPhone = preg_replace('/[^0-9]/', '', $request->email);
-            
-            if (strlen($actualPhone) < 10) {
-                return back()->withErrors(['email' => 'Please enter a valid email address or mobile number.'])->withInput();
-            }
-
-            if (User::where('phone_number', $actualPhone)->exists()) {
-                return back()->withErrors(['email' => 'This mobile number is already registered.'])->withInput();
-            }
+        // Check for duplicates in users table
+        if ($email && User::where('email', $email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'field'   => 'email',
+                'message' => 'This email address is already registered. Please log in instead.'
+            ], 422);
         }
 
-        $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        if ($cleanPhone && User::where('phone_number', $cleanPhone)->exists()) {
+            return response()->json([
+                'success' => false,
+                'field'   => 'phone_number',
+                'message' => 'This mobile number is already registered. Please log in instead.'
+            ], 422);
+        }
 
-        $user = User::create([
-            'user_id' => $userId,
-            'name' => $request->name,
-            'email' => $actualEmail,             
-            'phone_number' => $actualPhone,      
-            'password' => Hash::make($request->password), 
-            'birthdate' => $request->birthdate, 
-            'gender' => $request->gender,       
-            'role' => 'Resident',
-            'status' => 'incomplete', 
+        // Determine destination
+        $targetType = $request->target_type;
+        if (!$targetType) {
+            $targetType = $email ? 'email' : 'phone';
+        }
+
+        if ($targetType === 'email') {
+            if (!$email) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email address is required to verify via email.'
+                ], 422);
+            }
+            $target = $email;
+        } else {
+            if (!$cleanPhone) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mobile number is required to verify via SMS.'
+                ], 422);
+            }
+            $target = $cleanPhone;
+        }
+
+        // Generate 5-digit verification code
+        $code = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $target],
+            ['token' => $code, 'created_at' => now()]
+        );
+
+        session([
+            'reg_verify_target' => $target,
+            'reg_verify_type'   => $targetType,
         ]);
 
-        Auth::login($user);
-
-        if ($actualEmail) {
-            // Email flow: Send verification email safely without hanging request
+        if ($targetType === 'email') {
+            $name = $request->first_name ?: 'Resident';
             try {
-                event(new Registered($user));
+                Mail::to($target)->send(new RegistrationOtpMail($code, $name));
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Registration email verification failed to send: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Registration OTP Email Failed: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send verification email. Please check your email address.'
+                ], 500);
             }
-            return redirect()->route('verification.notice');
         } else {
-            // Phone flow: Generate a 5-digit number
-            $code = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            
-            // Store it temporarily (reusing the password reset table for convenience)
-            DB::table('password_reset_tokens')->updateOrInsert(
-                ['email' => $actualPhone],
-                ['token' => $code, 'created_at' => now()]
-            );
-
-            // Trigger the real SMS through your physical Tecno phone via Textbee
-            $message = "E-Barangay: {$code} is your verification code. Please do not share this with anyone.";
-
-            // FORCE INTERNATIONAL FORMAT: Change 09... to +639...
-            $formattedPhone = preg_replace('/^09/', '+639', $actualPhone);
-
+            $message = "E-Barangay: {$code} is your verification code to continue registration. Valid for 15 minutes.";
+            $formattedPhone = preg_replace('/^09/', '+639', $target);
             try {
                 $response = Http::withHeaders([
                     'x-api-key' => config('services.textbee.api_key'),
@@ -371,14 +385,284 @@ class ResidentAuthController extends Controller
                 ]);
 
                 if (!$response->successful()) {
-                    \Illuminate\Support\Facades\Log::error('Textbee API Error: ' . json_encode($response->json()));
+                    \Illuminate\Support\Facades\Log::error('Textbee Registration OTP SMS Error: ' . json_encode($response->json()));
                 }
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Registration SMS network error: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Registration OTP SMS Network Error: ' . $e->getMessage());
             }
-
-            return redirect()->route('verify_phone.notice')->with('phone_number', $actualPhone);
         }
+
+        return response()->json([
+            'success'        => true,
+            'message'        => 'Verification code sent successfully.',
+            'target'         => $target,
+            'target_type'    => $targetType,
+            'display_target' => $targetType === 'email' ? $target : preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $target)
+        ]);
+    }
+
+    /**
+     * Verify OTP for manual registration before Step 2
+     */
+    public function verifyRegistrationOtp(Request $request)
+    {
+        $request->validate([
+            'code'   => 'required',
+            'target' => 'nullable|string',
+        ]);
+
+        $rawCode = $request->input('code');
+        if (is_array($rawCode)) {
+            $code = strtoupper(implode('', $rawCode));
+        } else {
+            $code = strtoupper(trim((string)$rawCode));
+        }
+
+        if (strlen($code) !== 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter a valid 5-digit verification code.'
+            ], 422);
+        }
+
+        $target = $request->input('target') ?: session('reg_verify_target');
+        if (!$target) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active verification session found. Please request a new code.'
+            ], 422);
+        }
+
+        if (!filter_var($target, FILTER_VALIDATE_EMAIL)) {
+            $target = preg_replace('/[^0-9]/', '', $target);
+        }
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $target)
+            ->where('token', $code)
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The verification code you entered is incorrect.'
+            ], 422);
+        }
+
+        if (\Carbon\Carbon::parse($record->created_at)->addMinutes(15)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $target)->delete();
+            return response()->json([
+                'success' => false,
+                'message' => 'This verification code has expired. Please request a new code.'
+            ], 422);
+        }
+
+        DB::table('password_reset_tokens')->where('email', $target)->delete();
+
+        session([
+            'reg_verified_target' => $target,
+            'reg_verified_at'     => now(),
+        ]);
+
+        return response()->json([
+            'success'         => true,
+            'message'         => 'Identity verified successfully!',
+            'verified_target' => $target,
+        ]);
+    }
+
+    public function register(Request $request)
+    {
+        // ==========================================
+        // STEP 1: Validate all 4 steps at once
+        // ==========================================
+        // Google users don't set a password during registration (they use OAuth)
+        $isGoogleSubmit = !empty(session('google_reg_id'));
+        $passwordRules  = $isGoogleSubmit ? ['nullable'] : ['required', 'min:8', 'confirmed'];
+
+        $request->validate([
+            // Step 1 — Personal Profile
+            'last_name'     => ['required', 'string', 'max:255'],
+            'first_name'    => ['required', 'string', 'max:255'],
+            'middle_name'   => ['nullable', 'string', 'max:255'],
+            'suffix'        => ['nullable', 'string', 'max:20'],
+            'birthdate'     => ['required', 'date'],
+            'age'           => ['required', 'integer', 'min:0', 'max:150'],
+            'birthplace'    => ['required', 'string', 'max:255'],
+            'gender'        => ['required', 'string'],
+            'civil_status'  => ['required', 'string'],
+            'nationality'   => ['required', 'string', 'max:100'],
+            'occupation'    => ['required', 'string', 'max:150'],
+
+            // Step 1 — Residency & Contact
+            'purok'             => ['required', 'string', 'max:100'],
+            'sitio'             => ['nullable', 'string', 'max:100'],
+            'barangay_address'  => ['required', 'string'],
+            'municipality'      => ['required', 'string'],
+            'zip_code'          => ['required', 'string'],
+            'phone_number'      => $isGoogleSubmit ? ['nullable', 'string'] : ['required', 'string'],
+            'email'             => ['nullable', 'email', 'max:255'],
+
+            // Step 2 — Account Setup (password optional for Google users)
+            'password' => $passwordRules,
+
+            // Step 3 — Admin & Face Verification
+            'id_type'            => ['required', 'string'],
+            'proof_of_residency' => ['required', 'file', 'mimes:jpeg,png,jpg,pdf', 'max:10240'],
+            'selfie_photo'       => ['nullable', 'string'],
+            'selfie_upload'      => ['nullable', 'file', 'mimes:jpeg,png,jpg', 'max:10240'],
+
+            // Step 4 — Compliance
+            'terms'   => ['accepted'],
+            'privacy' => ['accepted'],
+        ]);
+
+        // ==========================================
+        // STEP 2: Check for duplicate email/phone
+        // ==========================================
+        $actualEmail = $request->email ?: null;
+        $actualPhone = $request->phone_number ? preg_replace('/[^0-9]/', '', $request->phone_number) : null;
+
+        if ($actualEmail && User::where('email', $actualEmail)->exists()) {
+            return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
+        }
+
+        if ($actualPhone && User::where('phone_number', $actualPhone)->exists()) {
+            return back()->withErrors(['phone_number' => 'This mobile number is already registered.'])->withInput();
+        }
+
+        // Security check: Check if user pre-verified before Step 2
+        // Google sign-ups are treated as pre-verified since Google already verified the email.
+        $googleId     = session('google_reg_id');
+        $isGoogleUser = !empty($googleId) && session('google_reg_email') === $actualEmail;
+
+        if (!$isGoogleUser) {
+            $verifiedTarget = session('reg_verified_target');
+            $isPreVerified  = ($verifiedTarget && ($verifiedTarget === $actualEmail || $verifiedTarget === $actualPhone));
+
+            if (!$isPreVerified) {
+                return back()->withErrors([
+                    'email' => 'Please verify your email address or mobile number before proceeding.'
+                ])->withInput();
+            }
+        }
+
+        // ==========================================
+        // STEP 3: Handle ID file upload & Face Verification
+        // ==========================================
+        $imagePath = null;
+        if ($request->hasFile('proof_of_residency')) {
+            $imagePath = $request->file('proof_of_residency')->store('residency_proofs', 'public');
+        }
+
+        $selfiePath = null;
+        if ($request->filled('selfie_photo') && str_starts_with($request->selfie_photo, 'data:image/')) {
+            $base64Data = $request->selfie_photo;
+            @list($type, $data) = explode(';', $base64Data);
+            @list(, $data)      = explode(',', $data);
+            if ($data) {
+                $decoded = base64_decode($data);
+                $ext = 'jpg';
+                if ($type && str_contains($type, 'png')) {
+                    $ext = 'png';
+                }
+                $selfieFileName = 'selfie_' . Str::random(24) . '.' . $ext;
+                Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
+                $selfiePath = 'selfies/' . $selfieFileName;
+            }
+        } elseif ($request->hasFile('selfie_upload')) {
+            $selfiePath = $request->file('selfie_upload')->store('selfies', 'public');
+        } elseif ($request->hasFile('selfie_photo')) {
+            $selfiePath = $request->file('selfie_photo')->store('selfies', 'public');
+        }
+
+        // ==========================================
+        // STEP 4: Compose the legacy "name" field
+        // ==========================================
+        $firstName   = strtoupper(trim($request->first_name));
+        $middleName  = $request->filled('middle_name') ? strtoupper(trim($request->middle_name)) : null;
+        $lastName    = strtoupper(trim($request->last_name));
+        $suffix      = $request->filled('suffix') ? strtoupper(trim($request->suffix)) : null;
+        $birthplace  = strtoupper(trim($request->birthplace));
+        $nationality = strtoupper(trim($request->nationality));
+        $occupation  = strtoupper(trim($request->occupation));
+        $purok       = strtoupper(trim($request->purok));
+        $sitio       = $request->filled('sitio') ? strtoupper(trim($request->sitio)) : null;
+        $barangay    = strtoupper(trim($request->barangay_address));
+        $municipality= strtoupper(trim($request->municipality));
+
+        $nameParts = array_filter([$firstName, $middleName, $lastName, $suffix]);
+        $composedName = implode(' ', $nameParts);
+
+        // ==========================================
+        // STEP 5: Create the user (Pre-verified!)
+        // ==========================================
+        $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+
+        // Google users get no password (they authenticate via Google OAuth)
+        $passwordValue = $isGoogleUser ? null : Hash::make($request->password);
+
+        $user = User::create([
+            'user_id'       => $userId,
+            'name'          => $composedName,
+            'first_name'    => $firstName,
+            'middle_name'   => $middleName,
+            'last_name'     => $lastName,
+            'suffix'        => $suffix,
+            'email'         => $actualEmail,
+            'phone_number'  => $actualPhone,
+            'password'      => $passwordValue,
+            'google_id'     => $isGoogleUser ? $googleId : null,
+            'birthdate'     => $request->birthdate,
+            'age'           => $request->age,
+            'birthplace'    => $birthplace,
+            'gender'        => $request->gender,
+            'civil_status'  => $request->civil_status,
+            'nationality'   => $nationality,
+            'occupation'    => $occupation,
+
+            // Address
+            'purok'             => $purok,
+            'sitio'             => $sitio,
+            'barangay_address'  => $barangay,
+            'municipality'      => $municipality,
+            'zip_code'          => $request->zip_code,
+
+            // Admin verification & Face Verification
+            'id_type'            => $request->id_type,
+            'proof_of_residency' => $imagePath,
+            'selfie_photo'       => $selfiePath,
+            'face_verified_at'   => $selfiePath ? now() : null,
+
+            // Defaults (Pre-verified, awaiting admin approval)
+            'role'              => 'Resident',
+            'status'            => 'pending_approval',
+        ]);
+
+        // Mark as verified since verified prior to Step 2
+        $user->markEmailAsVerified();
+
+        // Notify admins about the new pending registration
+        $admins = User::where('role', 'Admin')->get();
+        foreach ($admins as $admin) {
+            try {
+                $admin->notify(new \App\Notifications\NewUserRegistrationNotification($user));
+            } catch (\Throwable $e) {}
+        }
+
+        // Clean up session (including Google data)
+        session()->forget([
+            'reg_verified_target', 'reg_verify_target', 'reg_verify_type', 'reg_verified_at',
+            'google_reg_email', 'google_reg_name', 'google_reg_id',
+        ]);
+
+        // Log user out so they see the pending approval screen cleanly
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $notifyMethod = empty($user->email) ? 'phone' : 'email';
+        return redirect(route('resident.pending') . '?notify=' . $notifyMethod);
     }
 
     // Show the Phone OTP Screen
@@ -419,6 +703,23 @@ class ResidentAuthController extends Controller
         $user = Auth::user();
         $user->email_verified_at = now();
         $user->save();
+
+        // Manual registration users already have ID uploaded from the 4-step wizard
+        if ($user->proof_of_residency) {
+            $user->update(['status' => 'pending_approval']);
+
+            // Notify admins about the new pending registration
+            $admins = User::where('role', 'Admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\NewUserRegistrationNotification($user));
+            }
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect(route('resident.pending') . '?notify=phone');
+        }
 
         return redirect()->route('register.complete');
     }

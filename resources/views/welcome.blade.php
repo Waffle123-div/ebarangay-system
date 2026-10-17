@@ -75,7 +75,8 @@
       <div class="nav-cta">
         @php
           $navUser = auth()->user();
-          $isLoggedInResident = $navUser && trim(strtolower($navUser->role)) !== 'admin';
+          $isAdmin = $navUser && trim(strtolower($navUser->role)) === 'admin';
+          $isLoggedInResident = $navUser && !$isAdmin;
           $navInitials = collect(explode(' ', trim($navUser?->name ?? '')))
               ->filter()
               ->take(2)
@@ -161,6 +162,11 @@
               </div>
             </div>
           </div>
+        @elseif($isAdmin)
+          <a href="{{ route('admin.dashboard') }}" class="btn btn-primary">
+            <i class="icon-shield-check"></i>
+            Admin Dashboard
+          </a>
         @else
           <a href="{{ route('resident.login') }}" class="btn btn-outline-nav" id="loginBtn">
             <i class="icon-log-in"></i>
@@ -214,10 +220,24 @@
             <i class="icon-file-plus"></i>
             Request Document Now
           </a>
-          <a href="{{ route('resident.register') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;" id="heroSignupBtn">
-            <i class="icon-user-plus"></i>
-            Create Account
-          </a>
+          @auth
+            @if($isAdmin)
+              <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;" id="heroDashboardBtn">
+                <i class="icon-shield-check"></i>
+                Admin Dashboard
+              </a>
+            @else
+              <a href="{{ route('resident.dashboard') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;" id="heroDashboardBtn">
+                <i class="icon-home"></i>
+                My Dashboard
+              </a>
+            @endif
+          @else
+            <a href="{{ route('resident.register') }}" class="btn btn-secondary btn-lg" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white;" id="heroSignupBtn">
+              <i class="icon-user-plus"></i>
+              Create Account
+            </a>
+          @endauth
         </div>
         <div class="hero-stats">
           <div class="hero-stat">
@@ -401,107 +421,69 @@
       </div>
 
       <div class="services-grid fade-in-up" id="servicesGrid">
+        @php
+            $portalDocs = collect();
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('document_types')) {
+                    $portalDocs = \App\Models\DocumentType::active()->orderBy('name')->get();
+                }
+            } catch (\Throwable $e) {
+                $portalDocs = collect();
+            }
+        @endphp
+        @forelse($portalDocs as $pDoc)
+            @php
+                $nameLower = strtolower($pDoc->name ?? '');
+                if (str_contains($nameLower, 'clearance') && str_contains($nameLower, 'business')) {
+                    $lucideIcon = 'icon-store';
+                    $iconStyle = 'background: #CCFBF1; color: var(--color-accent-teal);';
+                } elseif (str_contains($nameLower, 'clearance')) {
+                    $lucideIcon = 'icon-file-badge';
+                    $iconStyle = 'background: var(--color-primary-50); color: var(--color-primary);';
+                } elseif (str_contains($nameLower, 'residency') || str_contains($nameLower, 'resident')) {
+                    $lucideIcon = 'icon-home';
+                    $iconStyle = 'background: #EDE9FE; color: #7C3AED;';
+                } elseif (str_contains($nameLower, 'indigency') || str_contains($nameLower, 'assistance') || str_contains($nameLower, 'medical')) {
+                    $lucideIcon = 'icon-heart-handshake';
+                    $iconStyle = 'background: #FEF3C7; color: var(--color-secondary);';
+                } elseif (str_contains($nameLower, 'business') || str_contains($nameLower, 'permit')) {
+                    $lucideIcon = 'icon-store';
+                    $iconStyle = 'background: #CCFBF1; color: var(--color-accent-teal);';
+                } elseif (str_contains($nameLower, 'id') || str_contains($nameLower, 'card')) {
+                    $lucideIcon = 'icon-id-card';
+                    $iconStyle = 'background: #FFE4E6; color: var(--color-accent-rose);';
+                } else {
+                    $lucideIcon = 'icon-file-text';
+                    $iconStyle = 'background: #E0F2FE; color: #0284C7;';
+                }
 
-        <div class="service-card" data-keywords="clearance barangay clearance employment permit legal">
-          <div class="service-card-icon" style="background: var(--color-primary-50); color: var(--color-primary);">
-            <i class="icon-file-badge"></i>
-          </div>
-          <h3>Barangay Clearance</h3>
-          <p>Required for employment, business permits, and legal transactions. Present a valid government ID and proof of residency.</p>
-          <div class="service-card-meta">
-            <span class="meta-tag"><i class="icon-clock"></i> ~30 mins processing</span>
-            <span class="meta-tag"><i class="icon-philippine-peso"></i> ₱100.00</span>
-          </div>
-          <div class="service-card-footer">
-            <div class="service-card-requirements">
-              <strong>Requirements:</strong> Valid ID, 2x2 Photo, Proof of Residency
+                $pReqs = !empty($pDoc->requirements_list) ? implode(', ', $pDoc->requirements_list) : 'Valid ID, Proof of Residency';
+                $keywords = strtolower($pDoc->name . ' ' . ($pDoc->description ?? '') . ' ' . $pReqs);
+            @endphp
+            <div class="service-card" data-keywords="{{ $keywords }}">
+              <div class="service-card-icon" style="{{ $iconStyle }}">
+                <i class="{{ $lucideIcon }}"></i>
+              </div>
+              <h3>{{ $pDoc->name }}</h3>
+              <p>{{ $pDoc->description ?: 'Official certification issued by the barangay for administrative and legal requirements.' }}</p>
+              <div class="service-card-meta">
+                <span class="meta-tag"><i class="icon-clock"></i> {{ $pDoc->processing_days ?: '1–2 days processing' }}</span>
+                <span class="meta-tag"><i class="icon-philippine-peso"></i> {{ $pDoc->formatted_fee }}</span>
+              </div>
+              <div class="service-card-footer">
+                <div class="service-card-requirements">
+                  <strong>Requirements:</strong> {{ $pReqs }}
+                </div>
+                <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="{{ $pDoc->name }}">
+                  <i class="icon-file-plus"></i> Request Now
+                </a>
+              </div>
             </div>
-            <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="Barangay Clearance">
-              <i class="icon-file-plus"></i> Request Now
-            </a>
-          </div>
-        </div>
-
-        <div class="service-card" data-keywords="certificate residency residence proof address">
-          <div class="service-card-icon" style="background: #EDE9FE; color: #7C3AED;">
-            <i class="icon-home"></i>
-          </div>
-          <h3>Certificate of Residency</h3>
-          <p>Official proof that you are a bonafide resident of Barangay Cogon East. Required for various government transactions.</p>
-          <div class="service-card-meta">
-            <span class="meta-tag"><i class="icon-clock"></i> ~20 mins processing</span>
-            <span class="meta-tag"><i class="icon-philippine-peso"></i> ₱50.00</span>
-          </div>
-          <div class="service-card-footer">
-            <div class="service-card-requirements">
-              <strong>Requirements:</strong> Valid ID, Utility Bill or Lease Contract
+        @empty
+            <div class="col-12 text-center py-4 text-muted">
+                <p>No document services currently available.</p>
             </div>
-            <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="Certificate of Residency">
-              <i class="icon-file-plus"></i> Request Now
-            </a>
-          </div>
-        </div>
-
-        <div class="service-card" data-keywords="certificate indigency financial assistance free scholarship medical">
-          <div class="service-card-icon" style="background: #FEF3C7; color: var(--color-secondary);">
-            <i class="icon-heart-handshake"></i>
-          </div>
-          <h3>Certificate of Indigency</h3>
-          <p>For residents in need of financial assistance, free medical care, or educational scholarships from government agencies.</p>
-          <div class="service-card-meta">
-            <span class="meta-tag"><i class="icon-clock"></i> ~20 mins processing</span>
-            <span class="meta-tag"><i class="icon-philippine-peso"></i> FREE</span>
-          </div>
-          <div class="service-card-footer">
-            <div class="service-card-requirements">
-              <strong>Requirements:</strong> Valid ID, Brief Interview with Social Worker
-            </div>
-            <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="Certificate of Indigency">
-              <i class="icon-file-plus"></i> Request Now
-            </a>
-          </div>
-        </div>
-
-        <div class="service-card" data-keywords="business permit clearance negosyo sari-sari store commercial">
-          <div class="service-card-icon" style="background: #CCFBF1; color: var(--color-accent-teal);">
-            <i class="icon-store"></i>
-          </div>
-          <h3>Business Clearance</h3>
-          <p>Required for new businesses or annual renewal of business permits within the barangay jurisdiction of Cogon East.</p>
-          <div class="service-card-meta">
-            <span class="meta-tag"><i class="icon-clock"></i> 1–2 days processing</span>
-            <span class="meta-tag"><i class="icon-philippine-peso"></i> ₱200.00</span>
-          </div>
-          <div class="service-card-footer">
-            <div class="service-card-requirements">
-              <strong>Requirements:</strong> Valid ID, DTI Registration, Business Address Proof
-            </div>
-            <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="Business Clearance">
-              <i class="icon-file-plus"></i> Request Now
-            </a>
-          </div>
-        </div>
-
-        <div class="service-card" data-keywords="barangay id identification card resident">
-          <div class="service-card-icon" style="background: #FFE4E6; color: var(--color-accent-rose);">
-            <i class="icon-id-card"></i>
-          </div>
-          <h3>Barangay ID</h3>
-          <p>Official identification card for all registered residents of Barangay Cogon East. Valid for discounts and local government transactions.</p>
-          <div class="service-card-meta">
-            <span class="meta-tag"><i class="icon-clock"></i> 3–5 days processing</span>
-            <span class="meta-tag"><i class="icon-philippine-peso"></i> ₱75.00</span>
-          </div>
-          <div class="service-card-footer">
-            <div class="service-card-requirements">
-              <strong>Requirements:</strong> Valid ID, 1x1 Photo, Proof of Residency
-            </div>
-            <a href="#" class="btn btn-primary btn-sm request-doc-btn" data-doc="Barangay ID">
-              <i class="icon-file-plus"></i> Request Now
-            </a>
-          </div>
-        </div>
-
+        @endforelse
       </div>
 
       <div class="services-no-results" id="servicesNoResults">
@@ -788,7 +770,11 @@
           <h4>Quick Links</h4>
           <ul>
             <li><a href="#how-it-works">How It Works</a></li>
-            <li><a href="{{ route('resident.login') }}">Log In</a></li>
+            @auth
+              <li><a href="{{ $isAdmin ? route('admin.dashboard') : route('resident.dashboard') }}">My Dashboard</a></li>
+            @else
+              <li><a href="{{ route('resident.login') }}">Log In</a></li>
+            @endauth
             <li><a href="#concerns">Submit Concern</a></li>
             <li><a href="#news">News & Updates</a></li>
             <li><a href="#emergency">Emergency</a></li>

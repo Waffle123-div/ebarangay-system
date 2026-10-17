@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
+use App\Models\BarangaySetting;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ResidentDashboardController extends Controller
 {
@@ -39,19 +41,39 @@ class ResidentDashboardController extends Controller
         $firstName = explode(' ', trim($user->name))[0];
         $isNewUser = ($totalCount === 0);
 
+        // Fetch active announcement banner if enabled
+        $announcement = null;
+        if (BarangaySetting::get('announcement_enabled', '0') == '1') {
+            $expiry = BarangaySetting::get('announcement_expiry_date');
+            if (!$expiry || Carbon::parse($expiry)->endOfDay()->isFuture()) {
+                $msgRecord = BarangaySetting::where('key', 'announcement_message')->first();
+                $announcement = [
+                    'type'           => BarangaySetting::get('announcement_type', 'info'),
+                    'category'       => BarangaySetting::get('announcement_category', 'General Advisory'),
+                    'title'          => BarangaySetting::get('announcement_title', 'Public Advisory'),
+                    'message'        => BarangaySetting::get('announcement_message', ''),
+                    'action_url'     => BarangaySetting::get('announcement_action_url'),
+                    'action_text'    => BarangaySetting::get('announcement_action_text', 'Learn More'),
+                    'is_dismissible' => BarangaySetting::get('announcement_is_dismissible', '1') == '1',
+                    'updated_at'     => $msgRecord ? $msgRecord->updated_at : null,
+                ];
+            }
+        }
+
         return view('resident.dashboardresident', compact(
             'pendingCount', 
             'approvedCount', 
             'totalCount', 
             'recentRequests',
             'firstName',
-            'isNewUser'
+            'isNewUser',
+            'announcement'
         ));
     }
 
     public function markNotificationsRead()
     {
-        auth()->user()->unreadNotifications->markAsRead();
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
         return response()->json(['success' => true]);
     }  
 
@@ -62,7 +84,30 @@ class ResidentDashboardController extends Controller
             return redirect()->route('resident.pending');
         }
 
-        return view('resident.request_document');
+        // Fetch the user's most recent document request to drive the lifecycle tracker
+        $latestRequest = \App\Models\DocumentRequest::where('user_id', Auth::id())
+            ->latest()
+            ->first();
+
+        // Map request status → stepper step (1-based)
+        $statusStepMap = [
+            'Pending'      => 1,
+            'Under Review' => 2,
+            'Processing'   => 3,
+            'Ready'        => 4,
+            'Completed'    => 5,
+            'Rejected'     => 0, // special: rejected state
+        ];
+
+        $currentStep = $latestRequest
+            ? ($statusStepMap[$latestRequest->status] ?? 1)
+            : 0; // 0 = no request yet
+
+        $activeDocTypes = \App\Models\DocumentType::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('resident.request_document', compact('latestRequest', 'currentStep', 'activeDocTypes'));
     }
 
     /**
@@ -76,39 +121,168 @@ class ResidentDashboardController extends Controller
         }
 
         $newRequest = new DocumentRequest();
-        $newRequest->tracking_number = 'REQ-' . date('Y') . '-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+        do {
+            $trackingNumber = 'REQ-' . date('Y') . '-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+        } while (DocumentRequest::where('tracking_number', $trackingNumber)->exists());
+        $newRequest->tracking_number = $trackingNumber;
         
-        // Save new separated Personal Info (forced to uppercase for database consistency)
-        $newRequest->last_name = strtoupper($request->input('last_name'));
-        $newRequest->first_name = strtoupper($request->input('first_name'));
-        $newRequest->middle_initial = strtoupper($request->input('middle_initial'));
-        $newRequest->age = $request->input('age');
+        // Personal Info: support both editable full_name and separated name fields
+        $firstName = $request->input('first_name');
+        $lastName = $request->input('last_name');
+        $middleInitial = $request->input('middle_initial');
 
-        // THE FIX: Gracefully handle optional email and contact number
+        if ((empty($firstName) || empty($lastName)) && $request->filled('full_name')) {
+            $parts = preg_split('/\s+/', trim($request->input('full_name')));
+            if (count($parts) === 1) {
+                $firstName = $parts[0];
+                $lastName = $parts[0];
+                $middleInitial = '';
+            } elseif (count($parts) === 2) {
+                $firstName = $parts[0];
+                $lastName = $parts[1];
+                $middleInitial = '';
+            } else {
+                $firstName = $parts[0];
+                $second = trim($parts[1], '.');
+                if (strlen($second) <= 2) {
+                    $middleInitial = $second;
+                    $lastName = implode(' ', array_slice($parts, 2));
+                } else {
+                    $middleInitial = substr($parts[1], 0, 1);
+                    $lastName = implode(' ', array_slice($parts, 2));
+                }
+            }
+        }
+
+        $newRequest->first_name = strtoupper($firstName ?: (Auth::user()->first_name ?? ''));
+        $newRequest->middle_initial = strtoupper($middleInitial ?: (Auth::user()->middle_name ? substr(Auth::user()->middle_name, 0, 1) : ''));
+        $newRequest->last_name = strtoupper($lastName ?: (Auth::user()->last_name ?? ''));
+        $newRequest->age = $request->input('age') ?? Auth::user()->age;
+
+        // Contact Number & Email
         $newRequest->contact_number = $request->input('contact_number') ?? Auth::user()->phone_number;
         $inputEmail = $request->input('email') ?? Auth::user()->email;
         $newRequest->resident_email = $inputEmail ? strtolower($inputEmail) : null;
 
-        // Save separated Address fields
-        $newRequest->purok = strtoupper($request->input('purok'));
-        $newRequest->street = strtoupper($request->input('street'));
+        // Address fields: support both complete address and separated purok/street
+        $purok = $request->input('purok');
+        $street = $request->input('street');
+        if (empty($purok) && $request->filled('address')) {
+            $addr = trim($request->input('address'));
+            $street = $addr;
+            if (preg_match('/purok\s*[\w\d]+/i', $addr, $m)) {
+                $purok = $m[0];
+            } else {
+                $purok = Auth::user()->purok;
+            }
+        }
+        $newRequest->purok = strtoupper($purok ?: (Auth::user()->purok ?? ''));
+        $newRequest->street = strtoupper($street ?: (Auth::user()->sitio ?? Auth::user()->street ?? ''));
         $newRequest->city = strtoupper($request->input('city', 'COGON EAST, CARMEN, CEBU'));
         
-        // Document Info
-        $newRequest->document_type = $request->input('document_type');
-        $newRequest->priority = $request->input('urgency');
-        $newRequest->purpose = strtoupper($request->input('purpose'));
-        
+        // Document Info: Single document per request
+        $docType = $request->input('document_type');
+        $purpose = strtoupper(trim($request->input('purpose', '')));
+
+        // If documents_json was submitted, extract the single document from it as fallback
+        if (empty($docType) && $request->filled('documents_json')) {
+            $decoded = json_decode($request->input('documents_json'), true);
+            if (is_array($decoded) && count($decoded) > 0) {
+                $docType = $decoded[0]['type'] ?? '';
+                if (empty($purpose) && !empty($decoded[0]['purpose'])) {
+                    $purpose = strtoupper(trim($decoded[0]['purpose']));
+                }
+            }
+        } elseif (empty($docType) && $request->filled('documents') && is_array($request->input('documents'))) {
+            $firstDoc = $request->input('documents')[0] ?? null;
+            if ($firstDoc) {
+                $docType = is_array($firstDoc) ? ($firstDoc['type'] ?? '') : (string)$firstDoc;
+                if (empty($purpose) && is_array($firstDoc) && !empty($firstDoc['purpose'])) {
+                    $purpose = strtoupper(trim($firstDoc['purpose']));
+                }
+            }
+        }
+
+        // Auto-assign fee from DocumentType catalog if configured
+        $docTypeRecord = \App\Models\DocumentType::where('name', $docType)->first();
+        if ($docTypeRecord && $docTypeRecord->fee !== null) {
+            $newRequest->fee = $docTypeRecord->fee;
+        }
+
+        $newRequest->document_type = $docType;
+        $newRequest->document_type_id = $docTypeRecord?->id;
+        $newRequest->purpose = $purpose;
+        $newRequest->documents = [
+            [
+                'type'         => $docType,
+                'purpose'      => $purpose,
+                'fee'          => $newRequest->fee,
+                'is_generated' => false,
+            ]
+        ];
+
+        $newRequest->priority = $request->input('urgency', 'Normal');
         $newRequest->status = 'Pending';
-        $newRequest->user_id = Auth::id(); 
+        $newRequest->user_id = Auth::id();
+        $selectedIdType = $request->input('id_type') ?: (Auth::user()->id_type ?? null);
+        $newRequest->id_type = $selectedIdType;
+        if (!empty($request->input('id_type')) && Auth::user() && empty(Auth::user()->id_type)) {
+            Auth::user()->update(['id_type' => $request->input('id_type')]);
+        }
         
         $newRequest->save();
+
+        $attachmentsData = [];
+        $metaList = [];
+        if ($request->filled('attachment_meta')) {
+            $decoded = json_decode($request->input('attachment_meta'), true);
+            if (is_array($decoded)) {
+                $metaList = $decoded;
+            }
+        }
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $idx => $file) {
+                if ($file->isValid()) {
+                    $originalName = $file->getClientOriginalName();
+                    $path = $file->store('attachments', 'public');
+                    
+                    $matchedMeta = null;
+                    foreach ($metaList as $m) {
+                        if (is_array($m) && ($m['name'] ?? '') === $originalName) {
+                            $matchedMeta = $m;
+                            break;
+                        }
+                    }
+                    if (!$matchedMeta && isset($metaList[$idx])) {
+                        $matchedMeta = $metaList[$idx];
+                    }
+
+                    $docType = $matchedMeta['doc_type'] ?? 'Supporting Document';
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    $fileType = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? 'image' : 'document';
+
+                    $attachmentsData[] = [
+                        'file_path' => $path,
+                        'file_name' => $originalName,
+                        'doc_type'  => $docType,
+                        'file_type' => $fileType,
+                        'file_size' => $file->getSize(),
+                    ];
+                }
+            }
+        }
+
+        if (!empty($attachmentsData)) {
+            $newRequest->attachments = $attachmentsData;
+            $newRequest->save();
+        }
 
         // Automatically record this action in the Activity Logs
         $log = new \App\Models\ActivityLog();
         $log->user_id = Auth::id();
         $log->action = 'Document Request';
-        $log->description = 'Requested a ' . $request->input('document_type');
+        $log->description = 'Requested: ' . $newRequest->document_type;
         $log->ip_address = $request->ip();
         $log->user_agent = $request->userAgent();
         $log->save();
@@ -145,9 +319,15 @@ class ResidentDashboardController extends Controller
         }
 
         // THE FIX: Check updates via USER_ID
-        $lastUpdate = DocumentRequest::where('user_id', auth()->id())->max('updated_at');
+        $latest = DocumentRequest::where('user_id', auth()->id())
+            ->latest()
+            ->first(['id', 'status', 'tracking_number', 'updated_at']);
 
-        return response()->json(['last_update' => $lastUpdate]);
+        return response()->json([
+            'last_update'      => $latest?->updated_at,
+            'latest_status'    => $latest?->status,
+            'tracking_number'  => $latest?->tracking_number,
+        ]);
     }
 
     /**
@@ -201,13 +381,8 @@ class ResidentDashboardController extends Controller
 
         $receiptNumber = str_replace('REQ', 'REC', $docRequest->tracking_number);
 
-        // Define the fee amount
-        $feeAmount = 0; 
-        if ($docRequest->document_type == 'Barangay Clearance') {
-            $feeAmount = 50;
-        } elseif ($docRequest->document_type == 'Business Permit') {
-            $feeAmount = 150;
-        }
+        // Define the fee amount from the database record (if updated by admin)
+        $feeAmount = ($docRequest->fee !== null && (float)$docRequest->fee > 0) ? (float)$docRequest->fee : 0;
 
         // Pass ALL required variables to the view
         return view('resident.receipt', compact('docRequest', 'receiptNumber', 'feeAmount'));

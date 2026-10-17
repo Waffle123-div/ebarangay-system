@@ -91,12 +91,12 @@
                         <tr>
                             <td class="fw-bold text-dark font-monospace py-3">{{ $docRequest->tracking_number }}</td>
                             <td class="fw-bold text-primary py-3">{{ $docRequest->document_type }}</td>
-                            <td class="text-muted small py-3">{{ $docRequest->purpose ?? 'General Purpose' }}</td>
+                            <td class="text-muted small py-3">{{ $docRequest->purpose ?: 'General Purpose' }}</td>
                             <td class="fw-bold text-dark text-end py-3">
                                 @if($feeAmount > 0)
                                     ₱{{ number_format($feeAmount, 2) }}
                                 @else
-                                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">FREE</span>
+                                    <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">TO BE SETTLED</span>
                                 @endif
                             </td>
                         </tr>
@@ -127,7 +127,7 @@
                             @if($feeAmount > 0)
                                 ₱{{ number_format($feeAmount, 2) }}
                             @else
-                                FREE OF CHARGE
+                                TO BE SETTLED
                             @endif
                         </h4>
                     </div>

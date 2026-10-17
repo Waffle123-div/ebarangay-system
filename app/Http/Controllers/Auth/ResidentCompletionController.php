@@ -57,6 +57,27 @@ class ResidentCompletionController extends Controller
             'status' => 'pending_approval', 
         ];
 
+        if ($request->filled('selfie_photo') && str_starts_with($request->selfie_photo, 'data:image/')) {
+            $base64Data = $request->selfie_photo;
+            @list($type, $data) = explode(';', $base64Data);
+            @list(, $data)      = explode(',', $data);
+            if ($data) {
+                $decoded = base64_decode($data);
+                $ext = 'jpg';
+                if ($type && str_contains($type, 'png')) {
+                    $ext = 'png';
+                }
+                $selfieFileName = 'selfie_' . \Illuminate\Support\Str::random(24) . '.' . $ext;
+                \Illuminate\Support\Facades\Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
+                $updateData['selfie_photo'] = 'selfies/' . $selfieFileName;
+                $updateData['face_verified_at'] = now();
+            }
+        } elseif ($request->hasFile('selfie_upload') || $request->hasFile('selfie_photo')) {
+            $file = $request->file('selfie_upload') ?: $request->file('selfie_photo');
+            $updateData['selfie_photo'] = $file->store('selfies', 'public');
+            $updateData['face_verified_at'] = now();
+        }
+
         // 5. If they came from Google, add their extra details to the update
         if ($user->google_id) {
             $updateData['password'] = Hash::make($request->password);

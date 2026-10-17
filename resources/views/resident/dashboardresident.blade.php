@@ -19,6 +19,145 @@
         </div>
     @endif
 
+    {{-- ========================================== --}}
+    {{-- OFFICIAL BARANGAY ANNOUNCEMENT BANNER      --}}
+    {{-- ========================================== --}}
+    @if(!empty($announcement) && !empty($announcement['message']))
+        @php
+            $type = $announcement['type'] ?? 'info';
+            $config = [
+                'info' => [
+                    'bg'     => 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                    'border' => '#93c5fd',
+                    'color'  => '#1e40af',
+                    'badge'  => 'bg-primary text-white',
+                    'icon'   => 'fa-solid fa-circle-info',
+                    'iconBg' => 'bg-primary text-white',
+                    'btn'    => 'btn-primary',
+                ],
+                'warning' => [
+                    'bg'     => 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                    'border' => '#fcd34d',
+                    'color'  => '#92400e',
+                    'badge'  => 'bg-warning text-dark',
+                    'icon'   => 'fa-solid fa-triangle-exclamation',
+                    'iconBg' => 'bg-warning text-dark',
+                    'btn'    => 'btn-warning text-dark',
+                ],
+                'danger' => [
+                    'bg'     => 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                    'border' => '#fca5a5',
+                    'color'  => '#991b1b',
+                    'badge'  => 'bg-danger text-white',
+                    'icon'   => 'fa-solid fa-circle-exclamation',
+                    'iconBg' => 'bg-danger text-white',
+                    'btn'    => 'btn-danger text-white',
+                ],
+                'success' => [
+                    'bg'     => 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                    'border' => '#86efac',
+                    'color'  => '#166534',
+                    'badge'  => 'bg-success text-white',
+                    'icon'   => 'fa-solid fa-bullhorn',
+                    'iconBg' => 'bg-success text-white',
+                    'btn'    => 'btn-success text-white',
+                ],
+            ][$type] ?? [
+                'bg'     => 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                'border' => '#93c5fd',
+                'color'  => '#1e40af',
+                'badge'  => 'bg-primary text-white',
+                'icon'   => 'fa-solid fa-circle-info',
+                'iconBg' => 'bg-primary text-white',
+                'btn'    => 'btn-primary',
+            ];
+        @endphp
+
+        <div id="barangay-announcement-card" 
+             class="card border shadow-sm rounded-4 mb-4 overflow-hidden position-relative"
+             style="background: {{ $config['bg'] }}; border-color: {{ $config['border'] }} !important;">
+            
+            @if($type === 'danger')
+                <div style="height: 4px; background: linear-gradient(90deg, #ef4444, #b91c1c); animation: pulse 2s infinite;"></div>
+            @endif
+
+            <div class="card-body p-4">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge {{ $config['badge'] }} px-3 py-1.5 rounded-pill fw-bold text-uppercase shadow-sm" style="font-size: 11px; letter-spacing: 0.5px;">
+                            <i class="{{ $config['icon'] }} me-1"></i>
+                            {{ $announcement['category'] ?? 'Barangay Advisory' }}
+                        </span>
+
+                        @if($type === 'danger')
+                            <span class="badge bg-danger rounded-pill px-2.5 py-1 text-white small fw-bold" style="font-size: 10px; animation: blinker 1.5s linear infinite;">
+                                <i class="fa-solid fa-circle-dot me-1"></i> URGENT ALERT
+                            </span>
+                        @endif
+
+                        @if(!empty($announcement['updated_at']))
+                            <span class="small" style="color: {{ $config['color'] }}; opacity: 0.85; font-size: 12px;">
+                                <i class="fa-regular fa-clock me-1"></i> {{ \Carbon\Carbon::parse($announcement['updated_at'])->format('M d, Y · h:i A') }}
+                            </span>
+                        @endif
+                    </div>
+
+                    @if(!empty($announcement['is_dismissible']))
+                        <button type="button" class="btn-close ms-auto" aria-label="Close" onclick="dismissAnnouncementBanner()" style="font-size: 11px;"></button>
+                    @endif
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mt-1">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm flex-shrink-0 {{ $config['iconBg'] }}"
+                         style="width: 48px; height: 48px; font-size: 20px;">
+                        <i class="{{ $config['icon'] }}"></i>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h5 class="fw-bold mb-1" style="color: {{ $config['color'] }}; font-family: var(--font-heading, sans-serif);">
+                            {{ $announcement['title'] }}
+                        </h5>
+                        <p class="mb-0" style="color: {{ $config['color'] }}; opacity: 0.95; font-size: 14.5px; line-height: 1.55; white-space: pre-line;">
+                            {{ $announcement['message'] }}
+                        </p>
+
+                        @if(!empty($announcement['action_url']))
+                            <div class="mt-3">
+                                <a href="{{ $announcement['action_url'] }}" 
+                                   class="btn {{ $config['btn'] }} btn-sm px-3.5 py-1.5 rounded-pill fw-semibold shadow-sm d-inline-flex align-items-center gap-1.5">
+                                    <span>{{ $announcement['action_text'] ?: 'Learn More' }}</span>
+                                    <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if(!empty($announcement['is_dismissible']))
+            <script>
+            (function() {
+                const bannerKey = 'brgy_announcement_dismissed_{{ md5($announcement['title'] . ($announcement['message'] ?? '')) }}';
+                if (sessionStorage.getItem(bannerKey)) {
+                    const card = document.getElementById('barangay-announcement-card');
+                    if (card) card.style.display = 'none';
+                }
+                window.dismissAnnouncementBanner = function() {
+                    const card = document.getElementById('barangay-announcement-card');
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(-10px)';
+                        setTimeout(() => card.style.display = 'none', 300);
+                    }
+                    sessionStorage.setItem(bannerKey, 'true');
+                };
+            })();
+            </script>
+        @endif
+    @endif
+
     <div class="row g-4 mb-4">
         <div class="col-md-4">
             <a href="{{ route('resident.request.create') }}" class="text-decoration-none">
@@ -156,12 +295,7 @@
 @foreach($recentRequests as $request)
 @php
     $receiptNumber = str_replace('REQ', 'REC', $request->tracking_number);
-    $feeAmount = 0; 
-    if ($request->document_type == 'Barangay Clearance') {
-        $feeAmount = 50;
-    } elseif ($request->document_type == 'Business Permit') {
-        $feeAmount = 150;
-    }
+    $feeAmount = ($request->fee !== null && (float)$request->fee > 0) ? (float)$request->fee : 0;
 @endphp
 
 <div class="modal fade" id="receiptModal{{ $request->id }}" tabindex="-1" aria-hidden="true">
@@ -253,12 +387,17 @@
                             <tbody>
                                 <tr>
                                     <td class="fw-bold text-dark font-monospace py-3">{{ $request->tracking_number }}</td>
-                                    <td class="fw-bold text-primary py-3">{{ $request->document_type }}</td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-primary">{{ $request->document_type }}</div>
+                                        @if(!empty($request->purpose))
+                                            <div class="text-muted small" style="font-size: 11px;">Purpose: {{ $request->purpose }}</div>
+                                        @endif
+                                    </td>
                                     <td class="fw-bold text-dark text-end py-3">
                                         @if($feeAmount > 0)
                                             ₱{{ number_format($feeAmount, 2) }}
                                         @else
-                                            <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">FREE</span>
+                                            <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">TO BE SETTLED</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -289,7 +428,7 @@
                                     @if($feeAmount > 0)
                                         ₱{{ number_format($feeAmount, 2) }}
                                     @else
-                                        FREE OF CHARGE
+                                        TO BE SETTLED
                                     @endif
                                 </h4>
                             </div>

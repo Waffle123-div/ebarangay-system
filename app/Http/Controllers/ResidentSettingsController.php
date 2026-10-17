@@ -95,6 +95,9 @@ class ResidentSettingsController extends Controller
             'middle_name'   => 'nullable|string|max:100',
             'last_name'     => 'required|string|max:100',
             'suffix'        => 'nullable|string|max:20',
+            'birthdate'     => 'nullable|date',
+            'age'           => 'nullable|integer|min:0|max:150',
+            'birthplace'    => 'nullable|string|max:255',
             'gender'        => 'nullable|string|max:50',
             'civil_status'  => 'nullable|string|max:50',
             'nationality'   => 'nullable|string|max:100',
@@ -110,17 +113,43 @@ class ResidentSettingsController extends Controller
         ]);
 
         $user = Auth::user();
-        $data =$request->only([
-            'first_name', 'middle_name', 'last_name', 'suffix', 'gender',
-            'civil_status', 'nationality', 'occupation', 'phone_number',
-            'house_number', 'street', 'barangay_address', 'municipality', 'province', 'zip_code',
-        ]);
+
+        $firstName    = strtoupper(trim($request->first_name));
+        $middleName   = $request->filled('middle_name') ? strtoupper(trim($request->middle_name)) : null;
+        $lastName     = strtoupper(trim($request->last_name));
+        $suffix       = $request->filled('suffix') ? strtoupper(trim($request->suffix)) : null;
+        $birthplace   = $request->filled('birthplace') ? strtoupper(trim($request->birthplace)) : null;
+        $nationality  = $request->filled('nationality') ? strtoupper(trim($request->nationality)) : null;
+        $occupation   = $request->filled('occupation') ? strtoupper(trim($request->occupation)) : null;
+        $houseNumber  = $request->filled('house_number') ? strtoupper(trim($request->house_number)) : null;
+        $street       = $request->filled('street') ? strtoupper(trim($request->street)) : null;
+        $barangay     = $request->filled('barangay_address') ? strtoupper(trim($request->barangay_address)) : null;
+        $municipality = $request->filled('municipality') ? strtoupper(trim($request->municipality)) : null;
+        $province     = $request->filled('province') ? strtoupper(trim($request->province)) : null;
+
+        $data = [
+            'first_name'       => $firstName,
+            'middle_name'      => $middleName,
+            'last_name'        => $lastName,
+            'suffix'           => $suffix,
+            'birthdate'        => $request->birthdate,
+            'age'              => $request->age,
+            'birthplace'       => $birthplace,
+            'gender'           => $request->gender,
+            'civil_status'     => $request->civil_status,
+            'nationality'      => $nationality,
+            'occupation'       => $occupation,
+            'phone_number'     => $request->phone_number,
+            'house_number'     => $houseNumber,
+            'street'           => $street,
+            'barangay_address' => $barangay,
+            'municipality'     => $municipality,
+            'province'         => $province,
+            'zip_code'         => $request->zip_code,
+        ];
 
         // Sync the full `name` field for backward compatibility
-        $data['name'] = trim(implode(' ', array_filter([
-            $request->first_name,$request->middle_name,
-            $request->last_name,$request->suffix,
-        ])));
+        $data['name'] = trim(implode(' ', array_filter([$firstName, $middleName, $lastName, $suffix])));
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {

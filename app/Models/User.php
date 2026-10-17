@@ -23,8 +23,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'username',
         'email',
+        'email_verified_at',
         'phone_number',
         'password',
+        'security_pin',
         'google_id',
         'role',
         'status',
@@ -35,6 +37,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_name',
         'suffix',
         'birthdate',
+        'age',
+        'birthplace',
         'gender',
         'civil_status',
         'nationality',
@@ -44,6 +48,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_picture',
 
         // Address
+        'purok',
+        'sitio',
         'house_number',
         'street',
         'barangay_address',
@@ -60,6 +66,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
         // Proof of residency (legacy)
         'proof_of_residency',
+
+        // Face Verification
+        'selfie_photo',
+        'face_verified_at',
 
         // Security
         'two_factor_enabled',
@@ -91,6 +101,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'id_expiry_date'    => 'date',
             'id_verified_at'    => 'datetime',
             'id_uploaded_at'    => 'datetime',
+            'face_verified_at'  => 'datetime',
         ];
     }
 
@@ -117,5 +128,47 @@ class User extends Authenticatable implements MustVerifyEmail
             $this->province,
             $this->zip_code,
         ])->filter()->implode(', ');
+    }
+
+    /**
+     * Get the ID document path (resolving proof_of_residency, id_photo, or id_front_path).
+     */
+    public function getIdFrontPathAttribute(): ?string
+    {
+        return $this->proof_of_residency ?: ($this->id_photo ?: ($this->attributes['id_front_path'] ?? null));
+    }
+
+    /**
+     * Get the public URL to view the ID document.
+     */
+    public function getIdDocumentUrlAttribute(): ?string
+    {
+        $path = $this->id_front_path;
+        if (!$path) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($path);
+    }
+
+    /**
+     * Get the public URL to view the selfie / face verification photo.
+     */
+    public function getSelfiePhotoUrlAttribute(): ?string
+    {
+        $path = $this->selfie_photo;
+        if (!$path) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($path);
     }
 }

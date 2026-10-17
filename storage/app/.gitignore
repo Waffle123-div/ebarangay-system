@@ -1,4 +1,8 @@
 *
 !private/
 !public/
+!document_templates/
+!document_templates/**
+!*_template.docx
 !.gitignore
+

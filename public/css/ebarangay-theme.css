@@ -1,6 +1,6 @@
 /* ========================================
    E-BARANGAY SYSTEM — Shared Theme
-   Color palette from landing page
+   Color palette: #18365D / #2B6CB0 / #319795 / #F7FAFC
    ======================================== */
 
 /* --- Google Fonts --- */
@@ -8,66 +8,66 @@
 
 /* --- CSS Custom Properties (Design Tokens) --- */
 :root {
-  /* Primary Colors — Professional Blue */
-  --color-primary: #1E40AF;
-  --color-primary-light: #3B82F6;
-  --color-primary-dark: #1E3A5F;
-  --color-primary-50: #EFF6FF;
-  --color-primary-100: #DBEAFE;
-  --color-primary-200: #BFDBFE;
+  /* ── Primary: Deep Navy ── */
+  --color-primary:       #18365D;
+  --color-primary-light: #2B6CB0;
+  --color-primary-dark:  #0F2240;
+  --color-primary-50:    #EBF4FF;
+  --color-primary-100:   #BEE3F8;
+  --color-primary-200:   #90CDF4;
 
-  /* Secondary Colors — Warm Gold */
-  --color-secondary: #D97706;
-  --color-secondary-light: #F59E0B;
-  --color-secondary-dark: #B45309;
+  /* ── Secondary: Sky Blue ── */
+  --color-secondary:       #2B6CB0;
+  --color-secondary-light: #4299E1;
+  --color-secondary-dark:  #1A4A80;
 
-  /* Accent Colors */
-  --color-accent-teal: #0EA5E9;
-  --color-accent-orange: #EA580C;
-  --color-accent-rose: #E11D48;
+  /* ── Tertiary: Teal ── */
+  --color-teal:       #319795;
+  --color-teal-light: #4FD1C5;
+  --color-teal-dark:  #22706E;
 
-  /* Neutrals */
-  --color-bg: #F9FAFB;
-  --color-bg-alt: #F0F4FA;
-  --color-surface: #FFFFFF;
-  --color-surface-glass: rgba(255, 255, 255, 0.7);
-  --color-text: #1F2937;
-  --color-text-light: #6B7280;
-  --color-text-inverse: #FFFFFF;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
+  /* ── Neutrals ── */
+  --color-bg:            #F7FAFC;
+  --color-bg-alt:        #EDF2F7;
+  --color-surface:       #FFFFFF;
+  --color-surface-glass: rgba(255, 255, 255, 0.75);
+  --color-text:          #1A202C;
+  --color-text-light:    #718096;
+  --color-text-inverse:  #FFFFFF;
+  --color-border:        #E2E8F0;
+  --color-border-light:  #F0F4F8;
 
-  /* Status Colors */
-  --color-status-pending: #F59E0B;
-  --color-status-processing: #3B82F6;
-  --color-status-approved: #10B981;
-  --color-status-ready: #059669;
-  --color-status-rejected: #EF4444;
+  /* ── Status Colors ── */
+  --color-status-pending:    #D97706;
+  --color-status-processing: #2B6CB0;
+  --color-status-approved:   #38A169;
+  --color-status-ready:      #319795;
+  --color-status-rejected:   #E53E3E;
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #1E3A5F 0%, #1E40AF 50%, #3B82F6 100%);
-  --gradient-hero: linear-gradient(160deg, #0F2B4C 0%, #1E3A5F 40%, #1E40AF 100%);
-  --gradient-gold: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+  /* ── Gradients ── */
+  --gradient-primary: linear-gradient(135deg, #0F2240 0%, #18365D 50%, #2B6CB0 100%);
+  --gradient-hero:    linear-gradient(160deg, #0F2240 0%, #18365D 45%, #2B6CB0 100%);
+  --gradient-teal:    linear-gradient(135deg, #22706E 0%, #319795 100%);
 
-  /* Typography */
+  /* ── Typography ── */
   --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body:    'Inter', sans-serif;
 
-  /* Shadows */
+  /* ── Shadows ── */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
 
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  /* ── Border Radius ── */
+  --radius-sm:   0.375rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
   --radius-full: 9999px;
 
-  /* Transitions */
+  /* ── Transitions ── */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -95,17 +95,15 @@
 
 /* Text utilities */
 .text-primary { color: var(--color-primary) !important; }
-.text-dark { color: var(--color-text) !important; }
-.text-muted { color: var(--color-text-light) !important; }
+.text-dark    { color: var(--color-text)    !important; }
+.text-muted   { color: var(--color-text-light) !important; }
 
-/* Background utilities — only solid fills, NOT opacity variants */
+/* Background utilities */
 .bg-primary { background-color: var(--color-primary) !important; }
 
-/* Fix: allow Bootstrap's bg-opacity modifier to work.
-   The solid .bg-primary override above kills bg-opacity-10/25 etc, so
-   we explicitly restore the opacity-backed pattern for elements that need it. */
-.bg-primary.bg-opacity-10 { background-color: rgba(30, 64, 175, 0.10) !important; }
-.bg-primary.bg-opacity-25 { background-color: rgba(30, 64, 175, 0.25) !important; }
+/* Restore opacity variants */
+.bg-primary.bg-opacity-10 { background-color: rgba(24, 54, 93, 0.10) !important; }
+.bg-primary.bg-opacity-25 { background-color: rgba(24, 54, 93, 0.25) !important; }
 
 /* Restore Bootstrap opacity variants for all standard badge/icon colors
    (warning, danger, success, info, secondary are not globally overridden
@@ -142,118 +140,89 @@
 }
 
 /* Pending — amber */
-.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
+.status-pending { background-color: #FEFCBF; color: #744210; border: 1px solid #F6E05E; }
 
-/* Under Review — sky blue */
-.status-under-review {
-  background-color: #e0f2fe;
-  color: #075985;
-  border: 1px solid #bae6fd;
-}
+/* Under Review — sky blue (palette secondary) */
+.status-under-review { background-color: #EBF8FF; color: #1A4A80; border: 1px solid #90CDF4; }
 
-/* In Progress — indigo/cyan */
-.status-in-progress {
-  background-color: #e0e7ff;
-  color: #3730a3;
-  border: 1px solid #c7d2fe;
-}
+/* In Progress — primary navy */
+.status-in-progress { background-color: #EBF4FF; color: #18365D; border: 1px solid #BEE3F8; }
 
-/* Processing — blue (same family as In Progress) */
-.status-processing {
-  background-color: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-}
+/* Processing — palette secondary blue */
+.status-processing { background-color: #EBF4FF; color: #2B6CB0; border: 1px solid #BEE3F8; }
 
-/* Ready / Ready for Pickup — purple */
-.status-ready {
-  background-color: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
-}
+/* Ready — teal */
+.status-ready { background-color: #E6FFFA; color: #22706E; border: 1px solid #81E6D9; }
 
 /* Approved / Resolved — green */
 .status-approved,
-.status-resolved {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
+.status-resolved { background-color: #F0FFF4; color: #276749; border: 1px solid #9AE6B4; }
 
 /* Completed — teal-green */
-.status-completed {
-  background-color: #ecfdf5;
-  color: #064e3b;
-  border: 1px solid #6ee7b7;
-}
+.status-completed { background-color: #E6FFFA; color: #234E52; border: 1px solid #81E6D9; }
 
 /* Rejected — red */
-.status-rejected {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
-}
+.status-rejected { background-color: #FFF5F5; color: #9B2C2C; border: 1px solid #FEB2B2; }
 
 /* Active (user status) — green */
-.status-active {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
+.status-active { background-color: #F0FFF4; color: #276749; border: 1px solid #9AE6B4; }
 
 /* Inactive / Deactivated — slate */
-.status-inactive {
-  background-color: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-}
+.status-inactive { background-color: #F7FAFC; color: #4A5568; border: 1px solid #CBD5E0; }
 
 /* Pending Approval (user account) */
-.status-pending-approval {
-  background-color: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
+.status-pending-approval { background-color: #FEFCBF; color: #744210; border: 1px solid #F6E05E; }
 
 /* Alert */
 .alert-primary {
   background-color: var(--color-primary-50) !important;
-  border-color: var(--color-primary-100) !important;
-  color: var(--color-primary) !important;
+  border-color: var(--color-primary-100)   !important;
+  color: var(--color-primary)              !important;
 }
 .alert-success {
-  background-color: #ecfdf5 !important;
-  border-color: #d1fae5 !important;
-  color: #065f46 !important;
+  background-color: #F0FFF4 !important;
+  border-color: #C6F6D5   !important;
+  color: #276749          !important;
 }
 
 /* Links */
 a.text-primary:hover { color: var(--color-primary-dark) !important; }
 
 /* Form focus */
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: var(--color-primary-light) !important;
-  box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.15) !important;
+  box-shadow: 0 0 0 0.2rem rgba(43, 108, 176, 0.20) !important;
 }
 
 /* Dropdown */
-.dropdown-item.active, .dropdown-item:active {
+.dropdown-item.active,
+.dropdown-item:active {
   background-color: var(--color-primary-50) !important;
   color: var(--color-primary) !important;
 }
 
 /* Progress bar */
-.progress-bar {
-  background-color: var(--color-primary) !important;
-}
+.progress-bar { background-color: var(--color-primary) !important; }
 
 /* Pagination */
 .page-item.active .page-link {
   background-color: var(--color-primary) !important;
-  border-color: var(--color-primary) !important;
+  border-color: var(--color-primary)     !important;
 }
 .page-link { color: var(--color-primary) !important; }
+
+/* Responsive Scrollbar & Flex-Containment Utilities */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E0 #F7FAFC;
+}
+.table-responsive::-webkit-scrollbar        { height: 6px; width: 6px; }
+.table-responsive::-webkit-scrollbar-track  { background: #EDF2F7; border-radius: 4px; }
+.table-responsive::-webkit-scrollbar-thumb  { background-color: #CBD5E0; border-radius: 4px; }
+.table-responsive::-webkit-scrollbar-thumb:hover { background-color: #A0AEC0; }
+
+.flex-contain { min-width: 0 !important; max-width: 100% !important; }

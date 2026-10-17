@@ -156,9 +156,23 @@
                                                     <span class="text-muted small">Document Type:</span>
                                                     <span class="fw-bold text-dark small">{{ $req->document_type }}</span>
                                                 </div>
+                                                @if($req->purpose)
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span class="text-muted small">Purpose:</span>
+                                                        <span class="fw-bold text-dark small text-end" style="max-width: 60%;">{{ $req->purpose }}</span>
+                                                    </div>
+                                                @endif
                                                 <div class="d-flex justify-content-between mb-2">
                                                     <span class="text-muted small">Submission Date:</span>
                                                     <span class="fw-bold text-dark small">{{ $req->created_at->format('F d, Y') }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="text-muted small">Fee Amount:</span>
+                                                    @if($req->fee !== null && (float)$req->fee > 0)
+                                                        <span class="fw-bold text-success small">₱{{ number_format($req->fee, 2) }}</span>
+                                                    @else
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1 small">TO BE SETTLED</span>
+                                                    @endif
                                                 </div>
                                                 <div class="d-flex justify-content-between">
                                                     <span class="text-muted small">Current Status:</span>

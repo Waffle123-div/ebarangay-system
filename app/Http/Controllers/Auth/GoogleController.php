@@ -15,10 +15,10 @@ class GoogleController extends Controller
     public function redirectToGoogle(Request $request)
     {
         $intended = $request->query('intended');
-    if (is_string($intended)
-        && (str_starts_with($intended, '/resident/request-document') || $intended === '/home')
-        && !str_contains($intended, '://')
-        && !str_contains($intended, '..')) {
+        if (is_string($intended)
+            && (str_starts_with($intended, '/resident/request-document') || $intended === '/home')
+            && !str_contains($intended, '://')
+            && !str_contains($intended, '..')) {
             $request->session()->put('url.intended', $intended);
         }
 
@@ -44,7 +44,7 @@ class GoogleController extends Controller
                 }
 
                 // ==========================================
-                // THE SMART ROUTING SYSTEM
+                // THE SMART ROUTING SYSTEM (existing users)
                 // ==========================================
                 if (trim(strtolower($user->status)) === 'active') {
                     Auth::login($user);
@@ -54,56 +54,51 @@ class GoogleController extends Controller
                     return redirect()->route('resident.pending');
 
                 } elseif (trim(strtolower($user->status)) === 'incomplete') {
-                    Auth::login($user);
-                    
-                    // If they haven't verified their email yet, send them to the waiting room
-                    if (!$user->hasVerifiedEmail()) {
-                        return redirect()->route('verification.notice');
-                    }
-                    
-                    return redirect()->route('register.complete');
+                    // ==========================================
+                    // INCOMPLETE GOOGLE USER: Route them through
+                    // the full registration wizard (new flow).
+                    // Delete the old minimal stub so the wizard
+                    // can create a complete user record.
+                    // ==========================================
+                    $user->delete();
+
+                    session([
+                        'google_reg_email'    => $googleUser->email,
+                        'google_reg_name'     => $googleUser->name,
+                        'google_reg_id'       => $googleUser->id,
+                        'reg_verified_target' => $googleUser->email,
+                        'reg_verified_at'     => now(),
+                    ]);
+
+                    return redirect()->route('resident.register')->with('via_google', true);
 
                 } else {
-                    return redirect()->route('resident.login')->withErrors(['email' => 'Your account access has been revoked or denied.']);
+                    return redirect()->route('resident.login')
+                        ->withErrors(['email' => 'Your account access has been revoked or denied.']);
                 }
 
             } else {
                 // ==========================================
-                // NEW USER LOGIC
+                // NEW USER: Store Google data in session
+                // and redirect to the full registration wizard.
+                // Email is pre-filled and OTP is bypassed
+                // since Google already verified the email.
                 // ==========================================
-                // If they don't exist in the database, we seamlessly auto-register them
-                // regardless of whether they clicked "Login" or "Sign up".
-
-                $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
-                
-                $newUser = User::create([
-                    'user_id' => $userId,
-                    'name' => $googleUser->name,
-                    'email' => $googleUser->email,
-                    'google_id' => $googleUser->id,
-                    'password' => null, 
-                    'role' => 'Resident',
-                    'status' => 'incomplete',
-                    // 'email_verified_at' is omitted so they are FORCED to verify
+                session([
+                    'google_reg_email'    => $googleUser->email,
+                    'google_reg_name'     => $googleUser->name,
+                    'google_reg_id'       => $googleUser->id,
+                    // Mark the email as already verified so the OTP step is skipped
+                    'reg_verified_target' => $googleUser->email,
+                    'reg_verified_at'     => now(),
                 ]);
 
-                // Trigger the Verification Email safely without hanging
-                try {
-                    event(new Registered($newUser));
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Google registration email verification failed to send: ' . $e->getMessage());
-                }
-
-                // Log them in so the system knows who is waiting
-                Auth::login($newUser);
-                
-                // Send them directly to Waiting Room 1
-                return redirect()->route('verification.notice');
+                return redirect()->route('resident.register')->with('via_google', true);
             }
 
         } catch (\Exception $e) {
-            // Print the ACTUAL error to the screen if Google auth completely fails
-            return redirect()->route('resident.login')->withErrors(['email' => 'System Error: ' . $e->getMessage()]);
+            return redirect()->route('resident.login')
+                ->withErrors(['email' => 'System Error: ' . $e->getMessage()]);
         }
     }
 }

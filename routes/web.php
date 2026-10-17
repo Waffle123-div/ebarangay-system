@@ -70,8 +70,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 
     // Document Generation Route
     Route::get('/requests/generate/{id}', [AdminDashboardController::class, 'generateWord'])->name('requests.generate');
+    Route::get('/requests/{id}', [AdminDashboardController::class, 'showRequest'])->name('requests.show');
     
     // Action Button Routes (legacy placeholder routes removed — use .accept and .reject)
+    Route::delete('/requests/bulk-delete', [AdminDashboardController::class, 'bulkDestroyRequests'])->name('requests.bulk-delete');
     Route::delete('/requests/{id}', [AdminDashboardController::class, 'destroy'])->name('requests.destroy');
 
     // --- NEW PIPELINE ROUTES (Accept/Reject Gateway) ---
@@ -79,6 +81,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::patch('/requests/{id}/reject', [AdminDashboardController::class, 'rejectRequest'])->name('requests.reject');
     Route::patch('/requests/{id}/ready', [AdminDashboardController::class, 'markReady'])->name('requests.ready');
     Route::patch('/requests/{id}/complete', [AdminDashboardController::class, 'markCompleted'])->name('requests.complete');
+    Route::patch('/requests/{id}/update', [AdminDashboardController::class, 'updateRequest'])->name('requests.update');
+    Route::patch('/requests/{id}/fee', [AdminDashboardController::class, 'updateFee'])->name('requests.updateFee');
 
     // Account Approval Routes
     Route::get('/account-approvals', [AdminDashboardController::class, 'accountApprovals'])->name('approvals');
@@ -86,21 +90,41 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::patch('/account-approvals/{id}/reject', [AdminDashboardController::class, 'rejectAccount'])->name('approvals.reject');
 
     // User Management Action Routes
+    Route::delete('/users/bulk-delete', [AdminDashboardController::class, 'bulkDestroyUsers'])->name('users.bulk-delete');
     Route::get('/users/{id}', [AdminDashboardController::class, 'viewUser'])->name('users.view');
     Route::patch('/users/{id}/update', [AdminDashboardController::class, 'updateUser'])->name('users.update');
     Route::patch('/users/{id}/toggle-status', [AdminDashboardController::class, 'toggleUserStatus'])->name('users.toggle-status');
+    Route::delete('/users/{id}', [AdminDashboardController::class, 'destroyUser'])->name('users.destroy');
 
     // Activity Logs
+    Route::delete('/activity-logs/bulk-delete', [AdminDashboardController::class, 'bulkDestroyActivityLogs'])->name('activity-logs.bulk-delete');
+    Route::delete('/activity-logs/{id}', [AdminDashboardController::class, 'destroyActivityLog'])->name('activity-logs.destroy');
     Route::get('/activity-logs', [AdminDashboardController::class, 'activityLogs'])->name('activity-logs');
 
     // Community Concerns
     Route::get('/concerns', [AdminDashboardController::class, 'concerns'])->name('concerns');
     Route::patch('/concerns/{id}', [AdminDashboardController::class, 'updateConcern'])->name('concerns.update');
 
+    // Document Types Catalog / Document Management (CRUD)
+    Route::get('/document-types', [AdminDashboardController::class, 'documentTypes'])->name('document-types.index');
+    Route::get('/document-management', [AdminDashboardController::class, 'documentTypes'])->name('documents.index');
+    Route::get('/documents', [AdminDashboardController::class, 'documentTypes']);
+    Route::post('/document-types', [AdminDashboardController::class, 'storeDocumentType'])->name('document-types.store');
+    Route::patch('/document-types/{id}', [AdminDashboardController::class, 'updateDocumentType'])->name('document-types.update');
+    Route::patch('/document-types/{id}/toggle-status', [AdminDashboardController::class, 'toggleDocumentTypeStatus'])->name('document-types.toggle-status');
+    Route::delete('/document-types/bulk-delete', [AdminDashboardController::class, 'bulkDestroyDocumentTypes'])->name('document-types.bulk-delete');
+    Route::delete('/document-types/{id}', [AdminDashboardController::class, 'destroyDocumentType'])->name('document-types.destroy');
+    Route::get('/document-types/{id}/template', [AdminDashboardController::class, 'downloadDocumentTypeTemplate'])->name('document-types.download-template');
+
+    // Walk-in Request Route
+    Route::post('/requests/walk-in', [AdminDashboardController::class, 'storeWalkInRequest'])->name('requests.walk-in');
+
     // Admin Settings
     Route::get('/settings', [AdminDashboardController::class, 'adminSettings'])->name('settings');
     Route::post('/settings/profile', [AdminDashboardController::class, 'updateAdminProfile'])->name('settings.profile');
     Route::post('/settings/password', [AdminDashboardController::class, 'updateAdminPassword'])->name('settings.password');
+    Route::post('/settings/barangay', [AdminDashboardController::class, 'updateBarangaySettings'])->name('settings.barangay');
+    Route::get('/settings/backup-db', [AdminDashboardController::class, 'exportDatabaseBackup'])->name('settings.backup-db');
 
     // Admin Notifications (AJAX)
     Route::get('/notifications', [AdminDashboardController::class, 'getAdminNotifications'])->name('notifications.get');
@@ -155,6 +179,21 @@ Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) 
 
     // Now correctly route them based on their status
     if ($user->status === 'incomplete') {
+        // Manual registration users already have ID uploaded from the 4-step wizard
+        if ($user->proof_of_residency) {
+            $user->update(['status' => 'pending_approval']);
+
+            // Notify admins about the new pending registration
+            $admins = \App\Models\User::where('role', 'Admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\NewUserRegistrationNotification($user));
+            }
+
+            Auth::logout();
+            $notifyMethod = empty($user->email) ? 'phone' : 'email';
+            return redirect(route('resident.pending') . '?notify=' . $notifyMethod);
+        }
+
         return redirect()->route('register.complete');
     }
 
@@ -182,10 +221,13 @@ Route::prefix('resident')->name('resident.')->group(function () {
         Route::get('/forgot-password/reset', [ResidentAuthController::class, 'showResetPasswordForm'])->name('forgot_password.reset');
         Route::post('/forgot-password/reset', [ResidentAuthController::class, 'resetPassword'])->name('forgot_password.reset.submit');
         Route::get('/forgot-password/success', [ResidentAuthController::class, 'showResetSuccess'])->name('forgot_password.success');
-        
-        Route::get('/register', [ResidentAuthController::class, 'showRegisterForm'])->name('register');
-        Route::post('/register', [ResidentAuthController::class, 'register'])->name('register.submit');
     });
+
+    // Registration routes (Accessible so Sign Up button always opens registration)
+    Route::get('/register', [ResidentAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [ResidentAuthController::class, 'register'])->name('register.submit');
+    Route::post('/register/send-otp', [ResidentAuthController::class, 'sendRegistrationOtp'])->name('register.send_otp');
+    Route::post('/register/verify-otp', [ResidentAuthController::class, 'verifyRegistrationOtp'])->name('register.verify_otp');
 
     // Logout route (Support GET and POST to prevent 419 expired page errors)
     Route::match(['get', 'post'], '/logout', [ResidentAuthController::class, 'logout'])->name('logout');
