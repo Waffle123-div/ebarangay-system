@@ -9,8 +9,56 @@
     <link rel="stylesheet" href="{{ asset('css/ebarangay-theme.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        body { background-color: var(--color-bg); font-family: var(--font-body); }
+        /* Lock body viewport to prevent structural layout breaks during step expansions */
+        html, body { height: 100vh; overflow: hidden; background-color: #ffffff; font-family: var(--font-body); margin: 0; }
         h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
+
+        /* Split-screen wrapper styles */
+        .split-layout { height: 100vh; width: 100vw; display: flex; flex-wrap: nowrap; overflow: hidden; }
+        
+        /* Left Panel: Fixed sticky viewport container so carousel never scrolls away */
+        .left-panel {
+            height: 100vh;
+            background-color: #0b2e59;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
+        }
+        #loginCarousel { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
+        .carousel-inner, .carousel-item { height: 100%; width: 100%; }
+        /* Responsive Banner Fix: cover + left center keeps banner content fully visible without cropping or letterboxing */
+        .carousel-item img { object-fit: cover; object-position: left center; height: 100%; width: 100%; }
+        .carousel-indicators { margin-bottom: 2rem; z-index: 3; }
+        .carousel-indicators button { width: 30px !important; height: 4px !important; border-radius: 2px; background-color: rgba(255,255,255,0.4) !important; border: none !important; }
+        .carousel-indicators button.active { background-color: #ffffff !important; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+
+        /* Carousel Side Arrows */
+        .carousel-control-prev, .carousel-control-next { width: 8%; z-index: 4; opacity: 0.8; transition: opacity 0.2s ease; }
+        .carousel-control-prev:hover, .carousel-control-next:hover { opacity: 1; }
+        .carousel-control-prev-icon, .carousel-control-next-icon { width: 2.2rem; height: 2.2rem; background-size: 100%, 100%; }
+
+        /* Right Panel: Independently scrollable container so forms/cameras never break layout */
+        .right-panel {
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem;
+            background: #f8fafc; /* Slightly off-white background to highlight container */
+        }
+        .register-form-container { width: 100%; max-width: 780px; margin: auto; }
+
+        /* Distinct Card Container Styling */
+        .auth-card-container {
+            background: #ffffff;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+        }
+
         .gateway-panel { display: block; }
         .manual-form-panel { display: none; }
 
@@ -36,7 +84,7 @@
 
         /* Scrollable card body for Step 1 */
         .step-scroll {
-            max-height: 60vh;
+            max-height: 52vh;
             overflow-y: auto;
             overflow-x: hidden;
             padding-left: 12px;
@@ -141,7 +189,7 @@
             margin-top: 2px;
         }
 
-        /* Enlarged Live Face Verification Styles */
+        /* Live Face Verification Styles */
         .face-cam-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -151,14 +199,11 @@
         }
         .face-video-viewport {
             width: 100%;
-            max-width: 620px;
             aspect-ratio: 4 / 3;
-            min-height: 360px;
+            min-height: 320px;
             background: #090e17;
-            border-radius: 1rem;
             overflow: hidden;
             position: relative;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
             margin: 0 auto;
         }
         .face-video-viewport video {
@@ -172,8 +217,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: clamp(230px, 50%, 300px);
-            height: clamp(290px, 70%, 380px);
+            width: clamp(210px, 45%, 280px);
+            height: clamp(270px, 65%, 350px);
             border: 3.5px dashed rgba(255, 255, 255, 0.95);
             border-radius: 50%;
             box-shadow: 0 0 0 9999px rgba(9, 14, 23, 0.45);
@@ -227,10 +272,17 @@
         }
         .face-captured-viewport img {
             width: 100%;
-            max-height: 440px;
+            max-height: 400px;
             object-fit: contain;
             display: block;
             margin: 0 auto;
+        }
+
+        @media (max-width: 991.98px) {
+            html, body { height: auto; overflow: auto; }
+            .split-layout { height: auto; overflow: auto; }
+            .left-panel { display: none; }
+            .right-panel { height: auto; padding: 2rem 1rem; width: 100%; overflow: visible; background: #ffffff; }
         }
     </style>
 </head>
@@ -239,12 +291,48 @@
     $googleEmail   = session('google_reg_email', '');
     $googleName    = session('google_reg_name', '');
 @endphp
-<body class="d-flex align-items-center justify-content-center" style="min-height: 100vh; padding: 2rem 0;">
+<body>
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-11 col-lg-10 col-xl-8" style="max-width: 880px;">
-                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+<div class="container-fluid p-0">
+    <div class="row g-0 split-layout">
+        
+        <!-- LEFT SIDE: CAROUSEL BANNER WITH ARROWS -->
+        <div class="col-lg-6 left-panel d-none d-lg-block">
+            <div id="loginCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#loginCarousel" data-bs-slide-to="0" class="active"></button>
+                    <button type="button" data-bs-target="#loginCarousel" data-bs-slide-to="1"></button>
+                    <button type="button" data-bs-target="#loginCarousel" data-bs-slide-to="2"></button>
+                </div>
+
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="{{ asset('images/Banner 1.png') }}" alt="Banner 1">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="{{ asset('images/Banner 2.png') }}" alt="Banner 2">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="{{ asset('images/Banner 3.png') }}" alt="Banner 3">
+                    </div>
+                </div>
+
+                <!-- Side Navigation Arrows -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#loginCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#loginCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: FULL REGISTRATION FORM -->
+        <div class="col-lg-6 right-panel">
+            <div class="register-form-container">
+                <div class="card auth-card-container rounded-4 p-4 p-md-5 my-3">
 
                     {{-- ============================================ --}}
                     {{-- GATEWAY PANEL (Choose Method) --}}
@@ -256,19 +344,9 @@
                             <p class="text-muted small">Register to request barangay documents</p>
                         </div>
 
-                        <button type="button" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold mb-3" onclick="showManualForm()">
-                            Create Account Manually
+                        <button type="button" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold mb-4" onclick="showManualForm()">
+                            Create an Account 
                         </button>
-
-                        <div class="d-flex align-items-center mb-3">
-                            <hr class="flex-grow-1">
-                            <span class="mx-2 text-muted small fw-bold">OR</span>
-                            <hr class="flex-grow-1">
-                        </div>
-
-                        <a href="{{ route('google.login', ['action' => 'register']) }}" class="btn btn-dark w-100 rounded-3 py-2 fw-semibold mb-4">
-                            <i class="fa-brands fa-google me-2"></i> Sign up with Google
-                        </a>
 
                         <div class="text-center small">
                             Already have an account? <a href="{{ route('resident.login') }}" class="text-primary text-decoration-none fw-bold">Log In Here</a>
@@ -354,7 +432,7 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label small fw-semibold">Age <span class="text-danger">*</span></label>
-                                            <input type="number" name="age" id="regAge" class="form-control rounded-3" value="{{ old('age') }}" min="0" max="150" placeholder="e.g. 25" required>
+                                            <input type="number" name="age" id="regAge" class="form-control rounded-3 bg-light" value="{{ old('age') }}" placeholder="Auto-computed" readonly required>
                                         </div>
                                     </div>
 
@@ -411,8 +489,8 @@
                                         </div>
                                     </div>
 
-                                    {{-- B. Residency and Contact --}}
-                                    <div class="section-label mt-2"><i class="fa-solid fa-location-dot me-1"></i> B. Residency and Contact</div>
+                                    {{-- B. Residency --}}
+                                    <div class="section-label mt-2"><i class="fa-solid fa-location-dot me-1"></i> B. Residency</div>
 
                                     <div class="row text-start">
                                         <div class="col-md-6 mb-3">
@@ -444,33 +522,6 @@
                                         <input type="hidden" name="zip_code" value="6005">
                                     </div>
 
-                                    <div class="row text-start">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Mobile Number <span class="text-danger">*</span></label>
-                                            <input type="text" id="step1PhoneNumber" class="form-control rounded-3" value="{{ old('phone_number') }}" placeholder="09XXXXXXXXX">
-                                            @if($viaGoogle)
-                                                <div class="form-text small text-muted">Optional when signing in with Google.</div>
-                                            @endif
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Email Address</label>
-                                            @if($viaGoogle)
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light border-end-0" style="border-color:#dee2e6;">
-                                                        <i class="fa-brands fa-google text-danger" style="font-size:13px;"></i>
-                                                    </span>
-                                                    <input type="email" id="step1Email" class="form-control rounded-end-3 bg-light border-start-0"
-                                                           value="{{ $googleEmail }}" readonly style="border-color:#dee2e6;">
-                                                </div>
-                                                <div class="form-text small text-success fw-semibold">
-                                                    <i class="fa-solid fa-circle-check me-1"></i>Verified via Google
-                                                </div>
-                                            @else
-                                                <input type="email" id="step1Email" class="form-control rounded-3" value="{{ old('email') }}" placeholder="you@email.com">
-                                            @endif
-                                        </div>
-                                    </div>
-
                                 </div>
 
                                 <div class="d-flex gap-2 mt-3">
@@ -487,19 +538,21 @@
 
                                     {{-- A. Contact Information --}}
                                     <div class="section-label"><i class="fa-solid fa-address-card me-1"></i> A. Contact Information</div>
+                                    <div class="alert alert-info border-0 small py-2 px-3 mb-3 text-start" style="font-size: 12px;">
+                                        <i class="fa-solid fa-circle-info me-1"></i> You can enter your <strong>Mobile Number</strong>, <strong>Email Address</strong>, or both. At least one is required to verify your account.
+                                    </div>
 
                                     <div class="row text-start">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Mobile Number <span class="text-danger">*</span></label>
-                                            <input type="text" name="phone_number" class="form-control rounded-3" value="{{ old('phone_number') }}" placeholder="09XXXXXXXXX" {{ $viaGoogle ? '' : 'required' }}>
+                                            <label class="form-label small fw-semibold">Mobile Number <span class="text-muted" style="font-size: 11px;">(Or Email)</span></label>
+                                            <input type="text" name="phone_number" class="form-control rounded-3" value="{{ old('phone_number') }}" placeholder="09XXXXXXXXX">
                                             @if($viaGoogle)
                                                 <div class="form-text small text-muted">Optional when signing in with Google.</div>
                                             @endif
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Email Address</label>
+                                            <label class="form-label small fw-semibold">Email Address <span class="text-muted" style="font-size: 11px;">(Or Mobile)</span></label>
                                             @if($viaGoogle)
-                                                {{-- Pre-filled from Google; read-only --}}
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light border-end-0" style="border-color:#dee2e6;">
                                                         <i class="fa-brands fa-google text-danger" style="font-size:13px;"></i>
@@ -526,12 +579,10 @@
                                     <div class="section-label mt-2"><i class="fa-solid fa-lock me-1"></i> B. Account Password</div>
 
                                     @if($viaGoogle)
-                                        {{-- Google users: password not required, they authenticate via Google OAuth --}}
                                         <div class="alert alert-success border-0 small rounded-3" role="alert">
                                             <i class="fa-brands fa-google me-1 text-danger"></i>
                                             You are signing up with <strong>Google</strong>. No password is needed — you can always sign in using your Google account.
                                         </div>
-                                        {{-- Hidden empty password fields to satisfy any browser validation --}}
                                         <input type="hidden" name="password" value="">
                                     @else
                                         <div class="row text-start">
@@ -610,7 +661,6 @@
                                     </p>
 
                                     <div class="face-cam-card p-3 p-md-4 text-center" id="faceCameraContainer">
-                                        {{-- 1. Initial State: Prompt to open camera --}}
                                         <div id="facePromptState">
                                             <div class="py-4 px-2">
                                                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
@@ -644,50 +694,6 @@
                                             </div>
                                         </div>
 
-                                        {{-- 2. Active Video Stream State --}}
-                                        <div id="faceActiveState" class="d-none">
-                                            <div class="face-video-viewport">
-                                                <video id="faceVideoElement" autoplay playsinline></video>
-                                                
-                                                {{-- Flash effect overlay on capture --}}
-                                                <div id="faceFlashOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-white" style="opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; z-index: 20;"></div>
-
-                                                {{-- Biometric HUD Header --}}
-                                                <div class="position-absolute top-0 start-0 end-0 p-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 10;">
-                                                    <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5" style="font-size: 11px; letter-spacing: 0.5px;">
-                                                        <i class="fa-solid fa-circle text-white fa-fade"></i> LIVE BIOMETRIC CAM
-                                                    </span>
-                                                    <button type="button" class="btn btn-sm btn-dark bg-opacity-75 border-0 text-white rounded-circle shadow" style="width: 32px; height: 32px;" onclick="stopFaceCamera()" title="Close Camera">
-                                                        <i class="fa-solid fa-xmark"></i>
-                                                    </button>
-                                                </div>
-
-                                                {{-- Corner Biometric Crosshairs --}}
-                                                <div class="biometric-crosshair top-left"></div>
-                                                <div class="biometric-crosshair top-right"></div>
-                                                <div class="biometric-crosshair bottom-left"></div>
-                                                <div class="biometric-crosshair bottom-right"></div>
-
-                                                {{-- Oval Guideline Overlay --}}
-                                                <div class="biometric-oval-frame"></div>
-
-                                                {{-- Bottom Guidance Banner --}}
-                                                <div class="position-absolute bottom-0 start-0 end-0 py-2.5 px-3 bg-dark bg-opacity-75 text-white text-center small" style="backdrop-filter: blur(4px); z-index: 10;">
-                                                    <i class="fa-solid fa-arrows-to-circle text-primary me-1"></i> Align your face within the oval guideline and click <strong>Take Snapshot</strong>
-                                                </div>
-                                            </div>
-
-                                            <div class="mt-3 pt-2 d-flex justify-content-center align-items-center gap-2 flex-wrap">
-                                                <button type="button" class="btn btn-success btn-lg px-4 py-2.5 rounded-pill fw-bold shadow" onclick="captureFaceSnapshot()">
-                                                    <i class="fa-solid fa-camera-retro me-2"></i> Take Snapshot
-                                                </button>
-                                                <button type="button" class="btn btn-light border px-3 py-2 rounded-pill text-muted fw-semibold" onclick="stopFaceCamera()">
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {{-- 3. Photo Captured State --}}
                                         <div id="faceCapturedState" class="d-none">
                                             <div class="face-captured-viewport position-relative">
                                                 <img id="faceCapturedPreview" src="" alt="Live Face Preview">
@@ -706,7 +712,6 @@
                                             </div>
                                         </div>
 
-                                        {{-- 4. Fallback File Upload State --}}
                                         <div id="selfieUploadFallbackBox" class="d-none text-start p-3 mt-3 border rounded-3 bg-white">
                                             <div class="d-flex align-items-center justify-content-between mb-2">
                                                 <label class="form-label small fw-bold text-dark mb-0">
@@ -721,7 +726,6 @@
                                         </div>
                                     </div>
 
-                                    {{-- Hidden Inputs for Form Submission --}}
                                     <input type="hidden" name="selfie_photo" id="selfiePhotoInput" value="">
                                     <canvas id="faceSnapshotCanvas" class="d-none"></canvas>
                                 </div>
@@ -792,6 +796,56 @@
                         </form>
                     </div>
 
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    {{-- ============================================ --}}
+    {{-- LIVE FACE CAMERA MODAL --}}
+    {{-- ============================================ --}}
+    <div class="modal fade" id="faceCameraModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="faceCameraModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 620px;">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-body p-0 text-center position-relative bg-dark">
+                    <div class="face-video-viewport m-0 border-0 rounded-0" style="max-width: 100%; aspect-ratio: 4 / 3; min-height: 360px;">
+                        <video id="faceVideoElement" autoplay playsinline></video>
+                        <div id="faceFlashOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-white" style="opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; z-index: 20;"></div>
+                        
+                        {{-- Top Controls Bar --}}
+                        <div class="position-absolute top-0 start-0 end-0 p-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 10;">
+                            <span class="badge bg-danger text-white px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5" style="font-size: 11px; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-circle text-white fa-fade"></i> LIVE BIOMETRIC CAM
+                            </span>
+                            <button type="button" class="btn btn-sm btn-dark bg-opacity-75 border-0 text-white rounded-circle shadow" style="width: 32px; height: 32px;" onclick="stopFaceCamera()" title="Close Camera">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        {{-- Crosshair and Oval Guidelines --}}
+                        <div class="biometric-crosshair top-left"></div>
+                        <div class="biometric-crosshair top-right"></div>
+                        <div class="biometric-crosshair bottom-left"></div>
+                        <div class="biometric-crosshair bottom-right"></div>
+                        <div class="biometric-oval-frame"></div>
+
+                        {{-- Bottom Overlay Guideline Bar --}}
+                        <div class="position-absolute bottom-0 start-0 end-0 py-2.5 px-3 bg-dark bg-opacity-75 text-white text-center small" style="backdrop-filter: blur(4px); z-index: 10;">
+                            <i class="fa-solid fa-arrows-to-circle text-primary me-1"></i> Align your face within the oval guideline and click <strong>Take Snapshot</strong>
+                        </div>
+                    </div>
+
+                    {{-- Modal Bottom Actions Panel --}}
+                    <div class="p-3 bg-white d-flex justify-content-center align-items-center gap-2">
+                        <button type="button" class="btn btn-success btn-lg px-4 py-2.5 rounded-pill fw-bold shadow" onclick="captureFaceSnapshot()">
+                            <i class="fa-solid fa-camera-retro me-2"></i> Take Snapshot
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 py-2.5 rounded-pill text-muted fw-semibold" onclick="stopFaceCamera()">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -917,6 +971,7 @@
         let otpCountdownInterval = null;
         let otpModalInstance = null;
         let channelChooserInstance = null;
+        let faceCameraModalInstance = null;
 
         // ============================================
         // GOOGLE SIGN-UP: Pre-mark email as verified
@@ -972,26 +1027,6 @@
                 }
             }
 
-            // Sync Step 1 contact fields → Step 2 when entering Step 2
-            if (step === 2 && currentStep === 1) {
-                const s1Phone = document.getElementById('step1PhoneNumber');
-                const s1Email = document.getElementById('step1Email');
-                const s2Phone = document.querySelector('input[name="phone_number"]');
-                const s2Email = document.querySelector('input[name="email"]');
-                if (s1Phone && s2Phone) s2Phone.value = s1Phone.value;
-                if (s1Email && s2Email && !s2Email.readOnly) s2Email.value = s1Email.value;
-            }
-
-            // Sync Step 2 contact fields → Step 1 when going back to Step 1
-            if (step === 1 && currentStep === 2) {
-                const s1Phone = document.getElementById('step1PhoneNumber');
-                const s1Email = document.getElementById('step1Email');
-                const s2Phone = document.querySelector('input[name="phone_number"]');
-                const s2Email = document.querySelector('input[name="email"]');
-                if (s2Phone && s1Phone) s1Phone.value = s2Phone.value;
-                if (s2Email && s1Email && !s1Email.readOnly) s1Email.value = s2Email.value;
-            }
-
             // When entering Step 3, show the verified badge in Step 2
             if (step === 3) {
                 const badge = document.getElementById('verifiedCredentialBadge');
@@ -1017,8 +1052,8 @@
 
             currentStep = step;
 
-            // Scroll to top of card
-            document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll right panel back to top cleanly
+            document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function openChannelChooser() {
@@ -1370,17 +1405,21 @@
             }
             clearInterval(otpCountdownInterval);
             setTimeout(() => {
-                document.querySelectorAll('.modal-backdrop').forEach(b => {
-                    if (!document.querySelector('.modal.show')) {
-                        b.remove();
-                    }
-                });
-                if (!document.querySelector('.modal.show')) {
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('padding-right');
-                    document.body.style.removeProperty('overflow');
-                }
+                cleanupModalBackdrops();
             }, 400);
+        }
+
+        function cleanupModalBackdrops() {
+            document.querySelectorAll('.modal-backdrop').forEach(b => {
+                if (!document.querySelector('.modal.show')) {
+                    b.remove();
+                }
+            });
+            if (!document.querySelector('.modal.show')) {
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.body.style.removeProperty('overflow');
+            }
         }
 
         // Setup OTP code box listeners
@@ -1442,23 +1481,6 @@
             }
         });
 
-        // Also invalidate if Step 1 contact fields change
-        document.getElementById('step1PhoneNumber')?.addEventListener('input', function() {
-            const clean = this.value.trim().replace(/[^0-9]/g, '');
-            if (isContactVerified && verifiedTarget && !verifiedTarget.includes('@') && verifiedTarget !== clean) {
-                isContactVerified = false;
-                verifiedTarget = '';
-                document.getElementById('verifiedCredentialBadge')?.classList.add('d-none');
-            }
-        });
-        document.getElementById('step1Email')?.addEventListener('input', function() {
-            if (isContactVerified && verifiedTarget && verifiedTarget.includes('@') && verifiedTarget !== this.value.trim()) {
-                isContactVerified = false;
-                verifiedTarget = '';
-                document.getElementById('verifiedCredentialBadge')?.classList.add('d-none');
-            }
-        });
-
         function validateStep(step) {
             clearErrors();
 
@@ -1491,32 +1513,6 @@
                 if (isNaN(ageVal) || ageVal < 0 || ageVal > 150) {
                     document.querySelector('[name="age"]').classList.add('field-error');
                     showAlert('Please enter a valid age between 0 and 150.');
-                    return false;
-                }
-
-                // Validate Step 1 contact fields
-                const s1Phone = document.getElementById('step1PhoneNumber');
-                const s1Email = document.getElementById('step1Email');
-                const s1PhoneVal = s1Phone ? s1Phone.value.trim().replace(/[^0-9]/g, '') : '';
-                const s1EmailVal = s1Email ? s1Email.value.trim() : '';
-
-                @if(!$viaGoogle)
-                if (!s1PhoneVal && !s1EmailVal) {
-                    if (s1Phone) { s1Phone.classList.add('field-error'); s1Phone.focus(); }
-                    showAlert('Please provide a mobile number or email address.');
-                    return false;
-                }
-
-                if (s1PhoneVal && (s1PhoneVal.length < 10 || s1PhoneVal.length > 11)) {
-                    if (s1Phone) { s1Phone.classList.add('field-error'); s1Phone.focus(); }
-                    showAlert('Please enter a valid mobile number (e.g. 09XXXXXXXXX).');
-                    return false;
-                }
-                @endif
-
-                if (s1EmailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s1EmailVal)) {
-                    if (s1Email) { s1Email.classList.add('field-error'); s1Email.focus(); }
-                    showAlert('Please enter a valid email address.');
                     return false;
                 }
 
@@ -1714,20 +1710,16 @@
         });
 
         // ============================================
-        // LIVE FACE VERIFICATION / WEBCAM SYSTEM
+        // LIVE FACE VERIFICATION / WEBCAM MODAL SYSTEM
         // ============================================
         let faceMediaStream = null;
 
         async function startFaceCamera() {
             try {
                 const videoEl = document.getElementById('faceVideoElement');
-                const promptState = document.getElementById('facePromptState');
-                const activeState = document.getElementById('faceActiveState');
-                const capturedState = document.getElementById('faceCapturedState');
                 const fallbackBox = document.getElementById('selfieUploadFallbackBox');
 
                 if (fallbackBox) fallbackBox.classList.add('d-none');
-                if (capturedState) capturedState.classList.add('d-none');
 
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     alert('Camera is not supported on this browser or device. Please upload a selfie photo instead.');
@@ -1750,8 +1742,15 @@
                     await videoEl.play();
                 }
 
-                if (promptState) promptState.classList.add('d-none');
-                if (activeState) activeState.classList.remove('d-none');
+                const modalEl = document.getElementById('faceCameraModal');
+                if (!faceCameraModalInstance) {
+                    faceCameraModalInstance = new bootstrap.Modal(modalEl, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                }
+                faceCameraModalInstance.show();
+
             } catch (err) {
                 console.warn('Face camera access error:', err);
                 alert('Could not access camera (' + (err.message || 'permission denied') + '). You may upload a photo of your face instead.');
@@ -1767,12 +1766,25 @@
             const videoEl = document.getElementById('faceVideoElement');
             if (videoEl) videoEl.srcObject = null;
 
+            if (faceCameraModalInstance) {
+                faceCameraModalInstance.hide();
+            } else {
+                const modalEl = document.getElementById('faceCameraModal');
+                const instance = bootstrap.Modal.getInstance(modalEl);
+                if (instance) instance.hide();
+            }
+
             const promptState = document.getElementById('facePromptState');
-            const activeState = document.getElementById('faceActiveState');
-            if (activeState) activeState.classList.add('d-none');
-            if (promptState && document.getElementById('faceCapturedState')?.classList.contains('d-none')) {
+            const capturedState = document.getElementById('faceCapturedState');
+
+            // Only show initial prompt state if NO photo is currently captured
+            if (promptState && (!capturedState || capturedState.classList.contains('d-none'))) {
                 promptState.classList.remove('d-none');
             }
+
+            setTimeout(() => {
+                cleanupModalBackdrops();
+            }, 400);
         }
 
         function captureFaceSnapshot() {
@@ -1780,8 +1792,8 @@
             const canvas = document.getElementById('faceSnapshotCanvas');
             const previewImg = document.getElementById('faceCapturedPreview');
             const hiddenInput = document.getElementById('selfiePhotoInput');
-            const activeState = document.getElementById('faceActiveState');
             const capturedState = document.getElementById('faceCapturedState');
+            const promptState = document.getElementById('facePromptState');
             const flashOverlay = document.getElementById('faceFlashOverlay');
 
             if (!videoEl || !canvas) return;
@@ -1815,29 +1827,34 @@
             if (fileInput) fileInput.value = '';
 
             setTimeout(() => {
-                stopFaceCamera();
-                if (activeState) activeState.classList.add('d-none');
+                // Hide prompt box completely and show captured photo preview
+                if (promptState) promptState.classList.add('d-none');
                 if (capturedState) capturedState.classList.remove('d-none');
+                stopFaceCamera();
             }, 200);
         }
 
         function retakeFacePhoto() {
             const hiddenInput = document.getElementById('selfiePhotoInput');
             const capturedState = document.getElementById('faceCapturedState');
+            const promptState = document.getElementById('facePromptState');
+
             if (hiddenInput) hiddenInput.value = '';
             if (capturedState) capturedState.classList.add('d-none');
+            if (promptState) promptState.classList.remove('d-none');
+
             startFaceCamera();
         }
 
         function toggleSelfieUploadFallback() {
             stopFaceCamera();
             document.getElementById('facePromptState')?.classList.add('d-none');
-            document.getElementById('faceActiveState')?.classList.add('d-none');
             document.getElementById('selfieUploadFallbackBox')?.classList.remove('d-none');
         }
 
         function useFaceCameraInstead() {
             document.getElementById('selfieUploadFallbackBox')?.classList.add('d-none');
+            document.getElementById('facePromptState')?.classList.remove('d-none');
             startFaceCamera();
         }
 
@@ -1851,7 +1868,6 @@
                     if (previewImg) previewImg.src = e.target.result;
                     if (hiddenInput) hiddenInput.value = ''; // Let server process the file input
                     document.getElementById('facePromptState')?.classList.add('d-none');
-                    document.getElementById('faceActiveState')?.classList.add('d-none');
                     document.getElementById('selfieUploadFallbackBox')?.classList.add('d-none');
                     if (capturedState) capturedState.classList.remove('d-none');
                 };

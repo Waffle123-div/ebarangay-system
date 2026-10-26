@@ -1,6 +1,11 @@
 @extends('resident.layouts.resident')
 
 @section('content')
+@php
+    // Dynamically fetch the updated fee from any matching database column
+    $effectiveFee = (float) ($docRequest->fee ?? $docRequest->fee_amount ?? $docRequest->amount ?? $feeAmount ?? 0);
+@endphp
+
 <div class="container py-4">
 
     {{-- Top Action Bar --}}
@@ -11,7 +16,6 @@
             </a>
         </div>
         <div class="d-flex gap-2">
-            <!-- THE FIX: Changed button to trigger the image download script -->
             <button onclick="downloadReceiptAsImage()" class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm">
                 <i class="fa-solid fa-download me-1"></i> Save as Image
             </button>
@@ -19,7 +23,6 @@
     </div>
 
     {{-- Official Printable Receipt Document --}}
-    <!-- THE FIX: Added id="receiptCard" so html2canvas knows what to target -->
     <div id="receiptCard" class="card border-0 shadow-lg rounded-4 overflow-hidden mx-auto printable-receipt" style="max-width: 800px; background: #fff;">
         
         {{-- Receipt Header --}}
@@ -92,9 +95,9 @@
                             <td class="fw-bold text-dark font-monospace py-3">{{ $docRequest->tracking_number }}</td>
                             <td class="fw-bold text-primary py-3">{{ $docRequest->document_type }}</td>
                             <td class="text-muted small py-3">{{ $docRequest->purpose ?: 'General Purpose' }}</td>
-                            <td class="fw-bold text-dark text-end py-3">
-                                @if($feeAmount > 0)
-                                    ₱{{ number_format($feeAmount, 2) }}
+                            <td class="fw-bold text-end py-3">
+                                @if($effectiveFee > 0)
+                                    <span class="text-success fw-bold fs-6">₱{{ number_format($effectiveFee, 2) }}</span>
                                 @else
                                     <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">TO BE SETTLED</span>
                                 @endif
@@ -102,36 +105,6 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-
-            {{-- Summary & Status --}}
-            <div class="row align-items-center mb-4">
-                <div class="col-sm-6 mb-3 mb-sm-0">
-                    <div class="p-3 rounded-3 border bg-light">
-                        <span class="text-muted small d-block mb-1">DOCUMENT STATUS</span>
-                        @if($docRequest->status == 'Completed')
-                            <span class="badge bg-success text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Completed / Claimed</span>
-                        @elseif($docRequest->status == 'Ready')
-                            <span class="badge bg-info text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-bell me-1"></i> Ready for Pickup</span>
-                        @elseif($docRequest->status == 'Rejected')
-                            <span class="badge bg-danger text-white px-3 py-2 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
-                        @else
-                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-clock me-1"></i> {{ $docRequest->status }}</span>
-                        @endif
-                    </div>
-                </div>
-                <div class="col-sm-6 text-sm-end">
-                    <div class="p-3 rounded-3 border bg-light">
-                        <span class="text-muted small d-block mb-1">TOTAL AMOUNT</span>
-                        <h4 class="fw-bold text-success mb-0">
-                            @if($feeAmount > 0)
-                                ₱{{ number_format($feeAmount, 2) }}
-                            @else
-                                TO BE SETTLED
-                            @endif
-                        </h4>
-                    </div>
-                </div>
             </div>
 
             {{-- Footer Note & QR Code Simulation --}}
@@ -158,22 +131,18 @@
 
 </div>
 
-<!-- THE FIX: Include html2canvas library for screenshot capability -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 function downloadReceiptAsImage() {
     const receiptCard = document.getElementById('receiptCard');
     
-    // Use html2canvas to take a snapshot of the element
     html2canvas(receiptCard, {
-        scale: 2, // Higher scale for better image quality on mobile
-        useCORS: true // Ensures icons/fonts load correctly in the image
+        scale: 2,
+        useCORS: true
     }).then(canvas => {
-        // Convert the canvas to a data URL (PNG)
         const image = canvas.toDataURL("image/png");
         
-        // Create a temporary link element to trigger the download
         const link = document.createElement('a');
         link.download = 'Receipt-{{ $receiptNumber }}.png';
         link.href = image;
@@ -183,7 +152,6 @@ function downloadReceiptAsImage() {
 </script>
 
 <style>
-/* Kept print styles just in case a user uses standard Ctrl+P */
 @media print {
     .top-navbar, .sidebar-wrapper, #sidebar-wrapper, .no-print, nav, footer, .btn,
     [id*="chat"], [class*="chat"], iframe {

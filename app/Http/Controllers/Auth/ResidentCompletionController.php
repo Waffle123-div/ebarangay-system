@@ -68,13 +68,15 @@ class ResidentCompletionController extends Controller
                     $ext = 'png';
                 }
                 $selfieFileName = 'selfie_' . \Illuminate\Support\Str::random(24) . '.' . $ext;
-                \Illuminate\Support\Facades\Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
+                // CHANGED: Saved to private storage disk ('local') instead of 'public'
+                \Illuminate\Support\Facades\Storage::disk('local')->put('selfies/' . $selfieFileName, $decoded);
                 $updateData['selfie_photo'] = 'selfies/' . $selfieFileName;
                 $updateData['face_verified_at'] = now();
             }
         } elseif ($request->hasFile('selfie_upload') || $request->hasFile('selfie_photo')) {
             $file = $request->file('selfie_upload') ?: $request->file('selfie_photo');
-            $updateData['selfie_photo'] = $file->store('selfies', 'public');
+            // CHANGED: Saved to private storage disk ('local') instead of 'public'
+            $updateData['selfie_photo'] = $file->store('selfies', 'local');
             $updateData['face_verified_at'] = now();
         }
 

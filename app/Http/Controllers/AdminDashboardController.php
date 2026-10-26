@@ -147,8 +147,18 @@ class AdminDashboardController extends Controller
             'fee' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $fee = $request->filled('fee') ? $request->fee : null;
+        $fee = $request->filled('fee') ? (float)$request->fee : null;
         $docRequest->fee = $fee;
+
+        // Sync documents JSON array if present
+        if (!empty($docRequest->documents) && is_array($docRequest->documents)) {
+            $docs = $docRequest->documents;
+            foreach ($docs as &$doc) {
+                $doc['fee'] = $fee;
+            }
+            $docRequest->documents = $docs;
+        }
+
         $docRequest->save();
 
         $feeText = $fee !== null ? '₱' . number_format($fee, 2) : 'To be settled';
@@ -514,6 +524,20 @@ class AdminDashboardController extends Controller
     {
         $user = auth()->user(); 
         return view('admin.profile.profile_settings', compact('user'));
+    }
+
+    /**
+     * Securely stream private resident selfies to authorized administrators.
+     */
+    public function showSelfie($filename)
+    {
+        $path = 'selfies/' . $filename;
+
+        if (!Storage::disk('local')->exists($path)) {
+            abort(404, 'Selfie not found.');
+        }
+
+        return Storage::disk('local')->response($path);
     }
 
     public function updateProfile(Request $request)
@@ -1116,7 +1140,7 @@ class AdminDashboardController extends Controller
 
         $docType = trim($request->document_type);
         $purpose = strtoupper(trim($request->purpose));
-        $fee = $request->boolean('waive_fee') ? 0 : ($request->filled('fee') ? $request->fee : null);
+        $fee = $request->boolean('waive_fee') ? 0 : ($request->filled('fee') ? (float)$request->fee : null);
 
         $newRequest->document_type = $docType;
         $newRequest->document_type_id = \App\Models\DocumentType::where('name', $docType)->value('id');
@@ -1275,13 +1299,23 @@ class AdminDashboardController extends Controller
         $docRequest = DocumentRequest::findOrFail($id);
         
         if ($request->filled('fee')) {
-            $docRequest->fee = $request->fee;
+            $fee = (float)$request->fee;
+            $docRequest->fee = $fee;
+
+            if (!empty($docRequest->documents) && is_array($docRequest->documents)) {
+                $docs = $docRequest->documents;
+                foreach ($docs as &$doc) {
+                    $doc['fee'] = $fee;
+                }
+                $docRequest->documents = $docs;
+            }
         }
 
         if (in_array($docRequest->status, ['Pending', 'Under Review'])) {
             $docRequest->status = 'Processing';
-            $docRequest->save();
         }
+
+        $docRequest->save();
 
         ActivityLog::record('request_accepted', "Accepted document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
 

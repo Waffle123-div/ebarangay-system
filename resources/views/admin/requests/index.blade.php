@@ -630,6 +630,8 @@
 
                     @php
                         $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                        $docTypeLower = strtolower($request->document_type ?? '');
+                        $isBusinessClearance = str_contains($docTypeLower, 'business');
                     @endphp
 
                     <tr class="{{ $isUrgent ? 'bg-danger bg-opacity-10' : '' }}" id="req-row-{{ $request->id }}">
@@ -664,7 +666,10 @@
                                         <i class="fa-solid fa-id-card me-1"></i>{{ $idType }}
                                     </span>
                                 @endif
-                                @if($request->fee !== null && (float)$request->fee > 0)
+                                
+                                @if(!$isBusinessClearance)
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10px;">FREE</span>
+                                @elseif($request->fee !== null && (float)$request->fee > 0)
                                     <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
                                 @else
                                     <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10px;">To be settled</span>
@@ -834,6 +839,8 @@
                 @php
                     $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                     $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
+                    $docTypeLower = strtolower($request->document_type ?? '');
+                    $isBusinessClearance = str_contains($docTypeLower, 'business');
                 @endphp
                 <div class="mobile-request-card {{ $isUrgent ? 'border-danger border-opacity-50' : '' }}" style="{{ $isUrgent ? 'background-color: #fff5f5;' : '' }}">
                     {{-- Header: Tracking ID + Status Badge --}}
@@ -891,7 +898,10 @@
                                     <i class="fa-solid fa-id-card me-1"></i>{{ $idType }}
                                 </span>
                             @endif
-                            @if($request->fee !== null && (float)$request->fee > 0)
+                            
+                            @if(!$isBusinessClearance)
+                                <span class="badge bg-success bg-opacity-10 text-success fw-bold ms-auto" style="font-size: 11px;">FREE</span>
+                            @elseif($request->fee !== null && (float)$request->fee > 0)
                                 <span class="badge bg-success bg-opacity-10 text-success fw-bold ms-auto" style="font-size: 11px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
                             @else
                                 <span class="badge bg-warning bg-opacity-10 text-warning ms-auto" style="font-size: 11px;">To be settled</span>
@@ -1046,7 +1056,11 @@
 
 <div id="modals-container">
     @foreach($allRequests as $request)
-    @php $editable = true; @endphp
+    @php 
+        $editable = true;
+        $docTypeLower = strtolower($request->document_type ?? '');
+        $isBusinessClearance = str_contains($docTypeLower, 'business');
+    @endphp
     <div class="modal fade" id="viewModal{{ $request->id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ $request->id }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow">
@@ -1110,7 +1124,7 @@
                             </div>
                         </div>
 
-                        {{-- Row 2: Name + Age (aligned 50/50 so Age aligns with Status) --}}
+                        {{-- Row 2: Name + Age --}}
                         <div class="row g-0 mb-0">
                             <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
                                 <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Applicant Name</p>
@@ -1122,7 +1136,7 @@
                             </div>
                         </div>
 
-                        {{-- Row 3: Contact + Document (aligned 50/50) --}}
+                        {{-- Row 3: Contact + ID Type --}}
                         <div class="row g-0 mb-0">
                             <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
                                 <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Contact Info</p>
@@ -1143,32 +1157,45 @@
                             </div>
                         </div>
 
-                        {{-- Row 4: Fee Amount + Date Submitted (aligned 50/50) --}}
+                        {{-- Row 4: Fee Amount + Date Submitted --}}
                         <div class="row g-0 mb-0">
                             <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <p class="text-muted mb-0" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Fee Amount</p>
-                                    @if($request->fee !== null && (float)$request->fee > 0)
-                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">SET: ₱{{ number_format($request->fee, 2) }}</span>
+                                    @if(!$isBusinessClearance)
+                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">
+                                            <i class="fa-solid fa-circle-check me-1"></i>FREE
+                                        </span>
                                     @else
-                                        <span class="badge bg-warning bg-opacity-10 text-warning fw-bold" style="font-size:11px;">TO BE SETTLED</span>
+                                        @if($request->fee !== null && (float)$request->fee > 0)
+                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">SET: ₱{{ number_format($request->fee, 2) }}</span>
+                                        @else
+                                            <span class="badge bg-warning bg-opacity-10 text-warning fw-bold" style="font-size:11px;">TO BE SETTLED</span>
+                                        @endif
                                     @endif
                                 </div>
-                                <form action="{{ route('admin.requests.updateFee', $request->id) }}" method="POST" class="d-flex align-items-center gap-1 mt-1">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-light text-muted fw-bold" style="font-size: 13px;">₱</span>
-                                        <input type="number" step="0.01" min="0" name="fee" 
-                                               class="form-control form-control-sm font-monospace fw-bold" 
-                                               placeholder="0.00" 
-                                               value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}"
-                                               style="font-size:13px;">
-                                        <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold" title="Save Fee Amount">
-                                            <i class="fa-solid fa-check me-1"></i> Save
-                                        </button>
+
+                                @if($isBusinessClearance)
+                                    <form action="{{ route('admin.requests.updateFee', $request->id) }}" method="POST" class="d-flex align-items-center gap-1 mt-1">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted fw-bold" style="font-size: 13px;">₱</span>
+                                            <input type="number" step="0.01" min="0" name="fee" 
+                                                   class="form-control form-control-sm font-monospace fw-bold" 
+                                                   placeholder="0.00" 
+                                                   value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}"
+                                                   style="font-size:13px;">
+                                            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold" title="Save Fee Amount">
+                                                <i class="fa-solid fa-check me-1"></i> Save
+                                            </button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <div class="bg-light border rounded-3 p-2 text-center text-success fw-bold small mt-1">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Free of Charge
                                     </div>
-                                </form>
+                                @endif
                             </div>
                             <div class="col-6 ps-3 py-3" style="border-bottom: 1px solid #f0f0f0; border-left: 1px solid #f0f0f0;">
                                 <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Date Submitted</p>
@@ -1176,8 +1203,7 @@
                             </div>
                         </div>
 
-                        {{-- Row 5: Stated Purpose / Requested Document (full width) --}}
-                        {{-- Row 5: Stated Purpose / Requested Documents (full width) --}}
+                        {{-- Row 5: Stated Purpose / Requested Documents --}}
                         <div class="pt-3">
                             @php
                                 $modalDocsList = $request->documents_list;
@@ -1199,12 +1225,20 @@
                             @if($docsCount > 1)
                                 <div class="d-flex flex-column gap-2 mb-2">
                                     @foreach($modalDocsList as $docItem)
+                                        @php
+                                            $itemDocLower = strtolower($docItem['type'] ?? '');
+                                            $isItemBusiness = str_contains($itemDocLower, 'business');
+                                        @endphp
                                         <div class="bg-light rounded-3 p-3 border d-flex justify-content-between align-items-center gap-3">
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
                                                     <span class="fw-bold text-dark" style="font-size: 14px;">{{ $docItem['type'] }}</span>
-                                                    @if($docItem['fee'] !== null && (float)$docItem['fee'] > 0)
+                                                    @if(!$isItemBusiness)
+                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                                    @elseif($docItem['fee'] !== null && (float)$docItem['fee'] > 0)
                                                         <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($docItem['fee'], 2) }}</span>
+                                                    @else
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
                                                     @endif
                                                 </div>
                                                 <div class="text-muted small mt-1">
@@ -1224,8 +1258,12 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
                                             <span class="fw-bold text-dark" style="font-size: 14px;">{{ $request->document_type }}</span>
-                                            @if($request->fee !== null && (float)$request->fee > 0)
+                                            @if(!$isBusinessClearance)
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                            @elseif($request->fee !== null && (float)$request->fee > 0)
                                                 <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
+                                            @else
+                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
                                             @endif
                                         </div>
                                         <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
@@ -1363,12 +1401,17 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small fw-semibold text-muted mb-1">Fee Amount (₱)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light text-muted fw-bold">₱</span>
-                                        <input type="number" step="0.01" min="0" name="fee" class="form-control rounded-end-3 font-monospace fw-bold" 
-                                               value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}" 
-                                               placeholder="0.00 (Leave blank for 'To be settled')">
-                                    </div>
+                                    @if($isBusinessClearance)
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted fw-bold">₱</span>
+                                            <input type="number" step="0.01" min="0" name="fee" class="form-control rounded-end-3 font-monospace fw-bold" 
+                                                   value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}" 
+                                                   placeholder="0.00 (Leave blank for 'To be settled')">
+                                        </div>
+                                    @else
+                                        <input type="text" class="form-control rounded-3 bg-light text-success fw-bold" value="FREE" readonly>
+                                        <input type="hidden" name="fee" value="0">
+                                    @endif
                                 </div>
                             </div>
 
@@ -1859,8 +1902,6 @@
         }
     });
 </script>
-
-
 
 {{-- MODAL: BULK DELETE CONFIRMATION FOR REQUESTS --}}
 <div class="modal fade" id="requestsBulkDeleteModal" tabindex="-1" aria-hidden="true">

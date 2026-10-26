@@ -11,7 +11,7 @@ use App\Http\Controllers\Auth\ResidentCompletionController;
 use Illuminate\Http\Request;
 use App\Http\Middleware\AdminMiddleware;
 
-// We added these 3 imports for the custom verification auto-login
+// Imports for custom verification auto-login
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +30,7 @@ Route::get('/', function () {
         return redirect()->route('resident.dashboard');
     }
     
-    // 2. If they are NOT logged in, show the brand new Guest Landing Page!
+    // 2. If they are NOT logged in, show the Guest Landing Page!
     return view('welcome');
 });
 
@@ -68,15 +68,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
 
+    // Secure Resident Selfie Route for Staff
+    Route::get('/resident-selfie/{filename}', [AdminDashboardController::class, 'showSelfie'])->name('resident.selfie');
+
     // Document Generation Route
     Route::get('/requests/generate/{id}', [AdminDashboardController::class, 'generateWord'])->name('requests.generate');
     Route::get('/requests/{id}', [AdminDashboardController::class, 'showRequest'])->name('requests.show');
     
-    // Action Button Routes (legacy placeholder routes removed — use .accept and .reject)
+    // Action Button Routes
     Route::delete('/requests/bulk-delete', [AdminDashboardController::class, 'bulkDestroyRequests'])->name('requests.bulk-delete');
     Route::delete('/requests/{id}', [AdminDashboardController::class, 'destroy'])->name('requests.destroy');
 
-    // --- NEW PIPELINE ROUTES (Accept/Reject Gateway) ---
+    // --- PIPELINE ROUTES (Accept/Reject Gateway) ---
     Route::patch('/requests/{id}/accept', [AdminDashboardController::class, 'acceptRequest'])->name('requests.accept');
     Route::patch('/requests/{id}/reject', [AdminDashboardController::class, 'rejectRequest'])->name('requests.reject');
     Route::patch('/requests/{id}/ready', [AdminDashboardController::class, 'markReady'])->name('requests.ready');
@@ -135,7 +138,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 // VERIFICATION ROUTES (Email & Phone)
 // ==========================================
 
-// 1. The Waiting Rooms (Needs auth because they are currently sitting on the screen)
+// 1. The Waiting Rooms
 Route::middleware('auth')->group(function () {
     
     // Email Verification Routes
@@ -153,37 +156,36 @@ Route::middleware('auth')->group(function () {
         }
     })->middleware('throttle:6,1')->name('verification.send');
 
-    // NEW: Phone Verification Routes
+    // Phone Verification Routes
     Route::get('/phone/verify', [ResidentAuthController::class, 'showVerifyPhoneForm'])->name('verify_phone.notice');
     Route::post('/phone/verify', [ResidentAuthController::class, 'verifyPhoneCode'])->name('verify_phone.submit');
 });
 
-// 2. The actual link they click in their Gmail (Moved OUTSIDE auth middleware so we can auto-login!)
+// 2. Verification link from email
 Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) {
     
     $user = User::findOrFail($id);
 
-    // Security check: Verify the hash matches their email
+    // Security check: Verify hash matches email
     if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
         abort(403, 'Invalid or expired verification link.');
     }
 
-    // Mark the email as verified in the database
+    // Mark email as verified in database
     if (!$user->hasVerifiedEmail()) {
         $user->markEmailAsVerified();
         event(new Verified($user));
     }
 
-    // Automatically log the user back in so they never see the login screen!
+    // Automatically log user in
     Auth::login($user);
 
-    // Now correctly route them based on their status
+    // Route based on user status
     if ($user->status === 'incomplete') {
-        // Manual registration users already have ID uploaded from the 4-step wizard
         if ($user->proof_of_residency) {
             $user->update(['status' => 'pending_approval']);
 
-            // Notify admins about the new pending registration
+            // Notify admins
             $admins = \App\Models\User::where('role', 'Admin')->get();
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\NewUserRegistrationNotification($user));
@@ -207,7 +209,7 @@ Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) 
 // ==========================================
 Route::prefix('resident')->name('resident.')->group(function () {
     
-    // Guest routes (Only for people NOT logged in)
+    // Guest routes
     Route::middleware('guest')->group(function () {
         Route::get('/login', [ResidentAuthController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [ResidentAuthController::class, 'login'])->name('login.submit');
@@ -215,7 +217,6 @@ Route::prefix('resident')->name('resident.')->group(function () {
         Route::post('/forgot-password/search', [ResidentAuthController::class, 'searchAccount'])->name('forgot_password.search');
         Route::post('/forgot-password/send', [ResidentAuthController::class, 'sendResetLink'])->name('forgot_password.send');
         
-        // Removed the "resident." prefix from these routes
         Route::get('/forgot-password/verify', [ResidentAuthController::class, 'showVerifyCodeForm'])->name('forgot_password.verify');
         Route::post('/forgot-password/verify', [ResidentAuthController::class, 'verifyCode'])->name('forgot_password.verify.submit');
         Route::get('/forgot-password/reset', [ResidentAuthController::class, 'showResetPasswordForm'])->name('forgot_password.reset');
@@ -223,33 +224,32 @@ Route::prefix('resident')->name('resident.')->group(function () {
         Route::get('/forgot-password/success', [ResidentAuthController::class, 'showResetSuccess'])->name('forgot_password.success');
     });
 
-    // Registration routes (Accessible so Sign Up button always opens registration)
+    // Registration routes
     Route::get('/register', [ResidentAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [ResidentAuthController::class, 'register'])->name('register.submit');
     Route::post('/register/send-otp', [ResidentAuthController::class, 'sendRegistrationOtp'])->name('register.send_otp');
     Route::post('/register/verify-otp', [ResidentAuthController::class, 'verifyRegistrationOtp'])->name('register.verify_otp');
 
-    // Logout route (Support GET and POST to prevent 419 expired page errors)
+    // Logout route
     Route::match(['get', 'post'], '/logout', [ResidentAuthController::class, 'logout'])->name('logout');
 
 });
 
 // ==========================================
-// RESIDENT COMPLETION ROUTES (Google & Phone Sign-ups)
+// RESIDENT COMPLETION ROUTES
 // ==========================================
 Route::middleware(['auth'])->group(function () {
     Route::get('/complete-registration', [ResidentCompletionController::class, 'showForm'])->name('register.complete');
     Route::post('/complete-registration', [ResidentCompletionController::class, 'submitForm'])->name('register.complete.submit');
 });
 
-// The "Waiting Room" after submitting the 3-step form
-// MOVED OUTSIDE the auth middleware so logged-out users can wait here!
+// Pending approval screen
 Route::get('/resident/pending-approval', function () {
     return view('resident.pending_approval');
 })->name('resident.pending');
 
 // ==========================================
-// PIN SETUP ROUTE (Must NOT have the 'require.pin' middleware)
+// PIN SETUP ROUTE
 // ==========================================
 Route::post('/resident/setup-pin', [ResidentAuthController::class, 'setupPin'])
     ->name('resident.pin.setup')
@@ -258,7 +258,6 @@ Route::post('/resident/setup-pin', [ResidentAuthController::class, 'setupPin'])
 // ==========================================
 // RESIDENT PANEL ROUTES (Protected, Verified, & PIN Required)
 // ==========================================
-// NEW: Added 'require.pin' to the middleware array!
 Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'require.pin'])->group(function () {
     Route::get('/', [ResidentDashboardController::class, 'index'])->name('dashboard');
     Route::get('/request-document', [ResidentDashboardController::class, 'createRequest'])->name('request.create');
@@ -271,14 +270,14 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     // Form Submission Route
     Route::post('/request-document', [ResidentDashboardController::class, 'store'])->name('request.store');
 
-    // THE NEW AJAX POLLING ROUTE
+    // AJAX polling route
     Route::get('/requests/check-updates', [ResidentDashboardController::class, 'checkUpdates'])->name('requests.check');
 
-    // THE SESSION LOCK ROUTES
+    // Session lock routes
     Route::post('/session/lock', [ResidentAuthController::class, 'lockSession'])->name('session.lock');
     Route::post('/session/unlock', [ResidentAuthController::class, 'unlockSession'])->name('session.unlock');
 
-    // When the resident clicks the bell, the red badge needs to disappear.
+    // Mark notifications read
     Route::post('/notifications/mark-read', [ResidentDashboardController::class, 'markNotificationsRead'])->name('notifications.read');
 
     // ==========================================
@@ -292,6 +291,8 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     // RESIDENT SETTINGS ROUTES
     // ==========================================
     Route::get('/settings', [ResidentSettingsController::class, 'index'])->name('settings');
+    Route::post('/settings/send-otp', [ResidentSettingsController::class, 'sendOtp'])->name('settings.send_otp');
+    Route::post('/settings/verify-otp', [ResidentSettingsController::class, 'verifyOtp'])->name('settings.verify_otp');
     Route::post('/settings/profile', [ResidentSettingsController::class, 'updateProfile'])->name('settings.profile');
     Route::post('/settings/account', [ResidentSettingsController::class, 'updateAccount'])->name('settings.account');
     Route::post('/settings/password', [ResidentSettingsController::class, 'updatePassword'])->name('settings.password');

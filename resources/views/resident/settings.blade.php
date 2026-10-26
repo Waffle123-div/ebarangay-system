@@ -292,6 +292,43 @@
         box-shadow: 0 1px 3px rgba(220, 38, 38, 0.04);
     }
 
+    /* ---- OTP Verification Code Boxes ---- */
+    .settings-code-box {
+        width: 48px;
+        height: 56px;
+        font-size: 22px;
+        text-align: center;
+        font-weight: 700;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .settings-code-box:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.15);
+        outline: none;
+    }
+    .settings-code-box.shake {
+        animation: settingsShake 0.4s ease-in-out;
+        border-color: #dc3545;
+    }
+    @keyframes settingsShake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+    }
+
+    /* ---- Channel Selector Options Card ---- */
+    .otp-channel-card {
+        transition: all 0.2s ease;
+        background: #f9fafb;
+        cursor: pointer;
+    }
+    .otp-channel-card:hover {
+        border-color: var(--color-primary) !important;
+        background: #f0f5fa;
+    }
+
     /* ---- Tab pane transitions ---- */
     .tab-pane { animation: fadeInUp 0.3s ease; }
     @keyframes fadeInUp {
@@ -1338,29 +1375,102 @@
     </div>
 </div>
 
-{{-- PIN Verification Modal --}}
-<div class="modal fade" id="pinVerificationModal" tabindex="-1" aria-labelledby="pinVerificationModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
+{{-- ============================================ --}}
+{{-- ACCOUNT SETTINGS OTP VERIFICATION MODAL     --}}
+{{-- ============================================ --}}
+<div class="modal fade" id="settingsOtpModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="settingsOtpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 py-4 justify-content-center flex-column text-center" style="background: rgba(30,64,175,0.05);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm" style="width:60px;height:60px;background:#fff;color:var(--color-primary);">
-                    <i class="fa-solid fa-shield-halved fs-4"></i>
+            
+            {{-- STEP 1: CHANNEL CHOICE (Only displayed when user has BOTH email and phone registered) --}}
+            <div id="settingsOtpChannelStep" class="modal-body text-center p-4 d-none">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: #e8f0fe; color: #0b2e59; border-radius: 50%; font-size: 1.75rem;">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <h5 class="modal-title fw-bold mb-1" id="pinVerificationModalLabel">Owner Verification</h5>
-                <p class="text-muted small mb-0">Please enter your 6-digit security PIN to confirm these changes.</p>
+
+                <h5 class="fw-bold text-dark mb-1">Choose Verification Method</h5>
+                <p class="text-muted small mb-4">
+                    Select where you would like us to send your 5-digit security code:
+                </p>
+
+                <div class="d-flex flex-column gap-2 mb-4">
+                    <label class="otp-channel-card border rounded-3 p-3 text-start d-flex align-items-center gap-3 position-relative">
+                        <input type="radio" name="otp_channel_choice" value="email" class="form-check-input my-0" id="otpChoiceEmail" checked>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px; flex-shrink: 0;">
+                            <i class="fa-solid fa-envelope text-primary fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size:14px;">Email Address</div>
+                            <div class="text-muted small" id="choiceEmailLabel">---</div>
+                        </div>
+                    </label>
+
+                    <label class="otp-channel-card border rounded-3 p-3 text-start d-flex align-items-center gap-3 position-relative">
+                        <input type="radio" name="otp_channel_choice" value="phone" class="form-check-input my-0" id="otpChoicePhone">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-light" style="width: 40px; height: 40px; flex-shrink: 0;">
+                            <i class="fa-solid fa-mobile-screen-button text-success fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size:14px;">SMS / Mobile Phone</div>
+                            <div class="text-muted small" id="choicePhoneLabel">---</div>
+                        </div>
+                    </label>
+                </div>
+
+                <button type="button" class="btn btn-primary w-100 rounded-3 py-2.5 fw-semibold shadow-sm mb-2" id="btnConfirmChannelChoice" onclick="confirmChannelAndSendOtp()">
+                    <i class="fa-solid fa-paper-plane me-1"></i> Send Verification Code
+                </button>
+                <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" data-bs-dismiss="modal">
+                    Cancel
+                </button>
             </div>
-            <div class="modal-body p-4 text-center">
-                <div class="mb-3">
-                    <input type="password" id="modalPinInput" class="form-control form-control-settings text-center fw-bold fs-4 tracking-widest" 
-                           placeholder="••••••" maxlength="6" autocomplete="one-time-code" style="letter-spacing: 6px;">
-                    <div id="pinErrorMsg" class="text-danger small mt-2 d-none">Please enter your 6-digit PIN.</div>
+
+            {{-- STEP 2: CODE ENTRY & VERIFICATION --}}
+            <div id="settingsOtpCodeStep" class="modal-body text-center p-4">
+                
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: #e8f0fe; color: #0b2e59; border-radius: 50%; font-size: 1.75rem;">
+                    <i class="fa-solid fa-shield-halved" id="settingsOtpIcon"></i>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-light flex-grow-1 rounded-3 fw-bold py-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" id="confirmPinBtn" class="btn btn-primary flex-grow-1 rounded-3 fw-bold py-2 shadow-sm">
-                        <i class="fa-solid fa-check me-1"></i> Confirm & Proceed
+
+                <h5 class="fw-bold text-dark mb-1">Security Verification</h5>
+                <p class="text-muted small mb-2">
+                    To authorize this account update, enter the 5-digit code sent to:
+                </p>
+                
+                <div class="mb-3">
+                    <span class="badge bg-light text-primary border px-3 py-2 fw-bold fs-6 text-break" id="settingsOtpTargetLabel">---</span>
+                </div>
+
+                <div id="settingsOtpAlert" class="alert alert-danger border-0 small rounded-3 py-2 mb-3 d-none text-start"></div>
+
+                <!-- 5-Digit OTP Inputs -->
+                <div class="d-flex justify-content-center gap-2 mb-3" id="settingsOtpInputsContainer">
+                    <input type="text" class="settings-code-box form-control text-center fw-bold fs-4" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-index="0">
+                    <input type="text" class="settings-code-box form-control text-center fw-bold fs-4" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-index="1">
+                    <input type="text" class="settings-code-box form-control text-center fw-bold fs-4" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-index="2">
+                    <input type="text" class="settings-code-box form-control text-center fw-bold fs-4" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-index="3">
+                    <input type="text" class="settings-code-box form-control text-center fw-bold fs-4" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-index="4">
+                </div>
+
+                <button type="button" class="btn btn-primary w-100 rounded-3 py-2.5 fw-semibold mb-3 shadow-sm" id="btnVerifySettingsOtp" onclick="submitSettingsOtpVerification()">
+                    <i class="fa-solid fa-lock-open me-1"></i> Verify & Confirm
+                </button>
+
+                <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top">
+                    <span id="settingsOtpCountdownText">Resend code in <strong id="settingsOtpTimerSeconds">60</strong>s</span>
+                    <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 fw-semibold text-primary d-none" id="btnResendSettingsOtp" onclick="requestSettingsOtp(true)">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Resend Code
+                    </button>
+
+                    <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-secondary d-none ms-auto me-2" id="btnBackToChannels" onclick="showChannelStep()">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Change Method
+                    </button>
+
+                    <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-muted ms-auto" data-bs-dismiss="modal">
+                        Cancel
                     </button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -1371,6 +1481,15 @@
      PAGE SCRIPTS
      ============================================================ --}}
 <script>
+    // ---- User Contacts for OTP Authorization ----
+    const residentEmail = @json($user->email ?? '');
+    const residentPhone = @json($user->phone_number ?? '');
+
+    let activeSettingsOtpChannel = residentEmail ? 'email' : (residentPhone ? 'phone' : 'email');
+    let settingsOtpModalInstance = null;
+    let settingsOtpTimerInterval = null;
+    let activeFormToSubmit = null;
+
     // ---- Avatar Preview ----
     function previewAvatar(input) {
         if (input.files && input.files[0]) {
@@ -1465,32 +1584,256 @@
         }
     }
 
-    // ---- PIN Verification Modal Interceptor ----
-    let activeFormToSubmit = null;
-
-    function setupPinInterception(formId) {
+    // ---- OTP Verification Modal Handlers ----
+    function setupOtpInterception(formId) {
         const form = document.getElementById(formId);
         if (!form) return;
 
         form.addEventListener('submit', function(e) {
-            // Check if form already has the pin injected
-            const existingPinInput = form.querySelector('input[name="pin"]');
-            if (existingPinInput && existingPinInput.value.length >= 4) {
-                return;
+            const isVerifiedInput = form.querySelector('input[name="otp_verified"]');
+            if (isVerifiedInput && isVerifiedInput.value === '1') {
+                return; // Form submits normally if already verified
             }
 
-            e.preventDefault(); 
+            e.preventDefault();
             activeFormToSubmit = form;
-
-            document.getElementById('modalPinInput').value = '';
-            document.getElementById('pinErrorMsg').classList.add('d-none');
-
-            const pinModal = new bootstrap.Modal(document.getElementById('pinVerificationModal'));
-            pinModal.show();
+            openSettingsOtpModal();
         });
     }
 
-    // ---- Re-open active tab after redirect & Setup PIN Interceptors ----
+    function openSettingsOtpModal() {
+        const modalEl = document.getElementById('settingsOtpModal');
+        if (!settingsOtpModalInstance) {
+            settingsOtpModalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+        }
+
+        const hasBoth = Boolean(residentEmail && residentPhone);
+
+        if (hasBoth) {
+            // Show channel choice step first
+            showChannelStep();
+        } else {
+            // Automatically set channel and jump to code step
+            activeSettingsOtpChannel = residentEmail ? 'email' : (residentPhone ? 'phone' : 'email');
+            showCodeStepAndRequestOtp();
+        }
+
+        settingsOtpModalInstance.show();
+    }
+
+    function showChannelStep() {
+        clearInterval(settingsOtpTimerInterval);
+        document.getElementById('settingsOtpChannelStep').classList.remove('d-none');
+        document.getElementById('settingsOtpCodeStep').classList.add('d-none');
+
+        document.getElementById('choiceEmailLabel').textContent = maskEmail(residentEmail);
+        document.getElementById('choicePhoneLabel').textContent = maskPhone(residentPhone);
+    }
+
+    function confirmChannelAndSendOtp() {
+        const emailRadio = document.getElementById('otpChoiceEmail');
+        activeSettingsOtpChannel = emailRadio && emailRadio.checked ? 'email' : 'phone';
+
+        showCodeStepAndRequestOtp();
+    }
+
+    function showCodeStepAndRequestOtp() {
+        document.getElementById('settingsOtpChannelStep').classList.add('d-none');
+        document.getElementById('settingsOtpCodeStep').classList.remove('d-none');
+
+        const backBtn = document.getElementById('btnBackToChannels');
+        if (residentEmail && residentPhone) {
+            backBtn.classList.remove('d-none');
+        } else {
+            backBtn.classList.add('d-none');
+        }
+
+        clearSettingsOtpInputs();
+        hideSettingsOtpAlert();
+        updateSettingsOtpTargetDisplay();
+
+        requestSettingsOtp(false);
+    }
+
+    function updateSettingsOtpTargetDisplay() {
+        const label = document.getElementById('settingsOtpTargetLabel');
+        const icon = document.getElementById('settingsOtpIcon');
+
+        if (activeSettingsOtpChannel === 'email') {
+            label.textContent = maskEmail(residentEmail);
+            icon.className = 'fa-solid fa-envelope-circle-check';
+        } else {
+            label.textContent = maskPhone(residentPhone);
+            icon.className = 'fa-solid fa-comment-sms';
+        }
+    }
+
+    async function requestSettingsOtp(isResend = false) {
+        hideSettingsOtpAlert();
+        const resendBtn = document.getElementById('btnResendSettingsOtp');
+        const countdownText = document.getElementById('settingsOtpCountdownText');
+
+        if (resendBtn) resendBtn.classList.add('d-none');
+        if (countdownText) countdownText.classList.remove('d-none');
+
+        try {
+            const response = await fetch("{{ route('resident.settings.send_otp') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ channel: activeSettingsOtpChannel })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                showSettingsOtpAlert(data.message || 'Failed to send OTP code. Please try again.');
+                return;
+            }
+
+            startSettingsOtpTimer(60);
+            setTimeout(() => {
+                document.querySelector('.settings-code-box[data-index="0"]')?.focus();
+            }, 300);
+
+        } catch (err) {
+            showSettingsOtpAlert('Network error while requesting verification code.');
+        }
+    }
+
+    function startSettingsOtpTimer(seconds) {
+        clearInterval(settingsOtpTimerInterval);
+        let remaining = seconds;
+        const timerSpan = document.getElementById('settingsOtpTimerSeconds');
+        const countdownText = document.getElementById('settingsOtpCountdownText');
+        const resendBtn = document.getElementById('btnResendSettingsOtp');
+
+        if (timerSpan) timerSpan.textContent = remaining;
+
+        settingsOtpTimerInterval = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(settingsOtpTimerInterval);
+                if (countdownText) countdownText.classList.add('d-none');
+                if (resendBtn) resendBtn.classList.remove('d-none');
+            } else {
+                if (timerSpan) timerSpan.textContent = remaining;
+            }
+        }, 1000);
+    }
+
+    async function submitSettingsOtpVerification() {
+        hideSettingsOtpAlert();
+        const boxes = document.querySelectorAll('.settings-code-box');
+        let code = '';
+        boxes.forEach(b => code += b.value.trim());
+
+        if (code.length < 5) {
+            showSettingsOtpAlert('Please enter the complete 5-digit verification code.');
+            shakeSettingsBoxes();
+            return;
+        }
+
+        const btn = document.getElementById('btnVerifySettingsOtp');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Verifying...';
+
+        try {
+            const response = await fetch("{{ route('resident.settings.verify_otp') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ code: code, channel: activeSettingsOtpChannel })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                showSettingsOtpAlert(data.message || 'Incorrect verification code.');
+                shakeSettingsBoxes();
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                return;
+            }
+
+            // Success feedback
+            btn.className = 'btn btn-success w-100 rounded-3 py-2.5 fw-semibold mb-3 shadow-sm';
+            btn.innerHTML = '<i class="fa-solid fa-circle-check me-2"></i> Verified!';
+
+            setTimeout(() => {
+                if (settingsOtpModalInstance) settingsOtpModalInstance.hide();
+                btn.disabled = false;
+                btn.className = 'btn btn-primary w-100 rounded-3 py-2.5 fw-semibold mb-3 shadow-sm';
+                btn.innerHTML = origText;
+
+                if (activeFormToSubmit) {
+                    let verifiedField = activeFormToSubmit.querySelector('input[name="otp_verified"]');
+                    if (!verifiedField) {
+                        verifiedField = document.createElement('input');
+                        verifiedField.type = 'hidden';
+                        verifiedField.name = 'otp_verified';
+                        activeFormToSubmit.appendChild(verifiedField);
+                    }
+                    verifiedField.value = '1';
+                    activeFormToSubmit.submit();
+                }
+            }, 600);
+
+        } catch (err) {
+            showSettingsOtpAlert('Network error while verifying code.');
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    }
+
+    function shakeSettingsBoxes() {
+        document.querySelectorAll('.settings-code-box').forEach(b => {
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 400);
+        });
+    }
+
+    function clearSettingsOtpInputs() {
+        document.querySelectorAll('.settings-code-box').forEach(b => b.value = '');
+    }
+
+    function showSettingsOtpAlert(msg) {
+        const alertBox = document.getElementById('settingsOtpAlert');
+        if (alertBox) {
+            alertBox.textContent = msg;
+            alertBox.classList.remove('d-none');
+        }
+    }
+
+    function hideSettingsOtpAlert() {
+        const alertBox = document.getElementById('settingsOtpAlert');
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+            alertBox.textContent = '';
+        }
+    }
+
+    function maskEmail(email) {
+        if (!email) return 'N/A';
+        const parts = email.split('@');
+        if (parts[0].length <= 2) return email;
+        return parts[0].substring(0, 2) + '***@' + parts[1];
+    }
+
+    function maskPhone(phone) {
+        if (!phone) return 'N/A';
+        if (phone.length < 7) return phone;
+        return phone.substring(0, 4) + '****' + phone.substring(phone.length - 3);
+    }
+
+    // ---- DOM Content Loaded initialization ----
     document.addEventListener('DOMContentLoaded', function () {
         // Enforce CapsLock / uppercase on personal details & address inputs
         const uppercaseSelectors = '#first_name, #middle_name, #last_name, #suffix, #nationality, #occupation, #house_number, #street, #barangay_address, #municipality, #province';
@@ -1507,6 +1850,7 @@
             });
         });
 
+        // Set up active tab navigation
         const activeTab = '{{ $activeTab }}';
         const tabEl = document.getElementById('tab-' + activeTab);
         if (tabEl) {
@@ -1514,46 +1858,56 @@
             bsTab.show();
         }
 
-        // Setup interceptors for password change and ID upload forms
+        // Setup OTP Interceptors for Change Password & ID Upload forms
         const passwordForm = document.querySelector('form[action*="settings/password"]');
         const idForm = document.querySelector('form[action*="settings/id"]');
 
         if (passwordForm) {
             passwordForm.id = passwordForm.id || 'passwordChangeForm';
-            setupPinInterception(passwordForm.id);
+            setupOtpInterception(passwordForm.id);
         }
         if (idForm) {
             idForm.id = idForm.id || 'idUploadForm';
-            setupPinInterception(idForm.id);
+            setupOtpInterception(idForm.id);
         }
 
-        // Handle modal confirmation click
-        document.getElementById('confirmPinBtn').addEventListener('click', function() {
-            const enteredPin = document.getElementById('modalPinInput').value;
-            const errorMsg = document.getElementById('pinErrorMsg');
-
-            if (!enteredPin || enteredPin.length < 4) {
-                errorMsg.textContent = 'Please enter a valid PIN.';
-                errorMsg.classList.remove('d-none');
-                return;
-            }
-
-            if (activeFormToSubmit) {
-                let pinField = activeFormToSubmit.querySelector('input[name="pin"]');
-                if (!pinField) {
-                    pinField = document.createElement('input');
-                    pinField.type = 'hidden';
-                    pinField.name = 'pin';
-                    activeFormToSubmit.appendChild(pinField);
+        // Configure 5-digit code box inputs navigation
+        const codeBoxes = document.querySelectorAll('.settings-code-box');
+        codeBoxes.forEach((box, idx) => {
+            box.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length >= 1) {
+                    this.value = this.value.slice(0, 1);
+                    if (idx < codeBoxes.length - 1) {
+                        codeBoxes[idx + 1].focus();
+                    } else if (idx === codeBoxes.length - 1) {
+                        submitSettingsOtpVerification();
+                    }
                 }
-                pinField.value = enteredPin;
+            });
 
-                const modalEl = document.getElementById('pinVerificationModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
+            box.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+                    codeBoxes[idx - 1].focus();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitSettingsOtpVerification();
+                }
+            });
 
-                activeFormToSubmit.submit();
-            }
+            box.addEventListener('paste', function (e) {
+                e.preventDefault();
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim().replace(/[^0-9]/g, '');
+                if (pasteData.length > 0) {
+                    for (let i = 0; i < codeBoxes.length; i++) {
+                        codeBoxes[i].value = pasteData[i] || '';
+                    }
+                    if (pasteData.length >= 5) {
+                        codeBoxes[4].focus();
+                        submitSettingsOtpVerification();
+                    }
+                }
+            });
         });
     });
 </script>

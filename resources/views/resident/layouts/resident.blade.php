@@ -24,7 +24,7 @@
 
         body {
             font-family: var(--font-body);
-            background-color: var(--color-bg);
+            background-color: var(--color-bg, #f8fafb);
             overflow-x: hidden;
         }
 
@@ -43,50 +43,51 @@
             height: 100%;
             width: var(--r-sidebar-width);
             background: var(--r-sidebar-bg);
-            border-right: 1px solid var(--r-sidebar-border);
+            border-right: none; 
+            box-shadow: none; 
             position: fixed;
             top: 0; left: 0; bottom: 0;
             z-index: 1030;
             display: flex;
             flex-direction: column;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
                         margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             overflow: hidden;
-            box-shadow: 4px 0 16px rgba(0, 0, 0, 0.15);
         }
 
         /* ─── Sidebar Brand Header ─── */
         .r-sidebar-heading {
-            padding: 1.15rem 1.15rem 1.15rem 1.25rem;
+            padding: 0 1.25rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--r-sidebar-border);
             background: rgba(0, 0, 0, 0.18);
             flex-shrink: 0;
-            height: 72px;
+            height: 84px;
+            transition: padding 0.25s ease;
         }
 
         .r-sidebar-brand-wrapper {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.85rem;
             text-decoration: none;
             min-width: 0;
         }
 
         .r-sidebar-brand-icon {
-            width: 38px; height: 38px;
+            width: 56px; height: 56px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #2B6CB0 0%, #319795 100%);
             display: flex; align-items: center; justify-content: center;
-            color: #ffffff; font-size: 1.1rem;
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.35);
+            background: transparent;
+            transition: width 0.25s ease, height 0.25s ease;
         }
 
         .r-sidebar-brand-text h4 {
-            font-size: 0.95rem; font-weight: 700;
+            font-size: 1.05rem; font-weight: 700;
             margin: 0; color: #ffffff;
             font-family: var(--font-heading);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -94,36 +95,38 @@
         }
 
         .r-sidebar-brand-text p {
-            font-size: 0.72rem; margin: 0;
+            font-size: 0.76rem; margin: 0;
             color: #4FD1C5; font-weight: 500;
             letter-spacing: 0.02em;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* ─── Sidebar Toggle Button ─── */
+        /* ─── Toggle Button Inside Sidebar ─── */
         .r-sidebar-header-toggle {
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            color: #A0B5CC;
+            width: 38px; height: 38px;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #ffffff;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
             flex-shrink: 0; padding: 0;
         }
         .r-sidebar-header-toggle:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            color: #4FD1C5;
+            transform: scale(1.05);
         }
 
         /* ─── Scrollable Nav ─── */
         .r-sidebar-nav-scroll {
             flex: 1 1 auto;
             overflow-y: auto; overflow-x: hidden;
-            padding: 0.65rem 0.55rem 0.85rem;
+            padding: 0.65rem 0 0.85rem 0.65rem; 
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.12) transparent;
+            transition: padding 0.25s ease;
         }
         .r-sidebar-nav-scroll::-webkit-scrollbar { width: 4px; }
         .r-sidebar-nav-scroll::-webkit-scrollbar-thumb {
@@ -135,21 +138,21 @@
             font-size: 0.68rem; font-weight: 700;
             letter-spacing: 0.08em; text-transform: uppercase;
             color: var(--r-sidebar-category);
-            padding: 0.85rem 0.75rem 0.35rem;
+            padding: 0.85rem 0.75rem 0.35rem 0.6rem;
             margin-top: 0.2rem;
             display: flex; align-items: center;
             user-select: none;
         }
         .r-sidebar-category:first-child { margin-top: 0; padding-top: 0.25rem; }
 
-        /* ─── Nav Item ─── */
+        /* ─── Nav Item (Inverse Curve Base) ─── */
         .r-sidebar-nav-item {
             display: flex; align-items: center;
-            padding: 0.52rem 0.75rem;
-            margin-bottom: 2px;
+            padding: 0.75rem 1rem 0.75rem 1.25rem;
+            margin-bottom: 4px;
             color: var(--r-sidebar-text);
             font-weight: 500; font-size: 0.86rem;
-            border-radius: 8px;
+            border-radius: 30px 0 0 30px; 
             text-decoration: none;
             transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
@@ -159,13 +162,15 @@
             width: 22px; font-size: 0.95rem;
             margin-right: 0.65rem; text-align: center;
             color: #5A7A9A;
-            transition: color 0.15s ease, transform 0.15s ease;
+            transition: color 0.15s ease, transform 0.15s ease, margin 0.15s ease;
             flex-shrink: 0;
+            z-index: 2;
         }
 
         .r-sidebar-nav-item .r-nav-text {
             flex: 1 1 auto;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            z-index: 2;
         }
 
         .r-sidebar-nav-item:hover {
@@ -177,12 +182,41 @@
             transform: translateX(1px);
         }
 
+        /* ─── Active Nav Item (The Cutout Effect) ─── */
         .r-sidebar-nav-item.active {
-            background: linear-gradient(90deg, #18365D 0%, #2B6CB0 100%);
-            color: #ffffff; font-weight: 600;
-            box-shadow: 0 4px 14px rgba(24, 54, 93, 0.45);
+            background-color: var(--color-bg, #f8fafb); 
+            color: #18365D; 
+            font-weight: 700;
+            box-shadow: none; 
+            margin-right: -1px; 
+            padding-right: calc(1rem + 1px);
         }
-        .r-sidebar-nav-item.active i.r-nav-icon { color: #4FD1C5; }
+        .r-sidebar-nav-item.active i.r-nav-icon { 
+            color: #2B6CB0; 
+        }
+
+        .r-sidebar-nav-item.active::before,
+        .r-sidebar-nav-item.active::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .r-sidebar-nav-item.active::before {
+            top: -30px;
+            box-shadow: 15px 15px 0 var(--color-bg, #f8fafb); 
+        }
+
+        .r-sidebar-nav-item.active::after {
+            bottom: -30px;
+            box-shadow: 15px -15px 0 var(--color-bg, #f8fafb);
+        }
 
         /* ─── User Footer ─── */
         .r-sidebar-user-footer {
@@ -192,11 +226,20 @@
             background: rgba(0, 0, 0, 0.22);
             display: flex; align-items: center;
             justify-content: space-between; gap: 0.65rem;
+            transition: padding 0.25s ease;
         }
 
         .r-sidebar-user-card {
             display: flex; align-items: center; gap: 0.65rem;
-            min-width: 0; text-decoration: none; color: inherit;
+            flex: 1 1 0;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .r-sidebar-user-info {
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
         }
 
         .r-sidebar-user-avatar {
@@ -210,8 +253,8 @@
         }
 
         .r-sidebar-user-name {
-            font-size: 0.84rem; font-weight: 600;
-            color: #ffffff; line-height: 1.2;
+            font-size: 0.82rem; font-weight: 600;
+            color: #ffffff; line-height: 1.25;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .r-sidebar-user-role {
@@ -243,19 +286,86 @@
             transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1),
                         width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
                         max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 4px 0 16px rgba(0, 0, 0, 0.02);
         }
 
-        /* ─── Desktop Collapsed ─── */
-        body.r-sidebar-collapsed { --r-sidebar-width: 0px; }
-        body.r-sidebar-collapsed #resident-sidebar-wrapper { transform: translateX(-100%); }
-        body.r-sidebar-collapsed #resident-content-wrapper {
-            margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+        /* ─── Desktop Collapsed State (Icon-Only Mini Sidebar) ─── */
+        @media (min-width: 992px) {
+            body.r-sidebar-collapsed { 
+                --r-sidebar-width: 78px; 
+            }
+            body.r-sidebar-collapsed #resident-sidebar-wrapper { 
+                transform: none !important; 
+                width: 78px; 
+            }
+            body.r-sidebar-collapsed #resident-content-wrapper {
+                margin-left: 78px !important;
+                width: calc(100% - 78px) !important;
+                max-width: calc(100% - 78px) !important;
+            }
+
+            /* Header Mini State: Hide Brand completely & Center Burger Button */
+            body.r-sidebar-collapsed .r-sidebar-heading {
+                padding: 0 !important;
+                justify-content: center !important;
+            }
+            body.r-sidebar-collapsed .r-sidebar-brand-wrapper {
+                display: none !important;
+            }
+
+            /* Hide category labels */
+            body.r-sidebar-collapsed .r-sidebar-category {
+                display: none !important;
+            }
+
+            /* Mini Nav Items */
+            body.r-sidebar-collapsed .r-sidebar-nav-scroll {
+                padding: 0.85rem 0.4rem;
+            }
+            body.r-sidebar-collapsed .r-sidebar-nav-item {
+                justify-content: center;
+                padding: 0.8rem 0;
+                margin-right: 0;
+                border-radius: 14px;
+            }
+            body.r-sidebar-collapsed .r-sidebar-nav-item i.r-nav-icon {
+                margin-right: 0 !important;
+                font-size: 1.15rem;
+            }
+            body.r-sidebar-collapsed .r-sidebar-nav-item .r-nav-text {
+                display: none !important;
+            }
+
+            /* Active State Overlay Adjustment for Mini Mode */
+            body.r-sidebar-collapsed .r-sidebar-nav-item.active::before,
+            body.r-sidebar-collapsed .r-sidebar-nav-item.active::after {
+                display: none !important;
+            }
+            body.r-sidebar-collapsed .r-sidebar-nav-item.active {
+                background-color: rgba(255, 255, 255, 0.15);
+                color: #ffffff;
+                margin-right: 0;
+                padding-right: 0;
+            }
+            body.r-sidebar-collapsed .r-sidebar-nav-item.active i.r-nav-icon {
+                color: #4FD1C5;
+            }
+
+            /* Mini User Footer */
+            body.r-sidebar-collapsed .r-sidebar-user-footer {
+                padding: 0.85rem 0.4rem;
+                justify-content: center;
+            }
+            body.r-sidebar-collapsed .r-sidebar-user-info,
+            body.r-sidebar-collapsed .r-sidebar-logout-btn {
+                display: none !important;
+            }
         }
 
         /* ─── Medium screens ─── */
         @media (min-width: 992px) and (max-width: 1280px) {
             :root { --r-sidebar-width: 230px; }
-            .r-sidebar-nav-item { padding: 0.48rem 0.65rem; font-size: 0.82rem; }
+            .r-sidebar-nav-item { padding: 0.65rem 0.65rem 0.65rem 1rem; font-size: 0.82rem; }
         }
 
         /* ─── Mobile Drawer ─── */
@@ -265,13 +375,14 @@
             #resident-sidebar-wrapper {
                 margin-left: calc(-1 * var(--r-sidebar-width));
                 transition: margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
                 z-index: 1050;
             }
             #resident-sidebar-wrapper.toggled { margin-left: 0; }
 
             #resident-content-wrapper {
                 margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+                box-shadow: none;
             }
 
             .r-sidebar-backdrop {
@@ -288,19 +399,19 @@
 
         /* ─── Top Header ─── */
         .resident-header {
-            background-color: var(--color-surface);
-            padding: 0.85rem 1.75rem;
-            box-shadow: var(--shadow-sm);
+            background-color: var(--color-surface, #ffffff);
+            padding: 0 1.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
             border-bottom: 1px solid var(--color-border);
-            height: 72px;
+            height: 84px;
             position: sticky; top: 0; z-index: 990;
         }
 
         @media (max-width: 991.98px) {
-            .resident-header { padding: 0.75rem 1.25rem !important; }
+            .resident-header { padding: 0 1.25rem !important; }
         }
 
-        /* ─── Navbar Toggle Button ─── */
+        /* Mobile navbar trigger */
         .r-navbar-toggle-btn {
             width: 38px; height: 38px;
             border-radius: 9px;
@@ -312,14 +423,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             padding: 0; flex-shrink: 0;
         }
-        .r-navbar-toggle-btn:hover {
-            background: #F7FAFC;
-            color: var(--color-primary);
-            border-color: #CBD5E0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
-        }
-        .r-navbar-toggle-btn:active { transform: translateY(0); }
 
         .r-header-page-title {
             font-size: 1.05rem; font-weight: 700;
@@ -372,27 +475,29 @@
     </style>
 </head>
 <body>
+    {{-- Synchronous state check executed before first paint to prevent layout flash --}}
+    <script>
+        if (window.innerWidth >= 992 && localStorage.getItem('residentSidebarCollapsed') === 'true') {
+            document.body.classList.add('r-sidebar-collapsed');
+        }
+    </script>
 
-    @php
-        $currentRoute = Route::currentRouteName();
-        $pageTitles = [
-            'welcome'                => 'Welcome',
-            'resident.dashboard'     => 'Dashboard',
-            'resident.request.create'=> 'Request Document',
-            'resident.request.track' => 'Track Requests',
-            'resident.concerns'      => 'Community Concerns',
-            'resident.activity-logs' => 'Activity Logs',
-            'resident.settings'      => 'Account Settings',
-        ];
-        $currentPageTitle = $pageTitles[$currentRoute] ?? 'Resident Portal';
-
-        $residentName  = auth()->user()?->name ?? 'Resident';
-        $nameParts     = explode(' ', trim($residentName));
-        $residentInitials = isset($nameParts[1])
-            ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
-            : strtoupper(substr($nameParts[0], 0, 2));
-        $barangayName  = \App\Models\BarangaySetting::get('barangay_name', 'Barangay Cogon East');
-    @endphp
+@php
+$currentRoute = Route::currentRouteName();
+$pageTitles = [
+'welcome' => 'Welcome',
+'resident.dashboard' => 'Dashboard',
+'resident.request.create' => 'Request Document',
+'resident.request.track' => 'Track Requests',
+'resident.concerns' => 'Community Concerns',
+'resident.activity-logs' => 'Activity Logs',
+'resident.settings' => 'Account Settings',
+];
+$currentPageTitle = $pageTitles[$currentRoute] ?? 'Resident Portal';
+$residentName = auth()->user()?->name ?? 'Resident';
+$nameParts = explode(' ', trim($residentName));
+$residentInitials = isset($nameParts[1]) ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1)) : strtoupper(substr($nameParts[0], 0, 2));
+@endphp
 
     <div id="resident-wrapper">
 
@@ -405,17 +510,17 @@
             <div class="r-sidebar-heading">
                 <a href="{{ route('resident.dashboard') }}" class="r-sidebar-brand-wrapper">
                     <div class="r-sidebar-brand-icon">
-                        <i class="fa-solid fa-house-flag"></i>
+                        <img src="{{ asset('images/logo.png') }}" alt="E-Barangay Logo" style="width: 100%; height: 100%; object-fit: contain;">
                     </div>
                     <div class="r-sidebar-brand-text">
-                        <h4>{{ $barangayName }}</h4>
+                        <h4>E-Barangay</h4>
                         <p>Resident Portal</p>
                     </div>
                 </a>
-                {{-- Mobile-only close button (X). Desktop collapse is handled by the ≡ in the top bar --}}
-                <button class="r-sidebar-header-toggle d-flex d-lg-none" id="rSidebarCollapseBtn"
-                        aria-label="Close Sidebar" title="Close Sidebar">
-                    <i class="fa-solid fa-xmark"></i>
+                
+                {{-- Toggle Sidebar Button Inside Sidebar --}}
+                <button class="r-sidebar-header-toggle" id="rSidebarToggleBtn" aria-label="Toggle Sidebar" title="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
 
@@ -424,13 +529,8 @@
 
                 {{-- PORTAL --}}
                 <div class="r-sidebar-category">Portal</div>
-                <a href="{{ route('welcome') }}"
-                   class="r-sidebar-nav-item {{ Route::is('welcome') ? 'active' : '' }}">
-                    <i class="fa-solid fa-house r-nav-icon"></i>
-                    <span class="r-nav-text">Home</span>
-                </a>
                 <a href="{{ route('resident.dashboard') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.dashboard') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.dashboard') ? 'active' : '' }}" title="Dashboard">
                     <i class="fa-solid fa-th-large r-nav-icon"></i>
                     <span class="r-nav-text">Dashboard</span>
                 </a>
@@ -438,17 +538,17 @@
                 {{-- SERVICES --}}
                 <div class="r-sidebar-category">Services</div>
                 <a href="{{ route('resident.request.create') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.request.create') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.request.create') ? 'active' : '' }}" title="Request Document">
                     <i class="fa-solid fa-file-circle-plus r-nav-icon"></i>
                     <span class="r-nav-text">Request Document</span>
                 </a>
                 <a href="{{ route('resident.request.track') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.request.track') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.request.track') ? 'active' : '' }}" title="Track Requests">
                     <i class="fa-solid fa-magnifying-glass r-nav-icon"></i>
                     <span class="r-nav-text">Track Requests</span>
                 </a>
                 <a href="{{ route('resident.concerns') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.concerns') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.concerns') ? 'active' : '' }}" title="Community Concern">
                     <i class="fa-solid fa-bullhorn r-nav-icon"></i>
                     <span class="r-nav-text">Community Concern</span>
                 </a>
@@ -456,12 +556,12 @@
                 {{-- ACCOUNT --}}
                 <div class="r-sidebar-category">Account</div>
                 <a href="{{ route('resident.activity-logs') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.activity-logs') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.activity-logs') ? 'active' : '' }}" title="Activity Logs">
                     <i class="fa-solid fa-clock-rotate-left r-nav-icon"></i>
                     <span class="r-nav-text">Activity Logs</span>
                 </a>
                 <a href="{{ route('resident.settings') }}"
-                   class="r-sidebar-nav-item {{ Route::is('resident.settings') ? 'active' : '' }}">
+                   class="r-sidebar-nav-item {{ Route::is('resident.settings') ? 'active' : '' }}" title="Settings">
                     <i class="fa-solid fa-sliders r-nav-icon"></i>
                     <span class="r-nav-text">Settings</span>
                 </a>
@@ -470,14 +570,14 @@
 
             {{-- User Footer --}}
             <div class="r-sidebar-user-footer">
-                <a href="{{ route('resident.settings') }}" class="r-sidebar-user-card min-w-0">
+                <div class="r-sidebar-user-card">
                     <div class="r-sidebar-user-avatar">{{ $residentInitials }}</div>
-                    <div class="min-width-0">
+                    <div class="r-sidebar-user-info">
                         <div class="r-sidebar-user-name">{{ $residentName }}</div>
                         <div class="r-sidebar-user-role">Resident</div>
                     </div>
-                </a>
-                <form action="{{ route('resident.logout') }}" method="POST" class="m-0">
+                </div>
+                <form action="{{ route('resident.logout') }}" method="POST" class="m-0 flex-shrink-0">
                     @csrf
                     <button type="submit" class="r-sidebar-logout-btn" title="Logout" aria-label="Logout">
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -498,8 +598,8 @@
             {{-- Sticky Top Header --}}
             <nav class="navbar resident-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
-                    <button class="r-navbar-toggle-btn" id="rSidebarToggle"
-                            aria-label="Toggle Sidebar" title="Toggle Sidebar">
+                    {{-- Mobile-only drawer trigger --}}
+                    <button class="r-navbar-toggle-btn d-lg-none" id="rMobileNavToggle" aria-label="Open Navigation" title="Open Navigation">
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div>
@@ -539,65 +639,36 @@
                             </div>
                             <div style="max-height:300px; overflow-y:auto;">
                                 @if(auth()->check())
-                                    @forelse(auth()->user()->notifications as $notification)
-                                        <div class="px-3 py-3 border-bottom {{ $notification->read_at === null ? '' : 'bg-white' }}"
-                                             style="{{ $notification->read_at === null ? 'background:#EBF4FF;' : '' }}">
-                                            <div class="fw-bold text-dark" style="font-size:14px;">
-                                                <i class="fa-solid fa-circle-check text-success me-1"></i>
-                                                {{ $notification->data['document_type'] ?? 'Document Update' }}
+@php
+$userNotifs = auth()->user()->notifications ? auth()->user()->notifications->values() : collect();
+@endphp
+                                    @if($userNotifs->count() > 0)
+                                        @for($n = 0; $n < $userNotifs->count(); $n++)
+@php
+$notification = $userNotifs[$n];
+@endphp
+                                            <div class="px-3 py-3 border-bottom {{ $notification->read_at === null ? '' : 'bg-white' }}"
+                                                 style="{{ $notification->read_at === null ? 'background:#EBF4FF;' : '' }}">
+                                                <div class="fw-bold text-dark" style="font-size:14px;">
+                                                    <i class="fa-solid fa-circle-check text-success me-1"></i>
+                                                    {{ $notification->data['document_type'] ?? 'Document Update' }}
+                                                </div>
+                                                <div class="text-muted mt-1" style="font-size:13px;">
+                                                    {{ $notification->data['message'] ?? 'The status of your document has been updated.' }}
+                                                </div>
+                                                <div class="mt-1" style="font-size:11px; color:#2B6CB0; font-weight:600;">
+                                                    TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
+                                                </div>
                                             </div>
-                                            <div class="text-muted mt-1" style="font-size:13px;">
-                                                {{ $notification->data['message'] ?? 'The status of your document has been updated.' }}
-                                            </div>
-                                            <div class="mt-1" style="font-size:11px; color:#2B6CB0; font-weight:600;">
-                                                TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
-                                            </div>
-                                        </div>
-                                    @empty
+                                        @endfor
+                                    @else
                                         <div class="px-3 py-4 text-center text-muted small">
                                             <i class="fa-regular fa-bell-slash fa-2x mb-2 d-block" style="color:#CBD5E0;"></i>
                                             No new notifications
                                         </div>
-                                    @endforelse
+                                    @endif
                                 @endif
                             </div>
-                        </ul>
-                    </div>
-
-                    {{-- User Dropdown --}}
-                    <div class="dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-decoration-none"
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <div class="text-end d-none d-md-block">
-                                <div class="fw-bold text-dark" style="font-size:14px; line-height:1.2;">
-                                    {{ auth()->user()?->name ?? 'Resident' }}
-                                </div>
-                                <div class="text-muted" style="font-size:12px;">Resident</div>
-                            </div>
-                            <div class="d-flex justify-content-center align-items-center fw-bold rounded-circle shadow-sm"
-                                 style="width:40px;height:40px;font-size:15px;background:linear-gradient(135deg,#EBF4FF,#BEE3F8);color:#18365D;">
-                                {{ $residentInitials }}
-                            </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 mt-3 px-2 py-2"
-                            style="min-width:210px;">
-                            <li><h6 class="dropdown-header text-uppercase fw-bold" style="font-size:11px;letter-spacing:1px;">My Account</h6></li>
-                            <li>
-                                <a class="dropdown-item rounded-3 d-flex align-items-center gap-3 py-2 fw-semibold"
-                                   href="{{ route('resident.settings') }}">
-                                    <i class="fa-solid fa-sliders text-primary" style="width:20px;"></i> Settings
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-2"></li>
-                            <li>
-                                <form method="POST" action="{{ route('resident.logout') }}" class="m-0 p-0">
-                                    @csrf
-                                    <button type="submit"
-                                            class="dropdown-item rounded-3 d-flex align-items-center gap-3 py-2 fw-semibold text-danger bg-transparent border-0 w-100 text-start">
-                                        <i class="fa-solid fa-arrow-right-from-bracket" style="width:20px;"></i> Logout
-                                    </button>
-                                </form>
-                            </li>
                         </ul>
                     </div>
 
@@ -732,24 +803,15 @@
     {{-- ═══ RESIDENT SIDEBAR TOGGLE JS ═══ --}}
     <script>
     (function() {
-        const sidebarToggle    = document.getElementById('rSidebarToggle');
-        const sidebarCollapse  = document.getElementById('rSidebarCollapseBtn');
+        const sidebarToggleBtn = document.getElementById('rSidebarToggleBtn');
+        const mobileNavToggle  = document.getElementById('rMobileNavToggle');
         const sidebar          = document.getElementById('resident-sidebar-wrapper');
         const backdrop         = document.getElementById('rSidebarBackdrop');
 
-        // Restore desktop collapse state
-        if (window.innerWidth >= 992 && localStorage.getItem('residentSidebarCollapsed') === 'true') {
-            document.body.classList.add('r-sidebar-collapsed');
-        }
-
-        function toggleSidebar() {
-            if (window.innerWidth < 992) {
-                sidebar && sidebar.classList.contains('toggled') ? closeMobile() : openMobile();
-            } else {
-                document.body.classList.toggle('r-sidebar-collapsed');
-                const collapsed = document.body.classList.contains('r-sidebar-collapsed');
-                localStorage.setItem('residentSidebarCollapsed', collapsed ? 'true' : 'false');
-            }
+        function toggleDesktopSidebar() {
+            document.body.classList.toggle('r-sidebar-collapsed');
+            const collapsed = document.body.classList.contains('r-sidebar-collapsed');
+            localStorage.setItem('residentSidebarCollapsed', collapsed ? 'true' : 'false');
         }
 
         function openMobile() {
@@ -764,9 +826,21 @@
             document.body.style.overflow = '';
         }
 
-        sidebarToggle   && sidebarToggle.addEventListener('click', e => { e.stopPropagation(); toggleSidebar(); });
-        sidebarCollapse && sidebarCollapse.addEventListener('click', e => { e.stopPropagation(); toggleSidebar(); });
-        backdrop        && backdrop.addEventListener('click', closeMobile);
+        sidebarToggleBtn && sidebarToggleBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (window.innerWidth < 992) {
+                sidebar && sidebar.classList.contains('toggled') ? closeMobile() : openMobile();
+            } else {
+                toggleDesktopSidebar();
+            }
+        });
+
+        mobileNavToggle && mobileNavToggle.addEventListener('click', e => {
+            e.stopPropagation();
+            openMobile();
+        });
+
+        backdrop && backdrop.addEventListener('click', closeMobile);
 
         // Close mobile drawer on nav link click
         sidebar && sidebar.querySelectorAll('.r-sidebar-nav-item').forEach(link => {
@@ -897,7 +971,6 @@
         }
         #send-chat-btn:hover { transform:scale(1.05);box-shadow:0 6px 12px rgba(24,54,93,0.4); }
 
-        /* Mobile adjustments */
         @media (max-width: 480px) {
             #ai-chat-container { bottom:15px;right:10px; }
             #ai-toggle-btn { width:85px;height:85px; }
@@ -922,7 +995,6 @@
             let isDragging = false, hasDragged = false;
             let startX, startY, initialLeft, initialTop;
 
-            // Clamp container so it never goes out of viewport
             function clampPosition() {
                 const rect = chatContainer.getBoundingClientRect();
                 const maxLeft = window.innerWidth - rect.width;
@@ -939,7 +1011,6 @@
                 startY = e.type==='touchstart' ? e.touches[0].clientY : e.clientY;
                 const rect = chatContainer.getBoundingClientRect();
                 initialLeft = rect.left; initialTop = rect.top;
-                // Switch from bottom/right to top/left anchoring for dragging
                 chatContainer.style.bottom = 'auto'; chatContainer.style.right = 'auto';
                 chatContainer.style.left = initialLeft+'px'; chatContainer.style.top = initialTop+'px';
             }
@@ -963,33 +1034,25 @@
             document.addEventListener('touchend', dragEnd);
 
             function openChat() {
-                // Show window
                 chatWindow.style.display = 'flex';
                 toggleBtn.style.display  = 'none';
 
-                // After rendering, ensure the container (window + button space)
-                // is fully within the viewport
                 requestAnimationFrame(() => {
                     const vw = window.innerWidth;
                     const vh = window.innerHeight;
                     const rect = chatContainer.getBoundingClientRect();
 
-                    // If container is positioned via left/top (was dragged)
                     if (chatContainer.style.left && chatContainer.style.left !== 'auto') {
                         let l = parseFloat(chatContainer.style.left);
                         let t = parseFloat(chatContainer.style.top);
 
-                        // Clamp horizontally
                         l = Math.max(10, Math.min(l, vw - chatContainer.offsetWidth - 10));
-                        // Clamp vertically – push down if too high, up if too low
                         t = Math.max(10, Math.min(t, vh - chatContainer.offsetHeight - 10));
 
                         chatContainer.style.left = l + 'px';
                         chatContainer.style.top  = t + 'px';
                     } else {
-                        // Default bottom-right: check if window overflows top
                         if (rect.top < 10) {
-                            // Switch to top/left positioning
                             chatContainer.style.bottom = 'auto';
                             chatContainer.style.right  = 'auto';
                             chatContainer.style.left   = (vw - chatContainer.offsetWidth - 25) + 'px';
@@ -1007,7 +1070,6 @@
             closeBtn.addEventListener('click', () => {
                 chatWindow.style.display = 'none';
                 toggleBtn.style.display  = 'flex';
-                // Reset to default bottom-right anchor
                 chatContainer.style.left   = 'auto';
                 chatContainer.style.top    = 'auto';
                 chatContainer.style.bottom = '25px';

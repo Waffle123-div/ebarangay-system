@@ -58,18 +58,8 @@
 </form>
 
 @if($ajaxMode)
-    <div class="welcome-login-divider"><span>OR</span></div>
-    <a href="{{ route('google.login', ['action' => 'login']) }}" class="btn btn-secondary btn-block" id="welcomeGoogleLogin">Continue with Google</a>
-    <p class="welcome-login-register">Don't have an account? <a href="{{ route('resident.register') }}">Create one here</a></p>
+    <p class="welcome-login-register mt-3">Don't have an account? <a href="{{ route('resident.register') }}">Create one here</a></p>
 @else
-    <div class="d-flex align-items-center mb-3">
-        <hr class="flex-grow-1 m-0">
-        <span class="mx-2 text-muted small fw-bold">OR</span>
-        <hr class="flex-grow-1 m-0">
-    </div>
-    <a href="{{ route('google.login', ['action' => 'login']) }}" class="btn btn-dark w-100 rounded-3 fw-semibold mb-3">
-        <i class="fa-brands fa-google me-2"></i> Continue with Google
-    </a>
     <div class="text-center small">
         Don't have an account? <a href="{{ route('resident.register') }}" class="text-success text-decoration-none fw-bold">Create one here</a>
     </div>

@@ -106,7 +106,6 @@ class ResidentAuthController extends Controller
 
     public function searchAccount(Request $request)
     {
-        // THE FIX: Changed 'email' to 'login_id' to match the updated view
         $rules = [
             'login_id' => ['required'],
         ];
@@ -125,7 +124,6 @@ class ResidentAuthController extends Controller
 
         $request->validate($rules);
 
-        // THE FIX: Determine if they entered an email or phone number
         $loginInput = $request->input('login_id');
         $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
 
@@ -143,13 +141,11 @@ class ResidentAuthController extends Controller
             return back()->withErrors(['login_id' => 'Your account has not been approved by the admin yet. Password recovery is only available for fully active accounts.'])->withInput();
         }
 
-        // Pass BOTH the user and the exact identifier they typed in
         return view('resident.auth.forgot_password_confirm', compact('user'))->with('identifier', $loginInput);
     }
 
     public function sendResetLink(Request $request)
     {
-        // THE FIX: Removed the "|email|exists:users,email" rule so phone numbers don't get rejected!
         $request->validate(['email' => 'required']); 
         
         $identifier = $request->input('email');
@@ -160,20 +156,16 @@ class ResidentAuthController extends Controller
              return redirect()->route('resident.forgot_password')->withErrors(['login_id' => 'Invalid request.']);
         }
 
-        // THE FIX: Generate a 5-digit number instead of letters so it's easy to text
         $code = str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-        // Store it in the tokens table (it's safe to store a phone number in the 'email' column temporarily)
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $identifier],
             ['token' => $code, 'created_at' => now()]
         );
 
         if ($field === 'email') {
-            // SEND EMAIL
             Mail::to($identifier)->send(new ResetPasswordCodeMail($code, $user->name));
         } else {
-            // SEND SMS VIA TEXTBEE
             $message = "E-Barangay: {$code} is your password reset code. Please do not share this with anyone.";
             $formattedPhone = preg_replace('/^09/', '+639', $identifier);
 
@@ -204,7 +196,6 @@ class ResidentAuthController extends Controller
 
     public function verifyCode(Request $request)
     {
-        // THE FIX: Removed |email validation rule here too
         $request->validate([
             'email' => 'required',
             'code' => 'required|array|size:5',
@@ -239,7 +230,6 @@ class ResidentAuthController extends Controller
 
     public function resetPassword(Request $request)
     {
-        // THE FIX: Removed |email validation rule
         $request->validate([
             'email' => 'required',
             'password' => 'required|min:8|confirmed',
@@ -258,7 +248,6 @@ class ResidentAuthController extends Controller
         if ($field === 'email') {
             Mail::to($identifier)->send(new PasswordChangedMail($user->name));
         } else {
-            // SEND SUCCESS SMS
             $message = "E-Barangay: Your account password has been successfully changed.";
             $formattedPhone = preg_replace('/^09/', '+639', $identifier);
             try {
@@ -476,7 +465,6 @@ class ResidentAuthController extends Controller
         // ==========================================
         // STEP 1: Validate all 4 steps at once
         // ==========================================
-        // Google users don't set a password during registration (they use OAuth)
         $isGoogleSubmit = !empty(session('google_reg_id'));
         $passwordRules  = $isGoogleSubmit ? ['nullable'] : ['required', 'min:8', 'confirmed'];
 
@@ -500,8 +488,8 @@ class ResidentAuthController extends Controller
             'barangay_address'  => ['required', 'string'],
             'municipality'      => ['required', 'string'],
             'zip_code'          => ['required', 'string'],
-            'phone_number'      => $isGoogleSubmit ? ['nullable', 'string'] : ['required', 'string'],
-            'email'             => ['nullable', 'email', 'max:255'],
+            'phone_number'      => $isGoogleSubmit ? ['nullable', 'string'] : ['required_without:email', 'nullable', 'string'],
+            'email'             => ['required_without:phone_number', 'nullable', 'email', 'max:255'],
 
             // Step 2 — Account Setup (password optional for Google users)
             'password' => $passwordRules,
@@ -515,6 +503,9 @@ class ResidentAuthController extends Controller
             // Step 4 — Compliance
             'terms'   => ['accepted'],
             'privacy' => ['accepted'],
+        ], [
+            'phone_number.required_without' => 'Please provide either a mobile number or an email address.',
+            'email.required_without'        => 'Please provide either an email address or a mobile number.',
         ]);
 
         // ==========================================
@@ -567,13 +558,13 @@ class ResidentAuthController extends Controller
                     $ext = 'png';
                 }
                 $selfieFileName = 'selfie_' . Str::random(24) . '.' . $ext;
-                Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
+                Storage::disk('local')->put('selfies/' . $selfieFileName, $decoded);
                 $selfiePath = 'selfies/' . $selfieFileName;
             }
         } elseif ($request->hasFile('selfie_upload')) {
-            $selfiePath = $request->file('selfie_upload')->store('selfies', 'public');
+            $selfiePath = $request->file('selfie_upload')->store('selfies', 'local');
         } elseif ($request->hasFile('selfie_photo')) {
-            $selfiePath = $request->file('selfie_photo')->store('selfies', 'public');
+            $selfiePath = $request->file('selfie_photo')->store('selfies', 'local');
         }
 
         // ==========================================
@@ -599,7 +590,6 @@ class ResidentAuthController extends Controller
         // ==========================================
         $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-        // Google users get no password (they authenticate via Google OAuth)
         $passwordValue = $isGoogleUser ? null : Hash::make($request->password);
 
         $user = User::create([
@@ -699,16 +689,14 @@ class ResidentAuthController extends Controller
         // Clean up token
         DB::table('password_reset_tokens')->where('email', $request->phone)->delete();
 
-        // Mark the account as verified (Reusing the email verified timestamp so Laravel core security passes)
+        // Mark the account as verified
         $user = Auth::user();
         $user->email_verified_at = now();
         $user->save();
 
-        // Manual registration users already have ID uploaded from the 4-step wizard
         if ($user->proof_of_residency) {
             $user->update(['status' => 'pending_approval']);
 
-            // Notify admins about the new pending registration
             $admins = User::where('role', 'Admin')->get();
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\NewUserRegistrationNotification($user));
@@ -730,12 +718,11 @@ class ResidentAuthController extends Controller
     public function setupPin(Request $request)
     {
         $request->validate([
-            'security_pin' => 'required|digits:6|confirmed', // Requires a 'security_pin_confirmation' field
+            'security_pin' => 'required|digits:6|confirmed',
         ]);
 
         $user = Auth::user();
         
-        // Hash it for security, just like a password!
         $user->security_pin = bcrypt($request->security_pin);
         $user->save();
 
@@ -747,7 +734,6 @@ class ResidentAuthController extends Controller
     // ==========================================
     public function lockSession(Request $request)
     {
-        // Securely flag the session as locked
         $request->session()->put('is_locked', true);
         return response()->json(['success' => true]);
     }
@@ -760,13 +746,11 @@ class ResidentAuthController extends Controller
 
         $user = Auth::user();
 
-        // Check if the entered PIN matches the hashed PIN in the database
         if (Hash::check($request->security_pin, $user->security_pin)) {
             $request->session()->forget('is_locked');
             return back()->with('success', 'Session unlocked.');
         }
 
-        // If wrong PIN, keep it locked and kick them back with an error
         $request->session()->put('is_locked', true);
         return back()->withErrors(['security_pin' => 'Incorrect PIN. Please try again.']);
     }

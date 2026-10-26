@@ -101,7 +101,7 @@
     <!-- FILTER & TOOLBAR -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div class="fw-semibold text-muted small">
-            Showing {{ count($pendingUsers) }} {{ str_replace('_', ' ', $currentStatus) }} record(s)
+            Showing {{ count($pendingUsers) }} {{ str_replace('_', ' ',$currentStatus) }} record(s)
         </div>
         <form action="{{ route('admin.approvals') }}" method="GET" class="d-flex align-items-center gap-2 m-0 w-100 w-sm-auto justify-content-end">
             <!-- Preserve the current status tab when filtering by ID -->
@@ -150,8 +150,8 @@
                         </td>
                         <td class="text-nowrap">
                             @php
-                                $docUrl = $user->id_document_url;
-                                $selfieUrl = $user->selfie_photo_url;
+                                $docUrl =$user->id_document_url;
+                                $selfieUrl = $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : null;
                                 $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
                             @endphp
                             <div class="d-inline-flex align-items-center gap-1.5 flex-wrap justify-content-center">
@@ -159,7 +159,7 @@
                                     <button type="button" 
                                             class="btn btn-sm btn-light border text-primary rounded-2 px-2.5 py-1 fw-semibold shadow-sm" 
                                             style="font-size: 12px;"
-                                            onclick="previewApprovalDocument('{{ $docUrl }}', '{{ $selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{ $currentStatus }}')">
+                                            onclick="previewApprovalDocument('{{ $docUrl }}', '{{$selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{$currentStatus }}')">
                                         <i class="fa-solid fa-user-shield text-primary me-1"></i> View ID & Face
                                     </button>
                                 @else
@@ -217,7 +217,7 @@
             </table>
         </div>
 
-        {{-- Mobile Cards View (Screens < 768px, matching Request tab) --}}
+        {{-- Mobile Cards View (Screens < 768px) --}}
         <div class="d-md-none p-3" id="approvals-mobile-list">
             @forelse($pendingUsers as $user)
                 <div class="mobile-approval-card">
@@ -252,15 +252,15 @@
                     {{-- Document & Face Link --}}
                     <div class="my-2">
                         @php
-                            $docUrl = $user->id_document_url;
-                            $selfieUrl = $user->selfie_photo_url;
+                            $docUrl =$user->id_document_url;
+                            $selfieUrl = $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : null;
                             $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
                         @endphp
                         @if($docUrl || $selfieUrl)
                             <div class="d-flex gap-2 align-items-center">
                                 <button type="button" 
                                         class="btn btn-sm btn-light border text-primary flex-fill rounded-3 py-1.5 fw-semibold shadow-sm"
-                                        onclick="previewApprovalDocument('{{ $docUrl }}', '{{ $selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{ $currentStatus }}')">
+                                        onclick="previewApprovalDocument('{{ $docUrl }}', '{{$selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{$currentStatus }}')">
                                     <i class="fa-solid fa-user-shield me-1"></i> View ID & Face
                                 </button>
                                 @if($selfieUrl)

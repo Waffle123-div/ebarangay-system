@@ -25,19 +25,18 @@ class ResidentDashboardController extends Controller
             return redirect()->route('resident.pending');
         }
 
-        // THE FIX: Match documents using the unique USER_ID instead of Email! 
-        // This ensures mobile-only users still see their requests.
+        // Match documents using the unique USER_ID
         $pendingCount = DocumentRequest::where('user_id', $user->id)->where('status', 'Pending')->count();
         $approvedCount = DocumentRequest::where('user_id', $user->id)->where('status', 'Approved')->count();
         $totalCount = DocumentRequest::where('user_id', $user->id)->count();
 
-        // THE FIX: Fetch recent requests using USER_ID
+        // Fetch recent requests using USER_ID
         $recentRequests = DocumentRequest::where('user_id', $user->id)
                                          ->orderBy('created_at', 'desc')
                                          ->take(5)
                                          ->get();
 
-        // WELCOME LOGIC: Grab their first name, and check if they are "New" (0 total requests)
+        // WELCOME LOGIC: Grab their first name, and check if they are "New"
         $firstName = explode(' ', trim($user->name))[0];
         $isNewUser = ($totalCount === 0);
 
@@ -184,7 +183,7 @@ class ResidentDashboardController extends Controller
         $docType = $request->input('document_type');
         $purpose = strtoupper(trim($request->input('purpose', '')));
 
-        // If documents_json was submitted, extract the single document from it as fallback
+        // Extract single document from documents_json if present
         if (empty($docType) && $request->filled('documents_json')) {
             $decoded = json_decode($request->input('documents_json'), true);
             if (is_array($decoded) && count($decoded) > 0) {
@@ -278,7 +277,7 @@ class ResidentDashboardController extends Controller
             $newRequest->save();
         }
 
-        // Automatically record this action in the Activity Logs
+        // Automatically record action in Activity Logs
         $log = new \App\Models\ActivityLog();
         $log->user_id = Auth::id();
         $log->action = 'Document Request';
@@ -287,7 +286,16 @@ class ResidentDashboardController extends Controller
         $log->user_agent = $request->userAgent();
         $log->save();
 
-        return redirect()->route('resident.dashboard')->with('success', 'Document request submitted successfully!');
+        // Redirect directly to the Track Request page instead of the Dashboard
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Document request submitted successfully!',
+                'redirect' => route('resident.request.track')
+            ]);
+        }
+
+        return redirect()->route('resident.request.track')->with('success', 'Document request submitted successfully!');
     }
 
     public function trackRequest()
@@ -297,7 +305,7 @@ class ResidentDashboardController extends Controller
             return redirect()->route('resident.pending');
         }
 
-        // THE FIX: Fetch ALL requests by USER_ID so mobile users aren't left out
+        // Fetch ALL requests by USER_ID
         $allRequests = \App\Models\DocumentRequest::where('user_id', auth()->id())
                     ->latest()
                     ->get();
@@ -305,7 +313,6 @@ class ResidentDashboardController extends Controller
         // The single most recent request goes to the big timeline tracker
         $myRequest = $allRequests->first();
 
-        // Pass BOTH the single request and the full history list to the page
         return view('resident.track_request', compact('myRequest', 'allRequests'));
     }
 
@@ -318,7 +325,6 @@ class ResidentDashboardController extends Controller
             return response()->json(['last_update' => null]);
         }
 
-        // THE FIX: Check updates via USER_ID
         $latest = DocumentRequest::where('user_id', auth()->id())
             ->latest()
             ->first(['id', 'status', 'tracking_number', 'updated_at']);
@@ -340,25 +346,20 @@ class ResidentDashboardController extends Controller
             return redirect()->route('resident.pending');
         }
 
-        // 1. Fetch the unique action types for the dropdown filter
+        // Fetch unique action types for filter
         $actionTypes = \App\Models\ActivityLog::where('user_id', Auth::id())
                                               ->select('action')
                                               ->distinct()
                                               ->pluck('action');
 
-        // 2. Build the query to get the logs
         $query = \App\Models\ActivityLog::where('user_id', Auth::id());
 
-        // 3. If the user selected a specific action from the dropdown, filter by it
         if ($request->filled('action')) {
             $query->where('action', $request->action);
         }
 
-        // 4. Get the final list of logs, paginated to 10 per page
-        // withQueryString() ensures filters stay active when navigating pages
         $logs = $query->latest()->paginate(10)->withQueryString();
 
-        // Pass BOTH variables to the view
         return view('resident.activity_logs', compact('logs', 'actionTypes'));
     }
 
@@ -374,17 +375,13 @@ class ResidentDashboardController extends Controller
 
         $docRequest = \App\Models\DocumentRequest::findOrFail($id);
 
-        // THE FIX: Security check now matches USER_ID
         if ((string)$docRequest->user_id !== (string)Auth::id()) {
             abort(403, 'Unauthorized access to this receipt.');
         }
 
         $receiptNumber = str_replace('REQ', 'REC', $docRequest->tracking_number);
-
-        // Define the fee amount from the database record (if updated by admin)
         $feeAmount = ($docRequest->fee !== null && (float)$docRequest->fee > 0) ? (float)$docRequest->fee : 0;
 
-        // Pass ALL required variables to the view
         return view('resident.receipt', compact('docRequest', 'receiptNumber', 'feeAmount'));
     }
 
@@ -398,8 +395,6 @@ class ResidentDashboardController extends Controller
         }
 
         $authUser = Auth::user();
-
-        // THE FIX: Define the missing resident address using their database info
         $residentAddress = trim("{$authUser->house_number} {$authUser->street}, {$authUser->barangay_address}");
 
         $categories = [
@@ -410,12 +405,10 @@ class ResidentDashboardController extends Controller
             'Others'
         ];
 
-        // Fetch the user's community concerns
         $concerns = \App\Models\CommunityConcern::where('user_id', Auth::id())
                                                 ->latest()
                                                 ->get();
 
-        // Pass ALL variables to the view, including the new residentAddress
         return view('resident.community_concerns', compact('concerns', 'authUser', 'categories', 'residentAddress'));
     }
 
@@ -424,12 +417,10 @@ class ResidentDashboardController extends Controller
      */
     public function storeConcern(Request $request)
     {
-        // THE BOUNCER: Security Check
         if (trim(strtolower(Auth::user()->status)) !== 'active') {
             return redirect()->route('resident.pending');
         }
 
-        // Validate the incoming data
         $request->validate([
             'category' => 'required|string',
             'description' => 'required|string',
@@ -437,32 +428,22 @@ class ResidentDashboardController extends Controller
         ]);
 
         $user = Auth::user();
-
-        // Create the new concern
         $concern = new \App\Models\CommunityConcern();
         
-        // Generate a unique concern tracking ID
         $concern->concern_id = 'CON-' . date('Y') . '-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-        
-        // Auto-fill the resident's details
         $concern->user_id = $user->id;
         $concern->resident_name = $user->name;
         $concern->resident_email = $user->email;
         $concern->contact_number = $user->contact_number ?? 'N/A';
         $concern->address = trim("{$user->house_number} {$user->street}, {$user->barangay_address}");
 
-        // Save the form inputs
         $concern->category = $request->input('category');
         $concern->description = $request->input('description');
-        
-        // Auto-fill the missing database columns
         $concern->title = $request->input('title', $request->input('category') . ' Report'); 
         $concern->location = $request->input('location', 'Not specified');
         $concern->incident_date = $request->input('incident_date', \Carbon\Carbon::now());
-
         $concern->status = 'Pending';
         
-        // Handle Image
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('concerns', 'public');
             $concern->photo_path = $path; 
@@ -470,7 +451,6 @@ class ResidentDashboardController extends Controller
 
         $concern->save();
 
-        // Automatically record this action in the Activity Logs
         $log = new \App\Models\ActivityLog();
         $log->user_id = Auth::id();
         $log->action = 'Submitted Concern';
@@ -479,7 +459,6 @@ class ResidentDashboardController extends Controller
         $log->user_agent = $request->userAgent();
         $log->save();
 
-        // Redirect back with a success message
         return back()->with('success', 'Your community concern has been submitted successfully!');
     }
 }
