@@ -9,12 +9,12 @@
             <p class="header-subtitle mb-0 mt-0.5 text-muted" style="font-size: 0.8125rem;">Manage and process document requests from residents</p>
         </div>
 
-        {{-- Right: Live Indicator Badge --}}
-        <div class="d-flex align-items-center gap-2">
-            <span class="live-badge" id="live-status-indicator">
+        {{-- Right: Live Indicator Badge (Hidden per user request) --}}
+        <div class="d-none align-items-center gap-2">
+            <span class="live-badge" id="live-status-indicator" style="display: none !important;">
                 <span class="live-status-dot"></span>LIVE
             </span>
-            <span class="text-muted" style="font-size: 11px;" id="last-refreshed-label">Auto-refreshes every 10s</span>
+            <span class="text-muted" style="font-size: 11px; display: none !important;" id="last-refreshed-label">Auto-refreshes every 10s</span>
         </div>
     </div>
 
@@ -1547,25 +1547,11 @@
         #requests-mobile-list .mobile-request-card:nth-child(3) { animation-delay: 0.30s; }
         #requests-mobile-list .mobile-request-card:nth-child(n+4) { animation-delay: 0.36s; }
 
-        /* Live badge in pipeline header */
-        .live-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #16a34a;
-            background: rgba(22, 163, 74, 0.10);
-            border: 1px solid rgba(22, 163, 74, 0.25);
-            border-radius: 999px;
-            padding: 2px 9px 2px 7px;
-            letter-spacing: 0.04em;
-        }
-        html[data-theme="dark"] .live-badge,
-        html[data-bs-theme="dark"] .live-badge {
-            color: #4ade80;
-            background: rgba(74, 222, 128, 0.12);
-            border-color: rgba(74, 222, 128, 0.3);
+        /* Live badge in pipeline header (Hidden per user request) */
+        .live-badge,
+        #live-status-indicator,
+        #last-refreshed-label {
+            display: none !important;
         }
 
         /* Pipeline pill active glow pulse */
