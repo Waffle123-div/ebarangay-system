@@ -1,10 +1,12 @@
 @extends('admin.layouts.admin')
 
+@section('page_title', 'User Management')
+
 @section('content')
 <div class="container-fluid px-3 px-sm-4 py-3 py-sm-4">
 
     <style>
-        /* Responsive Table & Sticky Actions */
+        /* Responsive Table & Accessibility Improvements */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -19,158 +21,786 @@
 
         .table-users {
             width: 100%;
-            min-width: 900px;
             border-collapse: separate;
             border-spacing: 0;
+            table-layout: auto;
+        }
+        .table-users thead th {
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            padding: 0.75rem 0.6rem;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .table-users tbody td {
+            padding: 0.65rem 0.6rem;
+            vertical-align: middle;
+            font-size: 0.84rem;
         }
         .table-users thead th.col-actions,
         .table-users tbody td.col-actions {
             white-space: nowrap;
             text-align: right;
-            padding-right: 1.25rem !important;
+            padding-right: 1rem !important;
+            min-width: 195px;
+            width: 195px;
+            position: sticky;
+            right: 0;
+            z-index: 2;
+        }
+        .table-users thead th.col-actions {
+            background-color: var(--color-bg, #f8fafc);
+        }
+        .table-users tbody td.col-actions {
+            background-color: #ffffff;
+        }
+        .table-users tbody tr:hover > td.col-actions {
+            background-color: #f8fafc;
         }
 
-        /* Mobile Status Pills Scroll & Card Layout */
+        /* Action Buttons Standardized Inline Group */
+        .user-actions-group {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .btn-table-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3.5px;
+            padding: 4px 7.5px;
+            border-radius: 6px;
+            font-size: 0.75rem; /* 12px */
+            font-weight: 600;
+            line-height: 1.2;
+            transition: all 0.15s ease-in-out;
+            text-decoration: none !important;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            height: 28px;
+        }
+        .btn-table-action:hover {
+            transform: translateY(-1px);
+        }
+        .btn-view-user {
+            color: #1d4ed8 !important;
+            background: rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.16);
+        }
+        .btn-view-user:hover {
+            background: rgba(37, 99, 235, 0.18);
+            color: #1e40af !important;
+        }
+        .btn-edit-user {
+            color: #b45309 !important;
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+        .btn-edit-user:hover {
+            background: rgba(245, 158, 11, 0.2);
+            color: #92400e !important;
+        }
+        .btn-toggle-status.action-deactivate {
+            color: #dc2626 !important;
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .btn-toggle-status.action-deactivate:hover {
+            background: rgba(239, 68, 68, 0.18);
+            color: #b91c1c !important;
+        }
+        .btn-toggle-status.action-activate {
+            color: #16a34a !important;
+            background: rgba(22, 163, 74, 0.08);
+            border-color: rgba(22, 163, 74, 0.2);
+        }
+        .btn-toggle-status.action-activate:hover {
+            background: rgba(22, 163, 74, 0.18);
+            color: #15803d !important;
+        }
+
+        /* ── Metric / Filter Cards ── */
+        .user-filter-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1rem 1.125rem;
+            background-color: #ffffff;
+            border: 1.5px solid #e2e8f0; /* border-slate-200 */
+            border-radius: 0.75rem; /* rounded-xl */
+            text-decoration: none !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            cursor: pointer;
+            min-height: 96px;
+            height: 100%;
+        }
+        .user-filter-card:hover {
+            border-color: #cbd5e1; /* border-slate-300 */
+            background-color: #f8fafc; /* bg-slate-50 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+            transform: translateY(-1px);
+        }
+        /* Active State: Clean dark blue ring/border (border-blue-600, ring-2 ring-blue-100, bg-blue-50/30) */
+        .user-filter-card.active {
+            border-color: #2563eb !important; /* border-blue-600 */
+            background-color: rgba(239, 246, 255, 0.5) !important; /* bg-blue-50/30 */
+            box-shadow: 0 0 0 3px #dbeafe !important; /* ring-2 ring-blue-100 */
+        }
+        .user-filter-card:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .card-label-text {
+            font-size: 0.875rem; /* 14px */
+            font-weight: 600; /* font-semibold */
+            color: #334155; /* text-slate-700 */
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .card-count-text {
+            font-size: 1.5rem; /* 24px - text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #0f172a; /* text-slate-900 */
+            line-height: 1.2;
+        }
+        .card-active-pill {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            background-color: #1e3a8a; /* deep navy */
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+        .card-subtext-total { color: #64748b; font-size: 0.75rem; }
+        .card-subtext-residents { color: #1d4ed8; font-size: 0.75rem; }
+        .card-subtext-admins { color: #6d28d9; font-size: 0.75rem; }
+        .card-pending-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.55rem;
+            border-radius: 9999px;
+            background-color: #fef3c7;
+            color: #92400e !important;
+            border: 1px solid #fde68a;
+            display: inline-block;
+            line-height: 1.2;
+            transition: all 0.15s ease;
+        }
+
+        /* ── Header Action Button ── */
+        .btn-create-user-header {
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: #ffffff !important;
+            background-color: #0f2240 !important; /* dark navy / bg-blue-900 */
+            border: 1px solid #0f2240;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: all 0.15s ease-in-out;
+            text-decoration: none !important;
+        }
+        .btn-create-user-header:hover {
+            background-color: #18365d !important;
+            border-color: #18365d;
+            box-shadow: 0 4px 6px -1px rgba(15, 34, 64, 0.18);
+        }
+        .btn-create-user-header:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+
+        /* ── Table Control Bar ── */
+        .control-search-input {
+            min-height: 44px; /* >= 42px requirement */
+            padding-left: 2.85rem;
+            padding-right: 2.75rem;
+            font-size: 0.9375rem;
+            color: #1e293b; /* text-slate-800 */
+            background-color: #ffffff;
+            border: 1.5px solid #cbd5e1; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: all 0.15s ease-in-out;
+        }
+        .control-search-input::placeholder {
+            color: #94a3b8; /* placeholder:text-slate-400 */
+        }
+        .control-search-input:focus {
+            background-color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px #dbeafe;
+            color: #1e293b;
+            outline: none;
+        }
+        .search-icon-adornment {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b; /* text-slate-500 prominent icon */
+            pointer-events: none;
+            font-size: 1rem;
+        }
+        .btn-filter-trigger {
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0.5rem 1.125rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #334155; /* text-slate-700 */
+            background-color: #ffffff;
+            border: 1.5px solid #cbd5e1; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .btn-filter-trigger:hover,
+        .btn-filter-trigger:focus,
+        .btn-filter-trigger[aria-expanded="true"] {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        /* Accessible Action Link Buttons */
+        .btn-table-action {
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13.5px;
+            text-decoration: none;
+            transition: background-color 0.15s ease;
+        }
+        .btn-table-action:hover {
+            background-color: #f1f5f9;
+        }
+
         @media (max-width: 767.98px) {
-            .users-nav-pills {
-                flex-wrap: nowrap !important;
-                overflow-x: auto;
-                padding-bottom: 8px;
-                -webkit-overflow-scrolling: touch;
-            }
-            .users-nav-pills .nav-link {
-                white-space: nowrap;
-                padding: 7px 15px;
-                font-size: 13px;
-                flex-shrink: 0;
-            }
             .mobile-user-card {
-                border: 1px solid #e2e8f0;
+                border: 1.5px solid #e2e8f0;
                 border-radius: 14px;
                 background: #ffffff;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
                 margin-bottom: 12px;
-                padding: 14px;
+                padding: 16px;
             }
         }
+    
+        /* ═══════════════════════════════════════════════════════════
+           DARK MODE OVERRIDES FOR USER MANAGEMENT (ACCESSIBILITY & CONTRAST)
+           ═══════════════════════════════════════════════════════════ */
+        html[data-theme="dark"] .user-filter-card,
+        html[data-bs-theme="dark"] .user-filter-card {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] .user-filter-card:hover,
+        html[data-bs-theme="dark"] .user-filter-card:hover {
+            border-color: #3b82f6 !important;
+            background-color: #182238 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+        html[data-theme="dark"] .user-filter-card.active,
+        html[data-bs-theme="dark"] .user-filter-card.active {
+            border-color: #3b82f6 !important;
+            background-color: rgba(37, 99, 235, 0.22) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
+        }
+        html[data-theme="dark"] .card-label-text,
+        html[data-bs-theme="dark"] .card-label-text {
+            color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .card-count-text,
+        html[data-bs-theme="dark"] .card-count-text {
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .card-active-pill,
+        html[data-bs-theme="dark"] .card-active-pill {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        /* Search input & Filter dropdown button */
+        html[data-theme="dark"] .control-search-input,
+        html[data-bs-theme="dark"] .control-search-input {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .control-search-input:focus,
+        html[data-bs-theme="dark"] .control-search-input:focus {
+            background-color: #1e2b45 !important;
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+        }
+        html[data-theme="dark"] .control-search-input::placeholder,
+        html[data-bs-theme="dark"] .control-search-input::placeholder {
+            color: #64748b !important;
+        }
+        html[data-theme="dark"] .search-icon-adornment,
+        html[data-bs-theme="dark"] .search-icon-adornment {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] .btn-filter-trigger,
+        html[data-bs-theme="dark"] .btn-filter-trigger {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .btn-filter-trigger:hover,
+        html[data-bs-theme="dark"] .btn-filter-trigger:hover {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #ffffff !important;
+        }
+
+        /* Table Card and Table Rows in Dark Mode */
+        html[data-theme="dark"] .table-users,
+        html[data-bs-theme="dark"] .table-users,
+        html[data-theme="dark"] .table-users > :not(caption) > * > *,
+        html[data-bs-theme="dark"] .table-users > :not(caption) > * > *,
+        html[data-theme="dark"] .table-users tbody td,
+        html[data-bs-theme="dark"] .table-users tbody td {
+            background-color: #131d31 !important;
+            color: #e2e8f0 !important;
+            border-color: #1e293b !important;
+            box-shadow: none !important;
+        }
+        html[data-theme="dark"] .table-users thead th,
+        html[data-bs-theme="dark"] .table-users thead th {
+            background-color: #10192a !important;
+            color: #cbd5e1 !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] .table-users tbody tr:hover > td,
+        html[data-bs-theme="dark"] .table-users tbody tr:hover > td {
+            background-color: #19253d !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .font-monospace,
+        html[data-bs-theme="dark"] .font-monospace {
+            color: #93c5fd !important;
+        }
+        html[data-theme="dark"] .mobile-user-card,
+        html[data-bs-theme="dark"] .mobile-user-card {
+            background: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+
+        /* ── High-Contrast Status Badges in Dark Mode ── */
+        html[data-theme="dark"] .status-badge.status-pending-approval,
+        html[data-bs-theme="dark"] .status-badge.status-pending-approval,
+        html[data-theme="dark"] .status-badge.status-pending,
+        html[data-bs-theme="dark"] .status-badge.status-pending {
+            background-color: rgba(245, 158, 11, 0.22) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.5) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-pending-approval *,
+        html[data-bs-theme="dark"] .status-badge.status-pending-approval *,
+        html[data-theme="dark"] .status-badge.status-pending *,
+        html[data-bs-theme="dark"] .status-badge.status-pending * {
+            color: #fbbf24 !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-active,
+        html[data-bs-theme="dark"] .status-badge.status-active {
+            background-color: rgba(34, 197, 94, 0.22) !important;
+            color: #4ade80 !important;
+            border: 1px solid rgba(34, 197, 94, 0.5) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-active *,
+        html[data-bs-theme="dark"] .status-badge.status-active * {
+            color: #4ade80 !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-inactive,
+        html[data-bs-theme="dark"] .status-badge.status-inactive {
+            background-color: rgba(148, 163, 184, 0.22) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(148, 163, 184, 0.4) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-inactive *,
+        html[data-bs-theme="dark"] .status-badge.status-inactive * {
+            color: #cbd5e1 !important;
+        }
+
+        /* ── Metric / Filter Cards Dark Mode Overrides ── */
+        html[data-theme="dark"] .card-subtext-total,
+        html[data-bs-theme="dark"] .card-subtext-total {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] .card-subtext-residents,
+        html[data-bs-theme="dark"] .card-subtext-residents {
+            color: #60a5fa !important;
+        }
+        html[data-theme="dark"] .card-subtext-admins,
+        html[data-bs-theme="dark"] .card-subtext-admins {
+            color: #c084fc !important;
+        }
+        html[data-theme="dark"] .card-pending-badge,
+        html[data-bs-theme="dark"] .card-pending-badge {
+            background-color: rgba(245, 158, 11, 0.22) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.45) !important;
+        }
+
+        /* ── Action buttons in Table (Dark Mode) ── */
+        html[data-theme="dark"] .btn-view-user,
+        html[data-bs-theme="dark"] .btn-view-user,
+        html[data-theme="dark"] .btn-view-user i,
+        html[data-bs-theme="dark"] .btn-view-user i {
+            color: #60a5fa !important;
+        }
+        html[data-theme="dark"] .btn-view-user:hover,
+        html[data-bs-theme="dark"] .btn-view-user:hover {
+            color: #93c5fd !important;
+        }
+        html[data-theme="dark"] .btn-edit-user,
+        html[data-bs-theme="dark"] .btn-edit-user,
+        html[data-theme="dark"] .btn-edit-user i,
+        html[data-bs-theme="dark"] .btn-edit-user i {
+            color: #fbbf24 !important;
+        }
+        html[data-theme="dark"] .btn-edit-user:hover,
+        html[data-bs-theme="dark"] .btn-edit-user:hover {
+            color: #fde047 !important;
+        }
+        html[data-theme="dark"] .btn-toggle-status.action-deactivate,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-deactivate,
+        html[data-theme="dark"] .btn-toggle-status.action-deactivate i,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-deactivate i {
+            color: #f87171 !important;
+            background: rgba(239, 68, 68, 0.14) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        html[data-theme="dark"] .btn-toggle-status.action-deactivate:hover,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-deactivate:hover {
+            background: rgba(239, 68, 68, 0.25) !important;
+            color: #fca5a5 !important;
+        }
+        html[data-theme="dark"] .btn-toggle-status.action-activate,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-activate,
+        html[data-theme="dark"] .btn-toggle-status.action-activate i,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-activate i {
+            color: #4ade80 !important;
+            background: rgba(34, 197, 94, 0.14) !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+        }
+        html[data-theme="dark"] .btn-toggle-status.action-activate:hover,
+        html[data-bs-theme="dark"] .btn-toggle-status.action-activate:hover {
+            background: rgba(34, 197, 94, 0.25) !important;
+            color: #86efac !important;
+        }
+
+        /* ── Sticky Actions Column in Dark Mode ── */
+        html[data-theme="dark"] .table-users thead th.col-actions,
+        html[data-bs-theme="dark"] .table-users thead th.col-actions {
+            background-color: #10192a !important;
+        }
+        html[data-theme="dark"] .table-users tbody td.col-actions,
+        html[data-bs-theme="dark"] .table-users tbody td.col-actions {
+            background-color: #131d31 !important;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.25);
+        }
+        html[data-theme="dark"] .table-users tbody tr:hover > td.col-actions,
+        html[data-bs-theme="dark"] .table-users tbody tr:hover > td.col-actions {
+            background-color: #19253d !important;
+        }
+
+        /* ── Role Badges in Table (Dark Mode) ── */
+        html[data-theme="dark"] .badge-admin-role,
+        html[data-bs-theme="dark"] .badge-admin-role {
+            background-color: rgba(147, 51, 234, 0.2) !important;
+            color: #c084fc !important;
+            border: 1px solid rgba(147, 51, 234, 0.4) !important;
+        }
+        html[data-theme="dark"] .badge-resident-role,
+        html[data-bs-theme="dark"] .badge-resident-role {
+            background-color: rgba(148, 163, 184, 0.18) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        }
+
     </style>
 
+    {{-- Header Section --}}
     <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> > Users</div>
-        <h2 class="header-title" style="font-weight: 400;">User Management</h2>
-        <p class="header-subtitle mb-0">Manage user accounts and permissions in the system</p>
+        {{-- Title + Subtitle on Left, "+ Create New User" on Top Right --}}
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 m-0" style="color: #1e293b; font-size: 1.5rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em;">
+                    User Management
+                </h1>
+                <p class="text-sm text-slate-500 m-0 mt-1" style="color: #64748b; font-size: 0.875rem;">
+                    Manage resident accounts, permissions, and system roles
+                </p>
+            </div>
+            <div class="d-flex align-items-center flex-shrink-0">
+                <button type="button" 
+                        class="btn btn-create-user-header d-inline-flex align-items-center justify-content-center gap-2"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#createUserModal"
+                        aria-label="Create New User">
+                    <i class="fa-solid fa-plus fa-sm" aria-hidden="true"></i>
+                    <span>+ Create New User</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible show rounded-3 mb-4 shadow-sm" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+        <div class="alert alert-success alert-dismissible show rounded-3 mb-4 shadow-sm d-flex align-items-center" role="alert" style="color: #166534; background-color: #f0fdf4; border: 1.5px solid #bbf7d0;">
+            <i class="fa-solid fa-circle-check me-2 fa-lg text-success"></i>
+            <span class="fw-medium">{{ session('success') }}</span>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible show rounded-3 mb-4 shadow-sm" role="alert" style="color: #991b1b; background-color: #fef2f2; border: 1.5px solid #fecaca;">
+            <div class="d-flex align-items-center mb-1">
+                <i class="fa-solid fa-circle-exclamation me-2 fa-lg text-danger"></i>
+                <span class="fw-bold">Please correct the following errors:</span>
+            </div>
+            <ul class="mb-0 mt-1 ps-4 small">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    {{-- KPI Cards (2 on mobile, 4 on desktop) --}}
-    <div class="row g-3 mb-4">
+    {{-- Metric / Filter Cards (Merged Stat Cards + Filter Tabs) --}}
+    <div class="row g-3 mb-4" role="tablist" aria-label="User Filter Tabs">
+        {{-- Card 1: All Users --}}
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1" style="font-size: 11px;">Total Users</div>
-                        <h3 class="fw-bold mb-0 text-dark">{{ $totalUsers }}</h3>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center flex-shrink-0" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
+            <a href="{{ request()->fullUrlWithQuery(['role' => 'All']) }}" 
+               class="user-filter-card {{ in_array($currentRole, ['All', '']) ? 'active' : '' }}"
+               role="tab"
+               aria-selected="{{ in_array($currentRole, ['All', '']) ? 'true' : 'false' }}"
+               title="Show All Users">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="card-label-text">
+                        <i class="fa-solid fa-users" style="color: #475569;" aria-hidden="true"></i>
+                        All Users
+                    </span>
+                    @if(in_array($currentRole, ['All', '']))
+                        <span class="card-active-pill" aria-label="Active category filter">Active</span>
+                    @endif
                 </div>
-            </div>
+                <div class="d-flex align-items-baseline justify-content-between mt-auto">
+                    <span class="card-count-text">{{ $tabCounts['All'] ?? $totalUsers }}</span>
+                    <span class="card-subtext-total fw-semibold">Total</span>
+                </div>
+            </a>
         </div>
+
+        {{-- Card 2: Residents --}}
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1" style="font-size: 11px;">Active Users</div>
-                        <h3 class="fw-bold mb-0 text-success">{{ $activeUsers }}</h3>
-                    </div>
-                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center flex-shrink-0" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-user-check"></i>
-                    </div>
+            <a href="{{ request()->fullUrlWithQuery(['role' => 'Resident']) }}" 
+               class="user-filter-card {{ $currentRole === 'Resident' ? 'active' : '' }}"
+               role="tab"
+               aria-selected="{{ $currentRole === 'Resident' ? 'true' : 'false' }}"
+               title="Filter by Residents">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="card-label-text">
+                        <i class="fa-solid fa-house-user" style="color: #1d4ed8;" aria-hidden="true"></i>
+                        Residents
+                    </span>
+                    @if($currentRole === 'Resident')
+                        <span class="card-active-pill" aria-label="Active category filter">Active</span>
+                    @endif
                 </div>
-            </div>
+                <div class="d-flex align-items-baseline justify-content-between mt-auto">
+                    <span class="card-count-text">{{ $tabCounts['Resident'] ?? 0 }}</span>
+                    <span class="card-subtext-residents fw-semibold">Residents</span>
+                </div>
+            </a>
         </div>
+
+        {{-- Card 3: Administrators --}}
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1" style="font-size: 11px;">New Registered</div>
-                        <h3 class="fw-bold mb-0 text-warning">{{ $newRegistrations }}</h3>
-                    </div>
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex justify-content-center align-items-center flex-shrink-0" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </div>
+            <a href="{{ request()->fullUrlWithQuery(['role' => 'Admin']) }}" 
+               class="user-filter-card {{ $currentRole === 'Admin' ? 'active' : '' }}"
+               role="tab"
+               aria-selected="{{ $currentRole === 'Admin' ? 'true' : 'false' }}"
+               title="Filter by Administrators">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="card-label-text">
+                        <i class="fa-solid fa-user-shield" style="color: #6d28d9;" aria-hidden="true"></i>
+                        Administrators
+                    </span>
+                    @if($currentRole === 'Admin')
+                        <span class="card-active-pill" aria-label="Active category filter">Active</span>
+                    @endif
                 </div>
-            </div>
+                <div class="d-flex align-items-baseline justify-content-between mt-auto">
+                    <span class="card-count-text">{{ $tabCounts['Admin'] ?? 0 }}</span>
+                    <span class="card-subtext-admins fw-semibold">Staff & Admins</span>
+                </div>
+            </a>
         </div>
+
+        {{-- Card 4: Pending / New --}}
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1" style="font-size: 11px;">Administrators</div>
-                        <h3 class="fw-bold mb-0" style="color: #6f42c1;">{{ $adminUsers }}</h3>
-                    </div>
-                    <div class="rounded-circle d-flex justify-content-center align-items-center flex-shrink-0" style="width: 40px; height: 40px; background-color: rgba(111, 66, 193, 0.1); color: #6f42c1;">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
+            <a href="{{ request()->fullUrlWithQuery(['role' => 'Pending']) }}" 
+               class="user-filter-card {{ in_array($currentRole, ['Pending', 'Pending / New']) ? 'active' : '' }}"
+               role="tab"
+               aria-selected="{{ in_array($currentRole, ['Pending', 'Pending / New']) ? 'true' : 'false' }}"
+               title="Filter by Pending Approvals and New Accounts">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="card-label-text">
+                        <i class="fa-solid fa-user-clock text-amber-700" style="color: #b45309;" aria-hidden="true"></i>
+                        Pending / New
+                    </span>
+                    @if(in_array($currentRole, ['Pending', 'Pending / New']))
+                        <span class="card-active-pill" style="background-color: #92400e;" aria-label="Active category filter">Active</span>
+                    @endif
                 </div>
-            </div>
+                <div class="d-flex align-items-baseline justify-content-between mt-auto">
+                    <span class="card-count-text">{{ $tabCounts['Pending'] ?? 0 }}</span>
+                    <span class="card-pending-badge fw-bold" aria-label="New and pending count">
+                        New & Pending
+                    </span>
+                </div>
+            </a>
         </div>
     </div>
 
-    <!-- THE HORIZONTAL TABS (Scrollable on mobile) -->
-    <ul class="nav nav-pills mb-4 gap-2 flex-wrap users-nav-pills">
-        <li class="nav-item">
-            <a class="nav-link rounded-pill px-3.5 py-2 {{ $currentRole == 'All' ? 'active fw-bold shadow-sm' : 'bg-white text-muted border' }}" 
-               href="{{ request()->fullUrlWithQuery(['role' => 'All']) }}">
-                <i class="fa-solid fa-users me-1"></i> All Users 
-                <span class="badge rounded-pill ms-1 {{ $currentRole == 'All' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-25 text-dark' }}">{{ $tabCounts['All'] ?? 0 }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill px-3.5 py-2 {{ $currentRole == 'Resident' ? 'active fw-bold shadow-sm' : 'bg-white text-muted border' }}" 
-               href="{{ request()->fullUrlWithQuery(['role' => 'Resident']) }}">
-                <i class="fa-solid fa-house-user me-1"></i> Residents 
-                <span class="badge rounded-pill ms-1 {{ $currentRole == 'Resident' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-25 text-dark' }}">{{ $tabCounts['Resident'] ?? 0 }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill px-3.5 py-2 {{ $currentRole == 'Admin' ? 'active fw-bold shadow-sm' : 'bg-white text-muted border' }}" 
-               href="{{ request()->fullUrlWithQuery(['role' => 'Admin']) }}">
-                <i class="fa-solid fa-user-shield me-1"></i> Administrators 
-                <span class="badge rounded-pill ms-1 {{ $currentRole == 'Admin' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-25 text-dark' }}">{{ $tabCounts['Admin'] ?? 0 }}</span>
-            </a>
-        </li>
-    </ul>
-
+    {{-- Main Table Container --}}
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header border-0 bg-white py-3 px-3 px-md-4 d-flex justify-content-between align-items-center flex-wrap gap-2 rounded-top-4">
+        {{-- Table Control Bar (Directly below cards) --}}
+        <div class="card-header border-bottom bg-white py-3 px-3 px-md-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
             
-            <form action="{{ route('admin.users') }}" method="GET" class="m-0 w-100 w-md-auto flex-grow-1 flex-md-grow-0" id="searchForm">
+            {{-- Left: Prominent Search Input --}}
+            <form action="{{ route('admin.users') }}" method="GET" class="m-0 flex-grow-1" style="max-width: 440px;" id="searchForm">
                 @if(request('role'))
                     <input type="hidden" name="role" value="{{ request('role') }}">
                 @endif
-                
-                <div class="input-group input-group-sm rounded w-100" style="max-width: 320px; background-color: var(--color-bg-alt);">
-                    <button type="submit" class="input-group-text border-0 bg-transparent text-muted"><i class="fa fa-search"></i></button>
-                    <input type="text" id="searchInput" name="search" value="{{ request('search') }}" class="form-control border-0 bg-transparent shadow-none" placeholder="Search users..." autocomplete="off">
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                @if(request('sort'))
+                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                @endif
+
+                <div class="position-relative w-100">
+                    <span class="search-icon-adornment" aria-hidden="true">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" 
+                           id="searchInput" 
+                           name="search" 
+                           value="{{ request('search') }}" 
+                           class="form-control control-search-input text-slate-800" 
+                           placeholder="Search by name, ID, or email..." 
+                           autocomplete="off"
+                           aria-label="Search by name, ID, or email">
                     @if(request('search'))
-                        <a href="{{ route('admin.users', ['role' => request('role')]) }}" class="btn btn-sm btn-transparent border-0 text-muted">
-                            <i class="fa fa-times"></i>
+                        <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" 
+                           class="position-absolute end-0 top-50 translate-middle-y me-2 d-flex align-items-center justify-content-center text-decoration-none"
+                           style="width: 38px; height: 38px; border-radius: 50%; color: #64748b;"
+                           title="Clear search"
+                           aria-label="Clear search input">
+                            <i class="fa-solid fa-circle-xmark fa-lg"></i>
                         </a>
                     @endif
                 </div>
             </form>
-            
-            <div class="d-flex gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
-                <button class="btn btn-sm btn-light border px-3 fw-semibold flex-fill flex-md-grow-0"><i class="fa-solid fa-filter text-muted me-1"></i> Advanced</button>
-                <button class="btn btn-sm btn-primary px-3 fw-semibold flex-fill flex-md-grow-0"><i class="fa-solid fa-user-plus me-1"></i> Create New</button>
+
+            {{-- Right: Filters Button with Clear Dropdown Arrow --}}
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <div class="dropdown">
+                    <button class="btn btn-filter-trigger d-inline-flex align-items-center gap-2" 
+                            type="button" 
+                            id="filtersDropdownBtn" 
+                            data-bs-toggle="dropdown" 
+                            data-bs-auto-close="outside" 
+                            aria-expanded="false"
+                            aria-label="Open filter options">
+                        <i class="fa-solid fa-sliders text-slate-500" style="color: #64748b;" aria-hidden="true"></i>
+                        <span>Filters</span>
+                        @if((request('status') && request('status') !== 'All') || (request('sort') && request('sort') !== 'newest'))
+                            <span class="badge rounded-pill bg-primary text-white ms-1" style="font-size: 10px; padding: 3px 6px;">Active</span>
+                        @endif
+                        <i class="fa-solid fa-chevron-down text-slate-500 fa-xs ms-1" style="color: #64748b;" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border border-slate-200 rounded-3" style="min-width: 300px; z-index: 1060;" aria-labelledby="filtersDropdownBtn">
+                        <form action="{{ route('admin.users') }}" method="GET">
+                            @if(request('role'))
+                                <input type="hidden" name="role" value="{{ request('role') }}">
+                            @endif
+                            @if(request('search'))
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                            @endif
+
+                            <div class="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom">
+                                <h6 class="fw-bold mb-0 text-slate-800" style="color: #1e293b; font-size: 0.9375rem;">Filter Users</h6>
+                                @if((request('status') && request('status') !== 'All') || (request('sort') && request('sort') !== 'newest'))
+                                    <a href="{{ route('admin.users', ['role' => request('role'), 'search' => request('search')]) }}" class="text-decoration-none text-danger small fw-semibold">
+                                        Reset All
+                                    </a>
+                                @endif
+                            </div>
+
+                            {{-- Status Filter --}}
+                            <div class="mb-3">
+                                <label for="filterStatusSelect" class="form-label text-xs fw-bold text-slate-600 text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em; color: #475569;">
+                                    Account Status
+                                </label>
+                                <select name="status" id="filterStatusSelect" class="form-select form-select-sm" style="min-height: 40px; border-color: #cbd5e1; font-size: 0.875rem;">
+                                    <option value="All" {{ request('status') == 'All' || !request('status') ? 'selected' : '' }}>All Statuses</option>
+                                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active Only</option>
+                                    <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
+                                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive / Deactivated</option>
+                                </select>
+                            </div>
+
+                            {{-- Sort Order --}}
+                            <div class="mb-3">
+                                <label for="filterSortSelect" class="form-label text-xs fw-bold text-slate-600 text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em; color: #475569;">
+                                    Sort Order
+                                </label>
+                                <select name="sort" id="filterSortSelect" class="form-select form-select-sm" style="min-height: 40px; border-color: #cbd5e1; font-size: 0.875rem;">
+                                    <option value="newest" {{ request('sort') == 'newest' || !request('sort') ? 'selected' : '' }}>Newest Registered First</option>
+                                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest Registered First</option>
+                                    <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name: A to Z</option>
+                                    <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Name: Z to A</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex gap-2 pt-2 border-top">
+                                <button type="submit" class="btn btn-primary btn-sm flex-fill fw-semibold py-2" style="background-color: #0f2240; border-color: #0f2240; min-height: 38px;">
+                                    Apply Filters
+                                </button>
+                                <a href="{{ route('admin.users', ['role' => request('role'), 'search' => request('search')]) }}" class="btn btn-light btn-sm flex-fill fw-semibold py-2 border" style="min-height: 38px;">
+                                    Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -195,41 +825,43 @@
             <table class="table table-hover align-middle mb-0 table-users" id="usersMasterTable">
                 <thead class="text-muted small" style="background-color: var(--color-bg);">
                     <tr>
-                        <th class="ps-4 py-3 border-0 text-center" style="width: 44px;">
+                        <th class="ps-3 py-3 border-0 text-center" style="width: 38px;">
                             <input class="form-check-input" type="checkbox" id="selectAllUsers" title="Select All">
                         </th>
-                        <th class="py-3 border-0 text-nowrap" style="width: 120px;">USER ID</th>
-                        <th class="py-3 border-0" style="min-width: 160px;">NAME</th>
-                        <th class="py-3 border-0" style="min-width: 170px;">EMAIL</th>
-                        <th class="py-3 border-0 text-center text-nowrap" style="width: 110px;">ROLE</th>
-                        <th class="py-3 border-0 text-center text-nowrap" style="width: 110px;">STATUS</th>
-                        <th class="py-3 border-0 text-nowrap" style="width: 130px;">REGISTRATION DATE</th>
-                        <th class="pe-4 py-3 border-0 text-end col-actions">ACTIONS</th>
+                        <th class="py-3 border-0 text-nowrap" style="width: 100px;">USER ID</th>
+                        <th class="py-3 border-0" style="min-width: 140px;">NAME</th>
+                        <th class="py-3 border-0" style="min-width: 130px;">EMAIL</th>
+                        <th class="py-3 border-0 text-center text-nowrap" style="width: 80px;">ROLE</th>
+                        <th class="py-3 border-0 text-center text-nowrap" style="width: 85px;">STATUS</th>
+                        <th class="py-3 border-0 text-nowrap" style="width: 105px;">REGISTERED</th>
+                        <th class="pe-3 py-3 border-0 text-end col-actions">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     @forelse($allUsers as $user)
                     <tr id="user-row-{{ $user->id }}">
-                        <td class="ps-4 text-center py-3" style="width: 44px;">
+                        <td class="ps-3 text-center py-2.5" style="width: 38px;">
                             <input class="form-check-input user-checkbox" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}" {{ $user->id === auth()->id() ? 'disabled title="Cannot delete your own account"' : '' }}>
                         </td>
                         <td class="fw-bold text-dark text-nowrap">
-                            <span class="font-monospace" style="font-size: 13px;">USR-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}</span>
+                            <span class="font-monospace" style="font-size: 12.5px;">USR-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}</span>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-2.5 fw-bold text-uppercase flex-shrink-0" style="width: 34px; height: 34px; font-size: 12px;">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-2 fw-bold text-uppercase flex-shrink-0" style="width: 30px; height: 30px; font-size: 11px;">
                                     {{ substr(strip_tags($user->name), 0, 2) }}
                                 </div>
-                                <div class="fw-bold text-dark text-truncate" style="font-size: 13.5px; max-width: 160px;">{{ $user->name }}</div>
+                                <div class="fw-bold text-dark text-truncate" style="font-size: 13px; max-width: 140px;" title="{{ $user->name }}">{{ $user->name }}</div>
                             </div>
                         </td>
-                        <td class="text-muted text-truncate" style="max-width: 180px; font-size: 13px;">{{ $user->email }}</td>
+                        <td>
+                            <div class="text-muted text-truncate" style="max-width: 150px; font-size: 12.5px;" title="{{ $user->email }}">{{ $user->email }}</div>
+                        </td>
                         <td class="text-center text-nowrap">
                             @if($user->role == 'Admin')
-                                <span class="badge bg-opacity-10 px-2.5 py-1 rounded-pill" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; font-size: 11px;">Admin</span>
+                                <span class="badge badge-admin-role bg-opacity-10 px-2.5 py-1 rounded-pill" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; font-size: 11px;">Admin</span>
                             @else
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-2.5 py-1 rounded-pill" style="font-size: 11px;">Resident</span>
+                                <span class="badge badge-resident-role bg-secondary bg-opacity-10 text-secondary px-2.5 py-1 rounded-pill" style="font-size: 11px;">Resident</span>
                             @endif
                         </td>
                         <td class="text-center text-nowrap">
@@ -241,53 +873,61 @@
                                 <span class="status-badge status-inactive"><i class="fa-solid fa-circle" style="font-size: 6px; vertical-align: middle; margin-right: 4px;"></i> Inactive</span>
                             @endif
                         </td>
-                        <td class="text-muted text-nowrap" style="font-size: 12.5px;">{{ $user->created_at->format('M d, Y') }}</td>
-                        <td class="pe-4 text-end text-nowrap col-actions">
-                            {{-- VIEW BUTTON --}}
-                            <button type="button"
-                                class="btn btn-link text-primary fw-bold text-decoration-none p-0 me-3 btn-view-user"
-                                style="font-size: 13.5px;"
-                                data-id="{{ $user->id }}"
-                                data-name="{{ $user->name }}"
-                                data-email="{{ $user->email }}"
-                                data-role="{{ $user->role }}"
-                                data-status="{{ $user->status }}"
-                                data-registered="{{ $user->created_at->format('M d, Y') }}"
-                                data-gender="{{ $user->gender ?? 'N/A' }}"
-                                data-birthdate="{{ $user->birthdate ?? 'N/A' }}"
-                                data-age="{{ $user->age ?? 'N/A' }}"
-                                data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
-                                data-id-type="{{ $user->id_type ?? 'N/A' }}"
-                                data-id-doc-url="{{ $user->id_document_url }}">
-                                View
-                            </button>
+                        <td class="text-muted text-nowrap" style="font-size: 12px;">{{ $user->created_at->format('M d, Y') }}</td>
+                        <td class="pe-3 text-end text-nowrap col-actions">
+                            <div class="user-actions-group">
+                                {{-- VIEW BUTTON --}}
+                                <button type="button"
+                                    class="btn-table-action btn-view-user"
+                                    aria-label="View user details for {{ $user->name }}"
+                                    title="View details"
+                                    data-id="{{ $user->id }}"
+                                    data-name="{{ $user->name }}"
+                                    data-email="{{ $user->email }}"
+                                    data-role="{{ $user->role }}"
+                                    data-status="{{ $user->status }}"
+                                    data-registered="{{ $user->created_at->format('M d, Y') }}"
+                                    data-gender="{{ $user->gender ?? 'N/A' }}"
+                                    data-birthdate="{{ $user->birthdate ?? 'N/A' }}"
+                                    data-age="{{ $user->age ?? 'N/A' }}"
+                                    data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
+                                    data-id-type="{{ $user->id_type ?? 'N/A' }}"
+                                    data-id-doc-url="{{ $user->id_document_url }}">
+                                    <i class="fa-solid fa-eye me-1"></i>
+                                    <span>View</span>
+                                </button>
 
-                            {{-- EDIT BUTTON --}}
-                            <button type="button"
-                                class="btn btn-link text-warning fw-bold text-decoration-none p-0 me-3 btn-edit-user"
-                                style="font-size: 13.5px;"
-                                data-id="{{ $user->id }}"
-                                data-name="{{ $user->name }}"
-                                data-email="{{ $user->email }}"
-                                data-role="{{ $user->role }}">
-                                Edit
-                            </button>
+                                {{-- EDIT BUTTON --}}
+                                <button type="button"
+                                    class="btn-table-action btn-edit-user"
+                                    aria-label="Edit user account for {{ $user->name }}"
+                                    title="Edit user"
+                                    data-id="{{ $user->id }}"
+                                    data-name="{{ $user->name }}"
+                                    data-email="{{ $user->email }}"
+                                    data-role="{{ $user->role }}">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>
+                                    <span>Edit</span>
+                                </button>
 
-                            {{-- DEACTIVATE / ACTIVATE BUTTON --}}
-                            <button type="button"
-                                class="btn btn-link fw-bold text-decoration-none p-0 btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'text-danger' : 'text-success' }}"
-                                style="font-size: 13.5px;"
-                                data-id="{{ $user->id }}"
-                                data-name="{{ $user->name }}"
-                                data-action="{{ in_array(strtolower($user->status), ['active']) ? 'deactivate' : 'activate' }}"
-                                data-url="{{ route('admin.users.toggle-status', $user->id) }}">
-                                {{ in_array(strtolower($user->status), ['active']) ? 'Deactivate' : 'Activate' }}
-                            </button>
+                                {{-- DEACTIVATE / ACTIVATE BUTTON --}}
+                                <button type="button"
+                                    class="btn-table-action btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'action-deactivate text-danger' : 'action-activate text-success' }}"
+                                    aria-label="{{ in_array(strtolower($user->status), ['active']) ? 'Deactivate' : 'Activate' }} user account for {{ $user->name }}"
+                                    title="{{ in_array(strtolower($user->status), ['active']) ? 'Deactivate' : 'Activate' }} user account"
+                                    data-id="{{ $user->id }}"
+                                    data-name="{{ $user->name }}"
+                                    data-action="{{ in_array(strtolower($user->status), ['active']) ? 'deactivate' : 'activate' }}"
+                                    data-url="{{ route('admin.users.toggle-status', $user->id) }}">
+                                    <i class="fa-solid {{ in_array(strtolower($user->status), ['active']) ? 'fa-ban' : 'fa-circle-check' }} me-1"></i>
+                                    <span>{{ in_array(strtolower($user->status), ['active']) ? 'Deactivate' : 'Activate' }}</span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="8" class="text-center py-5 text-muted">
                             <i class="fa-solid fa-users fa-3x mb-3 text-light"></i>
                             <h5 class="fw-bold text-dark">No Users Found</h5>
                             <div>There are currently no users matching your criteria.</div>
@@ -341,7 +981,8 @@
 
                     {{-- Actions Grid for Mobile --}}
                     <div class="d-flex gap-2 pt-2 border-top mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-3 flex-fill fw-semibold py-1.5 btn-view-user"
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-3 flex-fill fw-semibold py-2 btn-view-user"
+                                style="min-height: 42px;"
                                 data-id="{{ $user->id }}"
                                 data-name="{{ $user->name }}"
                                 data-email="{{ $user->email }}"
@@ -356,14 +997,16 @@
                                 data-id-doc-url="{{ $user->id_document_url }}">
                             <i class="fa-solid fa-eye me-1"></i> View
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning rounded-3 flex-fill fw-semibold py-1.5 btn-edit-user"
+                        <button type="button" class="btn btn-sm rounded-3 flex-fill fw-semibold py-2 btn-edit-user"
+                                style="color: #92400e; border: 1.5px solid #d97706; background-color: #fef3c7; min-height: 42px;"
                                 data-id="{{ $user->id }}"
                                 data-name="{{ $user->name }}"
                                 data-email="{{ $user->email }}"
                                 data-role="{{ $user->role }}">
                             <i class="fa-solid fa-pen me-1"></i> Edit
                         </button>
-                        <button type="button" class="btn btn-sm rounded-3 flex-fill fw-semibold py-1.5 btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                        <button type="button" class="btn btn-sm rounded-3 flex-fill fw-semibold py-2 btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                style="min-height: 42px;"
                                 data-id="{{ $user->id }}"
                                 data-name="{{ $user->name }}"
                                 data-action="{{ in_array(strtolower($user->status), ['active']) ? 'deactivate' : 'activate' }}"
@@ -379,6 +1022,77 @@
                     <div class="small">There are currently no users matching your criteria.</div>
                 </div>
             @endforelse
+        </div>
+    </div>
+</div>
+
+{{-- ===================== CREATE NEW USER MODAL ===================== --}}
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background: linear-gradient(135deg, #0F2240 0%, #18365D 100%); border-radius: 1rem 1rem 0 0;">
+                <div>
+                    <h5 class="modal-title fw-bold text-white mb-1" id="createUserModalLabel">
+                        <i class="fa-solid fa-user-plus me-2"></i>Create New User
+                    </h5>
+                    <p class="text-white-50 small mb-0">Add a new administrator or resident account</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('admin.users.store') }}" method="POST">
+                @csrf
+                <div class="modal-body px-4 py-3">
+                    <div class="mb-3">
+                        <label for="createUserName" class="form-label fw-bold text-slate-700 small" style="color: #334155;">
+                            FULL NAME <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="createUserName" name="name" required placeholder="e.g. JUAN DELA CRUZ" style="min-height: 44px; text-transform: uppercase;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="createUserEmail" class="form-label fw-bold text-slate-700 small" style="color: #334155;">
+                            EMAIL ADDRESS <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="createUserEmail" name="email" required placeholder="e.g. user@example.com" style="min-height: 44px;">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="createUserRole" class="form-label fw-bold text-slate-700 small" style="color: #334155;">
+                                ROLE <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="createUserRole" name="role" required style="min-height: 44px;">
+                                <option value="Resident" selected>Resident</option>
+                                <option value="Admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="createUserStatus" class="form-label fw-bold text-slate-700 small" style="color: #334155;">
+                                INITIAL STATUS
+                            </label>
+                            <select class="form-select" id="createUserStatus" name="status" style="min-height: 44px;">
+                                <option value="active" selected>Active</option>
+                                <option value="pending_approval">Pending Approval</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="createUserPassword" class="form-label fw-bold text-slate-700 small" style="color: #334155;">
+                            PASSWORD <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" class="form-control" id="createUserPassword" name="password" required minlength="8" placeholder="At least 8 characters" style="min-height: 44px;">
+                        <div class="form-text small" style="color: #64748b;">Must be at least 8 characters. User will use this to sign in.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-1">
+                    <button type="button" class="btn btn-light rounded-3 fw-semibold px-4" data-bs-dismiss="modal" style="min-height: 44px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" style="background-color: #0f2240; border-color: #0f2240; min-height: 44px;">
+                        <i class="fa-solid fa-plus me-1"></i> Create User
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -596,6 +1310,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const editUserNameInput = document.getElementById('editUserName');
     if (editUserNameInput) {
         editUserNameInput.addEventListener('input', function() {
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            if (typeof this.value === 'string') {
+                this.value = this.value.toUpperCase();
+            }
+            if (start !== null && end !== null) {
+                this.setSelectionRange(start, end);
+            }
+        });
+    }
+
+    const createUserNameInput = document.getElementById('createUserName');
+    if (createUserNameInput) {
+        createUserNameInput.addEventListener('input', function() {
             const start = this.selectionStart;
             const end = this.selectionEnd;
             if (typeof this.value === 'string') {

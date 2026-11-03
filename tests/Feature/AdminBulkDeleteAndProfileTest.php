@@ -180,4 +180,21 @@ class AdminBulkDeleteAndProfileTest extends TestCase
         $this->assertDatabaseMissing('activity_logs', ['id' => $log1->id]);
         $this->assertDatabaseMissing('activity_logs', ['id' => $log2->id]);
     }
+
+    public function test_admin_can_view_activity_logs_without_ip_address_column()
+    {
+        ActivityLog::create([
+            'user_id'     => $this->admin->id,
+            'action'      => 'test_action',
+            'description' => 'Test log description',
+            'ip_address'  => '127.0.0.1',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.activity-logs'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Log Entries');
+        $response->assertSee('DESCRIPTION');
+        $response->assertDontSee('IP ADDRESS');
+    }
 }

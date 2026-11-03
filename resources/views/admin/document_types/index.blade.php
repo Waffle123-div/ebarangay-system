@@ -19,15 +19,38 @@
 
         .table-doc-types {
             width: 100%;
-            min-width: 860px;
             border-collapse: separate;
             border-spacing: 0;
+            table-layout: auto;
+        }
+        .table-doc-types thead th {
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.75rem 0.75rem;
+            white-space: nowrap;
+        }
+        .table-doc-types tbody td {
+            padding: 0.75rem 0.75rem;
+            vertical-align: middle;
         }
         .table-doc-types thead th.col-actions,
         .table-doc-types tbody td.col-actions {
+            position: sticky;
+            right: 0;
+            z-index: 5;
             white-space: nowrap;
             text-align: right;
             padding-right: 1.25rem !important;
+            background-color: #ffffff;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.04);
+        }
+        .table-doc-types thead th.col-actions {
+            background-color: #f8f9fe;
+        }
+        .table-doc-types tbody tr:hover > td.col-actions {
+            background-color: #f8fafc;
         }
 
         @media (max-width: 767.98px) {
@@ -72,15 +95,80 @@
         .custom-modal-scroll::-webkit-scrollbar-thumb:hover {
             background-color: #94a3b8;
         }
-    </style>
+    
+        /* ═══════════════════════════════════════════════════════════
+           DARK MODE OVERRIDES FOR DOCUMENT TYPES (ACCESSIBILITY & CONTRAST)
+           ═══════════════════════════════════════════════════════════ */
+        html[data-theme="dark"] .table-doc-types,
+        html[data-bs-theme="dark"] .table-doc-types,
+        html[data-theme="dark"] .table-doc-types > :not(caption) > * > *,
+        html[data-bs-theme="dark"] .table-doc-types > :not(caption) > * > *,
+        html[data-theme="dark"] .table-doc-types tbody td,
+        html[data-bs-theme="dark"] .table-doc-types tbody td {
+            background-color: #131d31 !important;
+            color: #e2e8f0 !important;
+            border-color: #1e293b !important;
+            box-shadow: none !important;
+        }
+        html[data-theme="dark"] .table-doc-types thead th,
+        html[data-bs-theme="dark"] .table-doc-types thead th {
+            background-color: #10192a !important;
+            color: #cbd5e1 !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] .table-doc-types tbody tr:hover > td,
+        html[data-bs-theme="dark"] .table-doc-types tbody tr:hover > td {
+            background-color: #19253d !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .table-doc-types thead th.col-actions,
+        html[data-bs-theme="dark"] .table-doc-types thead th.col-actions {
+            background-color: #10192a !important;
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.35);
+        }
+        html[data-theme="dark"] .table-doc-types tbody td.col-actions,
+        html[data-bs-theme="dark"] .table-doc-types tbody td.col-actions {
+            background-color: #131d31 !important;
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.35);
+        }
+        html[data-theme="dark"] .table-doc-types tbody tr:hover > td.col-actions,
+        html[data-bs-theme="dark"] .table-doc-types tbody tr:hover > td.col-actions {
+            background-color: #19253d !important;
+        }
+        html[data-theme="dark"] .mobile-doc-card,
+        html[data-bs-theme="dark"] .mobile-doc-card {
+            background: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
 
-    {{-- Breadcrumb & Title --}}
+            .doc-fee-badge.fee-paid {
+            background-color: #ebf4ff !important;
+            color: #1e40af !important;
+            border: 1px solid #bfdbfe !important;
+        }
+        .doc-fee-badge.fee-free {
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            border: 1px solid #bbf7d0 !important;
+        }
+        html[data-theme="dark"] .doc-fee-badge.fee-paid,
+        html[data-bs-theme="dark"] .doc-fee-badge.fee-paid {
+            background-color: rgba(30, 58, 138, 0.4) !important;
+            color: #93c5fd !important;
+            border: 1px solid rgba(96, 165, 250, 0.45) !important;
+        }
+        html[data-theme="dark"] .doc-fee-badge.fee-free,
+        html[data-bs-theme="dark"] .doc-fee-badge.fee-free {
+            background-color: rgba(22, 101, 52, 0.4) !important;
+            color: #86efac !important;
+            border: 1px solid rgba(74, 222, 128, 0.45) !important;
+        }
+</style>
+
+    {{-- Page Header --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <div class="text-muted small mb-1">
-                <a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; 
-                <span class="text-dark">Document Management</span>
-            </div>
             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                 <h2 class="header-title mb-0">Document Management</h2>
                 <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill small fw-semibold">
@@ -192,9 +280,9 @@
 
     {{-- Main Table Card --}}
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white border-bottom py-3 px-3 px-md-4 d-flex flex-wrap justify-content-between align-items-center gap-2 gap-md-3">
+        <div class="card-header bg-white border-bottom py-3 px-3 px-md-4 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2.5">
             {{-- Status Filters (Scrollable on small mobile screens) --}}
-            <div class="d-flex gap-2 doc-status-pills w-100 w-md-auto">
+            <div class="d-flex gap-2 doc-status-pills">
                 <a href="{{ route('admin.document-types.index') }}" 
                    class="btn btn-sm rounded-pill px-3 fw-semibold {{ !request('status') ? 'btn-primary' : 'btn-light border text-muted' }}">
                     All ({{ $stats['total'] }})
@@ -210,11 +298,11 @@
             </div>
 
             {{-- Search Box --}}
-            <form action="{{ route('admin.document-types.index') }}" method="GET" class="m-0 w-100 w-md-auto">
+            <form action="{{ route('admin.document-types.index') }}" method="GET" class="m-0 ms-sm-auto w-100 w-sm-auto" style="max-width: 300px;">
                 @if(request('status'))
                     <input type="hidden" name="status" value="{{ request('status') }}">
                 @endif
-                <div class="input-group input-group-sm w-100" style="max-width: 300px;">
+                <div class="input-group input-group-sm w-100">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa fa-search"></i></span>
                     <input type="text" name="search" value="{{ request('search') }}" 
                            class="form-control bg-light border-start-0 shadow-none" 
@@ -249,99 +337,97 @@
             <table class="table table-hover align-middle mb-0 table-doc-types">
                 <thead class="text-muted small" style="background-color: #f8f9fe;">
                     <tr>
-                        <th class="ps-4 py-3 border-0 text-center" style="width: 44px;">
+                        <th class="ps-3 ps-md-4 py-3 border-0 text-center" style="width: 44px; min-width: 44px;">
                             <input class="form-check-input" type="checkbox" id="selectAllDocs" title="Select All">
                         </th>
-                        <th class="py-3 border-0">DOCUMENT NAME & DETAILS</th>
-                        <th class="py-3 border-0 text-center">STANDARD FEE</th>
-                        <th class="py-3 border-0 text-center">PROCESSING TIME</th>
-                        <th class="py-3 border-0">REQUIRED ATTACHMENTS</th>
-                        <th class="py-3 border-0 text-center">AVAILABILITY</th>
-                        <th class="pe-4 py-3 border-0 text-end col-actions">ACTIONS</th>
+                        <th class="py-3 border-0" style="min-width: 220px;">DOCUMENT NAME & DETAILS</th>
+                        <th class="py-3 border-0 text-center" style="width: 105px; min-width: 95px;">STANDARD FEE</th>
+                        <th class="py-3 border-0 text-center" style="width: 125px; min-width: 115px;">PROCESSING TIME</th>
+                        <th class="py-3 border-0" style="width: 180px; min-width: 160px;">REQUIRED ATTACHMENTS</th>
+                        <th class="py-3 border-0 text-center" style="width: 105px; min-width: 95px;">AVAILABILITY</th>
+                        <th class="pe-3 pe-md-4 py-3 border-0 text-end col-actions" style="width: 115px; min-width: 115px;">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     @forelse($documentTypes as $doc)
                         <tr id="doc-row-{{ $doc->id }}">
-                            <td class="ps-4 py-3 text-center" style="width: 44px;">
+                            <td class="ps-3 ps-md-4 py-3 text-center" style="width: 44px;">
                                 <input class="form-check-input doc-checkbox" type="checkbox" value="{{ $doc->id }}" data-name="{{ $doc->name }}">
                             </td>
                             <td class="py-3">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold"
-                                         style="width: 42px; height: 42px; background: {{ $doc->is_active ? 'rgba(43, 108, 176, 0.12)' : '#f3f4f6' }}; color: {{ $doc->is_active ? '#18365D' : '#9ca3af' }};">
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                                         style="width: 38px; height: 38px; background: {{ $doc->is_active ? 'rgba(43, 108, 176, 0.12)' : '#f3f4f6' }}; color: {{ $doc->is_active ? '#18365D' : '#9ca3af' }};">
                                         <i class="fa-solid fa-file-lines"></i>
                                     </div>
-                                    <div>
-                                        <div class="fw-bold text-dark mb-1 d-flex align-items-center gap-2 flex-wrap">
-                                            {{ $doc->name }}
+                                    <div class="min-w-0" style="max-width: 260px;">
+                                        <div class="fw-bold text-dark mb-0.5 d-flex align-items-center gap-1.5 flex-wrap">
+                                            <span class="text-truncate" title="{{ $doc->name }}">{{ $doc->name }}</span>
                                             @if($doc->template_file)
-                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0" style="font-size: 10px;" title="Template: {{ basename($doc->template_file) }}">
-                                                    <i class="fa-solid fa-file-word me-1"></i> Template Attached
+                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-1.5 py-0" style="font-size: 9.5px;" title="Template: {{ basename($doc->template_file) }}">
+                                                    <i class="fa-solid fa-file-word me-0.5"></i> Template
                                                 </span>
                                             @endif
                                             @if(!$doc->is_active)
-                                                <span class="badge bg-secondary text-white px-2 py-0" style="font-size: 10px;">Disabled</span>
+                                                <span class="badge bg-secondary text-white px-1.5 py-0" style="font-size: 9.5px;">Disabled</span>
                                             @endif
                                         </div>
-                                        <div class="text-muted small text-truncate" style="max-width: 320px;">
+                                        <div class="text-muted small text-truncate" style="font-size: 11.5px;" title="{{ $doc->description }}">
                                             {{ $doc->description ?: 'No detailed description provided.' }}
                                         </div>
                                     </div>
                                 </div>
                             </td>
 
-                            <td class="text-center py-3">
+                            <td class="text-center py-3" style="width: 105px;">
                                 @if((float)$doc->fee > 0)
-                                    <span class="badge px-3 py-2 rounded-pill fw-bold" style="background: #EBF4FF; color: #18365D; font-size: 13px;">
+                                    <span class="badge px-2.5 py-1 rounded-pill fw-bold doc-fee-badge fee-paid" style="font-size: 12px;">
                                         ₱{{ number_format($doc->fee, 2) }}
                                     </span>
                                 @else
-                                    <span class="badge px-3 py-2 rounded-pill fw-bold" style="background: #dcfce7; color: #15803d; font-size: 13px;">
+                                    <span class="badge px-2.5 py-1 rounded-pill fw-bold doc-fee-badge fee-free" style="font-size: 12px;">
                                         FREE
                                     </span>
                                 @endif
                             </td>
 
-                            <td class="text-center py-3">
-                                <span class="badge px-3 py-2 rounded-pill bg-light text-dark border fw-semibold" style="font-size: 12px;">
-                                    <i class="fa-regular fa-clock me-1 text-muted"></i> {{ $doc->processing_days ?: '1-2 Business Days' }}
+                            <td class="text-center py-3" style="width: 125px;">
+                                <span class="badge px-2.5 py-1 rounded-pill bg-light text-dark border fw-semibold text-truncate d-inline-block" style="font-size: 11.5px; max-width: 120px;">
+                                    <i class="fa-regular fa-clock me-1 text-muted"></i> {{ $doc->processing_days ?: '1-2 Days' }}
                                 </span>
                             </td>
 
-                            <td class="py-3">
+                            <td class="py-3" style="width: 180px;">
                                 @php
                                     $reqs = $doc->requirements_list;
                                 @endphp
                                 @if(!empty($reqs) && count($reqs) > 0)
-                                    <div class="d-flex flex-wrap gap-1" style="max-width: 280px;">
-                                        @foreach(array_slice($reqs, 0, 2) as $req)
-                                            <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 11px; font-weight: 500;">
-                                                <i class="fa-solid fa-paperclip me-1 text-muted"></i> {{ $req }}
-                                            </span>
-                                        @endforeach
-                                        @if(count($reqs) > 2)
-                                            <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 11px;" title="{{ implode(', ', array_slice($reqs, 2)) }}">
-                                                +{{ count($reqs) - 2 }} more
+                                    <div class="d-flex align-items-center gap-1 flex-nowrap" style="max-width: 180px;">
+                                        <span class="badge bg-light text-secondary border px-2 py-1 text-truncate d-inline-block align-middle" style="max-width: 130px; font-size: 11px; font-weight: 500;" title="{{ $reqs[0] }}">
+                                            <i class="fa-solid fa-paperclip me-1 text-muted"></i> {{ $reqs[0] }}
+                                        </span>
+                                        @if(count($reqs) > 1)
+                                            <span class="badge bg-light text-muted border px-1.5 py-1 flex-shrink-0" style="font-size: 10.5px; cursor: help;" title="{{ implode(', ', array_slice($reqs, 1)) }}">
+                                                +{{ count($reqs) - 1 }}
                                             </span>
                                         @endif
                                     </div>
                                 @else
-                                    <span class="text-muted small fst-italic">None specified</span>
+                                    <span class="text-muted small fst-italic" style="font-size: 11px;">None specified</span>
                                 @endif
                             </td>
 
-                            <td class="text-center py-3">
+                            <td class="text-center py-3" style="width: 105px;">
                                 <form action="{{ route('admin.document-types.toggle-status', $doc->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-sm border-0 bg-transparent p-0" title="Click to toggle status">
                                         @if($doc->is_active)
-                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">
+                                            <span class="badge bg-success bg-opacity-10 text-success px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 11px;">
                                                 <i class="fa-solid fa-circle-check me-1"></i> Active
                                             </span>
                                         @else
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-semibold">
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 11px;">
                                                 <i class="fa-solid fa-ban me-1"></i> Disabled
                                             </span>
                                         @endif
@@ -349,17 +435,17 @@
                                 </form>
                             </td>
 
-                            <td class="pe-4 py-3 text-end col-actions">
-                                <div class="d-flex justify-end align-items-center gap-1">
+                            <td class="pe-3 pe-md-4 py-3 text-end col-actions" style="width: 115px;">
+                                <div class="d-inline-flex align-items-center gap-1">
                                     {{-- Download Template Button --}}
                                     @if($doc->template_file)
-                                        <a href="{{ route('admin.document-types.download-template', $doc->id) }}" class="btn btn-sm btn-light border px-2.5 py-1 text-success rounded-2" title="Download Word Template (.docx)">
-                                            <i class="fa-solid fa-file-word"></i>
+                                        <a href="{{ route('admin.document-types.download-template', $doc->id) }}" class="btn btn-sm btn-light border p-1 text-success rounded-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;" title="Download Word Template (.docx)">
+                                            <i class="fa-solid fa-file-word" style="font-size: 11px;"></i>
                                         </a>
                                     @endif
 
                                     {{-- Edit Button --}}
-                                    <button type="button" class="btn btn-sm btn-light border px-2.5 py-1 text-primary edit-doc-btn rounded-2" 
+                                    <button type="button" class="btn btn-sm btn-light border p-1 text-primary edit-doc-btn rounded-2" 
                                             data-id="{{ $doc->id }}"
                                             data-name="{{ $doc->name }}"
                                             data-fee="{{ $doc->fee }}"
@@ -368,16 +454,18 @@
                                             data-requirements="{{ is_array($doc->requirements) ? implode("\n", $doc->requirements) : $doc->requirements }}"
                                             data-active="{{ $doc->is_active ? 1 : 0 }}"
                                             data-template="{{ $doc->template_file }}"
+                                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                             title="Edit Document Type">
-                                        <i class="fa-regular fa-pen-to-square"></i>
+                                        <i class="fa-regular fa-pen-to-square" style="font-size: 11px;"></i>
                                     </button>
 
                                     {{-- Delete Button --}}
-                                    <button type="button" class="btn btn-sm btn-light border px-2.5 py-1 text-danger delete-doc-btn rounded-2" 
+                                    <button type="button" class="btn btn-sm btn-light border p-1 text-danger delete-doc-btn rounded-2" 
                                             data-id="{{ $doc->id }}"
                                             data-name="{{ $doc->name }}"
+                                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
                                             title="Delete or Deactivate">
-                                        <i class="fa-regular fa-trash-can"></i>
+                                        <i class="fa-regular fa-trash-can" style="font-size: 11px;"></i>
                                     </button>
                                 </div>
                             </td>
@@ -439,11 +527,11 @@
                     {{-- Fee & Turnaround Badges --}}
                     <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
                         @if((float)$doc->fee > 0)
-                            <span class="badge px-2.5 py-1 rounded-pill fw-bold" style="background: #EBF4FF; color: #18365D; font-size: 12px;">
+                            <span class="badge px-2.5 py-1 rounded-pill fw-bold doc-fee-badge fee-paid" style="font-size: 12px;">
                                 Fee: ₱{{ number_format($doc->fee, 2) }}
                             </span>
                         @else
-                            <span class="badge px-2.5 py-1 rounded-pill fw-bold" style="background: #dcfce7; color: #15803d; font-size: 12px;">
+                            <span class="badge px-2.5 py-1 rounded-pill fw-bold doc-fee-badge fee-free" style="font-size: 12px;">
                                 FREE
                             </span>
                         @endif

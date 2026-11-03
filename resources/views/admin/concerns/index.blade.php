@@ -53,10 +53,47 @@
                 padding: 14px;
             }
         }
+    
+        /* ═══════════════════════════════════════════════════════════
+           DARK MODE OVERRIDES FOR COMMUNITY CONCERNS (ACCESSIBILITY & CONTRAST)
+           ═══════════════════════════════════════════════════════════ */
+        html[data-theme="dark"] .table-concerns,
+        html[data-bs-theme="dark"] .table-concerns,
+        html[data-theme="dark"] .table-concerns > :not(caption) > * > *,
+        html[data-bs-theme="dark"] .table-concerns > :not(caption) > * > *,
+        html[data-theme="dark"] .table-concerns tbody td,
+        html[data-bs-theme="dark"] .table-concerns tbody td {
+            background-color: #131d31 !important;
+            color: #e2e8f0 !important;
+            border-color: #1e293b !important;
+            box-shadow: none !important;
+        }
+        html[data-theme="dark"] .table-concerns thead th,
+        html[data-bs-theme="dark"] .table-concerns thead th {
+            background-color: #10192a !important;
+            color: #cbd5e1 !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] .table-concerns tbody tr:hover > td,
+        html[data-bs-theme="dark"] .table-concerns tbody tr:hover > td {
+            background-color: #19253d !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .mobile-concern-card,
+        html[data-bs-theme="dark"] .mobile-concern-card {
+            background: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] .table-concerns tbody tr td[colspan],
+        html[data-bs-theme="dark"] .table-concerns tbody tr td[colspan] {
+            background-color: #131d31 !important;
+            color: #94a3b8 !important;
+        }
+
     </style>
 
     <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; <span class="text-dark">Community Reports</span></div>
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h2 class="header-title mb-0">Community Reports</h2>
             <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2.5 py-1 rounded-pill small fw-semibold">

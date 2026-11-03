@@ -34,7 +34,6 @@
     </style>
 
     <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; <span class="text-dark">Activity Logs</span></div>
         <h2 class="header-title">Activity Logs</h2>
         <p class="header-subtitle mb-0">A chronological record of all admin and system actions.</p>
     </div>
@@ -119,7 +118,6 @@
                             <th class="py-3 text-muted small fw-bold border-0" style="letter-spacing:0.5px; min-width: 170px;">USER</th>
                             <th class="py-3 text-muted small fw-bold border-0" style="letter-spacing:0.5px; width: 150px;">ACTION</th>
                             <th class="py-3 text-muted small fw-bold border-0" style="letter-spacing:0.5px; min-width: 250px;">DESCRIPTION</th>
-                            <th class="py-3 text-muted small fw-bold border-0" style="letter-spacing:0.5px; width: 130px;">IP ADDRESS</th>
                             <th class="py-3 text-muted small fw-bold border-0 pe-4 text-nowrap" style="letter-spacing:0.5px; width: 140px;">DATE & TIME</th>
                         </tr>
                     </thead>
@@ -168,9 +166,6 @@
                             <td class="border-bottom py-3 text-dark" style="font-size:13.5px;">
                                 {{ $log->description }}
                             </td>
-                            <td class="border-bottom py-3 text-muted small font-monospace">
-                                {{ $log->ip_address ?? '–' }}
-                            </td>
                             <td class="border-bottom py-3 pe-4 text-muted small text-nowrap">
                                 <div>{{ $log->created_at->format('M d, Y') }}</div>
                                 <div class="text-muted">{{ $log->created_at->format('h:i A') }}</div>
@@ -178,7 +173,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-clock-rotate-left fa-3x mb-3 text-light d-block"></i>
                                 <h6 class="fw-bold text-dark">No Activity Logs Found</h6>
                                 <p class="small mb-0">Actions performed in the admin panel will appear here.</p>
@@ -227,8 +222,7 @@
                         <div class="text-dark my-2 ps-4" style="font-size: 13px;">
                             {{ $log->description }}
                         </div>
-                        <div class="d-flex justify-content-between align-items-center text-muted small pt-2 border-top" style="font-size: 11.5px;">
-                            <span><i class="fa-solid fa-network-wired me-1"></i> {{ $log->ip_address ?? 'Local' }}</span>
+                        <div class="d-flex justify-content-end align-items-center text-muted small pt-2 border-top" style="font-size: 11.5px;">
                             <span><i class="fa-regular fa-clock me-1"></i> {{ $log->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                     </div>
@@ -246,7 +240,9 @@
             <div class="text-muted small">
                 Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} entries
             </div>
-            {{ $logs->links('pagination::bootstrap-5') }}
+            <div class="pagination-wrapper">
+                {{ $logs->links('pagination::bootstrap-5') }}
+            </div>
         </div>
         @endif
     </div>

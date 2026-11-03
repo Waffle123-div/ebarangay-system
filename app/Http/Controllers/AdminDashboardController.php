@@ -195,7 +195,11 @@ class AdminDashboardController extends Controller
         ActivityLog::record('account_approved', "Approved resident account for {$user->name} (ID: {$user->user_id}).");
 
         if ($user->email) {
-            Mail::to($user->email)->send(new AccountApproved($user));
+            try {
+                Mail::to($user->email)->send(new AccountApproved($user));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Approval email error: ' . $e->getMessage());
+            }
         }
 
         if ($user->phone_number) {
@@ -226,45 +230,226 @@ class AdminDashboardController extends Controller
     public function rejectAccount($id) 
     {
         $user = User::findOrFail($id);
-        $user->status = 'Rejected';
+        $user->status = 'rejected';
         $user->save();
 
         ActivityLog::record('account_rejected', "Rejected resident account for {$user->name} (ID: {$user->user_id}).");
 
-        Mail::to($user->email)->send(new AccountRejectedMail($user->name));
+        if ($user->email) {
+            try {
+                Mail::to($user->email)->send(new AccountRejectedMail($user->name));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Rejection email error: ' . $e->getMessage());
+            }
+        }
 
-        return redirect()->back()->with('success', 'Account Rejected');
+        if ($user->phone_number) {
+            $formattedPhone = preg_replace('/^09/', '+639', $user->phone_number);
+            $message = "Hello {$user->name}, your E-Barangay registration was not approved. Please contact the barangay hall or re-submit valid requirements.";
+            
+            try {
+                $response = Http::withHeaders([
+                    'x-api-key' => config('services.textbee.api_key'),
+                    'Content-Type' => 'application/json'
+                ])->timeout(10)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                    'deviceId'   => config('services.textbee.device_id'),
+                    'recipients' => [$formattedPhone],
+                    'message'    => $message
+                ]);
+
+                if (!$response->successful()) {
+                    \Illuminate\Support\Facades\Log::error('Rejection SMS Textbee Error: ' . json_encode($response->json()));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Rejection SMS network error: ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->back()->with('success', 'Resident account rejected successfully.');
+    }
+
+    public function bulkApproveAccounts(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'required|integer|exists:users,id',
+        ]);
+
+        $ids = $request->input('ids', []);
+        $users = User::whereIn('id', $ids)->get();
+        $approvedCount = 0;
+
+        foreach ($users as $user) {
+            $user->update(['status' => 'active']);
+            $approvedCount++;
+
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new AccountApproved($user));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Bulk approval email error for user #{$user->id}: " . $e->getMessage());
+                }
+            }
+
+            if ($user->phone_number) {
+                $formattedPhone = preg_replace('/^09/', '+639', $user->phone_number);
+                $message = "Hello {$user->name}, your E-Barangay account has been approved by the Admin! You can now log in to the website.";
+                
+                try {
+                    $response = Http::withHeaders([
+                        'x-api-key' => config('services.textbee.api_key'),
+                        'Content-Type' => 'application/json'
+                    ])->timeout(5)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                        'deviceId'   => config('services.textbee.device_id'),
+                        'recipients' => [$formattedPhone],
+                        'message'    => $message
+                    ]);
+
+                    if (!$response->successful()) {
+                        \Illuminate\Support\Facades\Log::error("Bulk approval SMS error for user #{$user->id}: " . json_encode($response->json()));
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Bulk approval SMS error for user #{$user->id}: " . $e->getMessage());
+                }
+            }
+        }
+
+        ActivityLog::record('accounts_bulk_approved', "Approved {$approvedCount} resident account(s) in bulk.");
+
+        return back()->with('success', "Successfully approved {$approvedCount} resident account(s).");
+    }
+
+    public function bulkRejectAccounts(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'required|integer|exists:users,id',
+        ]);
+
+        $ids = $request->input('ids', []);
+        $users = User::whereIn('id', $ids)->get();
+        $rejectedCount = 0;
+
+        foreach ($users as $user) {
+            $user->update(['status' => 'rejected']);
+            $rejectedCount++;
+
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new AccountRejectedMail($user->name));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Bulk rejection email error for user #{$user->id}: " . $e->getMessage());
+                }
+            }
+
+            if ($user->phone_number) {
+                $formattedPhone = preg_replace('/^09/', '+639', $user->phone_number);
+                $message = "Hello {$user->name}, your E-Barangay registration was not approved. Please contact the barangay hall or re-submit valid requirements.";
+                
+                try {
+                    $response = Http::withHeaders([
+                        'x-api-key' => config('services.textbee.api_key'),
+                        'Content-Type' => 'application/json'
+                    ])->timeout(5)->post('https://api.textbee.dev/api/v1/gateway/send-sms', [
+                        'deviceId'   => config('services.textbee.device_id'),
+                        'recipients' => [$formattedPhone],
+                        'message'    => $message
+                    ]);
+
+                    if (!$response->successful()) {
+                        \Illuminate\Support\Facades\Log::error("Bulk rejection SMS error for user #{$user->id}: " . json_encode($response->json()));
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Bulk rejection SMS error for user #{$user->id}: " . $e->getMessage());
+                }
+            }
+        }
+
+        ActivityLog::record('accounts_bulk_rejected', "Rejected {$rejectedCount} resident account(s) in bulk.");
+
+        return back()->with('success', "Successfully rejected {$rejectedCount} resident account(s).");
     }
 
     public function users(Request $request)
     {
         $totalUsers = User::count();
-        $activeUsers = User::where('status', 'Active')->orWhere('status', 'active')->count();
+        $activeUsers = User::where(function($q) {
+            $q->where('status', 'Active')->orWhere('status', 'active');
+        })->count();
         $newRegistrations = User::whereMonth('created_at', Carbon::now()->month)
                                 ->whereYear('created_at', Carbon::now()->year)
                                 ->count();
         $adminUsers = User::where('role', 'Admin')->count();
 
+        $pendingNewCount = User::where(function($q) {
+            $q->whereIn('status', ['pending_approval', 'Pending', 'pending'])
+              ->orWhere(function($sub) {
+                  $sub->whereMonth('created_at', Carbon::now()->month)
+                      ->whereYear('created_at', Carbon::now()->year);
+              });
+        })->count();
+
         $tabCounts = [
-            'All' => User::count(),
+            'All'      => $totalUsers,
             'Resident' => User::where('role', 'Resident')->count(),
-            'Admin' => User::where('role', 'Admin')->count(),
+            'Admin'    => $adminUsers,
+            'Pending'  => $pendingNewCount,
         ];
 
         $currentRole = $request->role ?? 'All';
-        $query = User::orderBy('created_at', 'desc');
+        $currentStatus = $request->status ?? 'All';
+        $currentSort = $request->sort ?? 'newest';
 
-        if ($currentRole !== 'All') {
+        $query = User::query();
+
+        // Role / Tab filtering
+        if ($currentRole === 'Resident' || $currentRole === 'Admin') {
             $query->where('role', $currentRole);
+        } elseif ($currentRole === 'Pending' || $currentRole === 'Pending / New') {
+            $query->where(function($q) {
+                $q->whereIn('status', ['pending_approval', 'Pending', 'pending'])
+                  ->orWhere(function($sub) {
+                      $sub->whereMonth('created_at', Carbon::now()->month)
+                          ->whereYear('created_at', Carbon::now()->year);
+                  });
+            });
         }
 
+        // Secondary status filtering (from Filters dropdown)
+        if ($request->filled('status') && $request->status !== 'All') {
+            if ($request->status === 'active') {
+                $query->where(function($q) {
+                    $q->where('status', 'Active')->orWhere('status', 'active');
+                });
+            } elseif ($request->status === 'inactive') {
+                $query->where(function($q) {
+                    $q->where('status', 'Inactive')->orWhere('status', 'inactive');
+                });
+            } elseif ($request->status === 'pending_approval') {
+                $query->whereIn('status', ['pending_approval', 'Pending', 'pending']);
+            }
+        }
+
+        // Search query filtering
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('id', 'like', "%{$search}%");
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhere('user_id', 'like', "%{$search}%");
             });
+        }
+
+        // Sorting
+        if ($currentSort === 'oldest') {
+            $query->orderBy('created_at', 'asc');
+        } elseif ($currentSort === 'name_asc') {
+            $query->orderBy('name', 'asc');
+        } elseif ($currentSort === 'name_desc') {
+            $query->orderBy('name', 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
         $allUsers = $query->get();
@@ -276,8 +461,41 @@ class AdminDashboardController extends Controller
             'adminUsers', 
             'allUsers',
             'currentRole',
+            'currentStatus',
+            'currentSort',
             'tabCounts'
         ));
+    }
+
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'role'     => 'required|in:Admin,Resident',
+            'status'   => 'nullable|in:active,inactive,pending_approval',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $fullName = strtoupper(trim($request->name));
+        $nameParts = explode(' ', $fullName);
+        $rolePrefix = ($request->role === 'Admin') ? 'ADM-' : 'USR-';
+
+        $user = User::create([
+            'user_id'           => $rolePrefix . rand(10000, 99999),
+            'name'              => $fullName,
+            'first_name'        => $nameParts[0] ?? $fullName,
+            'last_name'         => count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '',
+            'email'             => $request->email,
+            'role'              => $request->role,
+            'status'            => $request->status ?? 'active',
+            'password'          => Hash::make($request->password),
+            'email_verified_at' => now(),
+        ]);
+
+        ActivityLog::record('user_created', "Created new {$user->role} user: {$user->name} ({$user->email}).");
+
+        return back()->with('success', 'User "' . $user->name . '" has been created successfully.');
     }
 
     public function viewUser($id)
@@ -392,6 +610,8 @@ class AdminDashboardController extends Controller
                                         ->where('created_at', '<', Carbon::now()->subDays(3))
                                         ->count();
 
+        $activeRequestsCount = DocumentRequest::whereIn('status', ['Pending', 'Under Review', 'Processing', 'Ready'])->count();
+
         $avgProcessing = round(
             (float) (DocumentRequest::where('status', 'Approved')
                 ->whereNotNull('updated_at')
@@ -402,13 +622,26 @@ class AdminDashboardController extends Controller
 
         $tabCounts = [
             'Pending_Review' => DocumentRequest::whereIn('status', ['Pending', 'Under Review'])->count(),
-            'Processing' => DocumentRequest::where('status', 'Processing')->count(),
-            'Ready' => DocumentRequest::where('status', 'Ready')->count(),
-            'Completed' => DocumentRequest::where('status', 'Completed')->count(),
-            'Rejected' => DocumentRequest::where('status', 'Rejected')->count(),
+            'Processing'     => DocumentRequest::where('status', 'Processing')->count(),
+            'Ready'          => DocumentRequest::where('status', 'Ready')->count(),
+            'Completed'      => DocumentRequest::where('status', 'Completed')->count(),
+            'Rejected'       => DocumentRequest::where('status', 'Rejected')->count(),
         ];
 
-        $currentStatus = $request->status ?? 'Pending_Review';
+        // UX improvement: default to the first active stage with records if Pending & Review is empty
+        $autoSelectedStatus = 'Pending_Review';
+        if (!$request->has('status')) {
+            if ($tabCounts['Pending_Review'] === 0) {
+                if ($tabCounts['Processing'] > 0) {
+                    $autoSelectedStatus = 'Processing';
+                } elseif ($tabCounts['Ready'] > 0) {
+                    $autoSelectedStatus = 'Ready';
+                }
+            }
+        }
+
+        $currentStatus = $request->status ?? $autoSelectedStatus;
+        $quickFilter = $request->quick_filter ?? 'all';
 
         $query = DocumentRequest::with('user')->orderBy('created_at', 'desc');
 
@@ -416,6 +649,19 @@ class AdminDashboardController extends Controller
             $query->whereIn('status', ['Pending', 'Under Review']);
         } elseif ($currentStatus !== 'All') {
             $query->where('status', $currentStatus);
+        }
+
+        // Quick Filter Chips (Today, Overdue, Active Workload)
+        if ($request->filled('quick_filter')) {
+            if ($request->quick_filter === 'today') {
+                $query->whereDate('created_at', Carbon::today());
+            } elseif ($request->quick_filter === 'overdue') {
+                $query->where('status', 'Pending')->where('created_at', '<', Carbon::now()->subDays(3));
+            } elseif ($request->quick_filter === 'this_week') {
+                $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+            } elseif ($request->quick_filter === 'active') {
+                $query->whereIn('status', ['Pending', 'Under Review', 'Processing', 'Ready']);
+            }
         }
 
         $dbTypes = DocumentType::orderBy('name')->get();
@@ -489,10 +735,12 @@ class AdminDashboardController extends Controller
             'pendingReviews', 
             'approvedToday', 
             'overdueRequests', 
+            'activeRequestsCount',
             'avgProcessing',
             'allRequests',
             'currentDocType',
             'currentStatus',
+            'quickFilter',
             'tabCounts',
             'validTypes',
             'activeDocTypes',
@@ -1187,6 +1435,15 @@ class AdminDashboardController extends Controller
             "Admin created walk-in request #{$newRequest->tracking_number} ({$newRequest->document_type}) for {$newRequest->resident_name}."
         );
 
+        \App\Services\WebSocketService::broadcast('request.created', [
+            'id'              => $newRequest->id,
+            'tracking_number' => $newRequest->tracking_number,
+            'status'          => $newRequest->status,
+            'applicant'       => $newRequest->resident_name,
+            'document_type'   => $newRequest->document_type,
+            'message'         => "New Walk-in Request #{$newRequest->tracking_number} created.",
+        ]);
+
         return back()->with('success', "Walk-in request #{$newRequest->tracking_number} created successfully with status '{$newRequest->status}'.");
     }
 
@@ -1319,6 +1576,15 @@ class AdminDashboardController extends Controller
 
         ActivityLog::record('request_accepted', "Accepted document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
 
+        \App\Services\WebSocketService::broadcast('request.status_changed', [
+            'id'              => $docRequest->id,
+            'tracking_number' => $docRequest->tracking_number,
+            'status'          => $docRequest->status,
+            'applicant'       => $docRequest->resident_name,
+            'document_type'   => $docRequest->document_type,
+            'message'         => "Request #{$docRequest->tracking_number} moved to Processing.",
+        ]);
+
         return back()->with('success', 'Request accepted and moved to Processing.');
     }
 
@@ -1329,6 +1595,15 @@ class AdminDashboardController extends Controller
         $docRequest->save();
 
         ActivityLog::record('request_rejected', "Rejected document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
+
+        \App\Services\WebSocketService::broadcast('request.status_changed', [
+            'id'              => $docRequest->id,
+            'tracking_number' => $docRequest->tracking_number,
+            'status'          => 'Rejected',
+            'applicant'       => $docRequest->resident_name,
+            'document_type'   => $docRequest->document_type,
+            'message'         => "Request #{$docRequest->tracking_number} has been rejected.",
+        ]);
 
         return back()->with('success', 'Request has been rejected.');
     }
@@ -1676,22 +1951,31 @@ class AdminDashboardController extends Controller
 
             $body = $section->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
             $body->addText("\t\tThis is to certify that ");
-            $body->addText($residentName, ['bold' => true]);
-            $body->addText(", {$ageText}, Filipino citizen, is a bonafide resident {$address}, Barangay {$barangayName}, {$city}, {$province}.");
+            $body->addText($residentName, ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
+            $body->addText(", ", ['name' => 'Times New Roman', 'size' => 12]);
+            $body->addText($ageText, ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
+            $body->addText(", Filipino citizen, is a bonafide resident {$address}, ");
+            $body->addText("Barangay {$barangayName}, {$city}, {$province}", ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
+            $body->addText(".");
             $section->addTextBreak(1);
 
-            $effectivePurpose = strtoupper($purpose ?: ($request->purpose ?? 'whatever legal purpose it may serve'));
+            $effectivePurpose = strtoupper($purpose ?: ($request->purpose ?? 'WHATEVER LEGAL PURPOSE IT MAY SERVE'));
             $body2 = $section->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
             $body2->addText("\t\tThis certification is issued upon the request of the above-named person for the purpose of ");
-            $body2->addText($effectivePurpose, ['bold' => true]);
+            $body2->addText($effectivePurpose, ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
             $body2->addText(' and for whatever legal intent it may serve.');
             $section->addTextBreak(1);
 
             $issuedDate = date('jS \d\a\y \o\f F, Y');
-            $section->addText("Issued this {$issuedDate} at the Barangay Hall of Barangay {$barangayName}, {$city}, {$province}.", ['name' => 'Times New Roman', 'size' => 12], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
+            $issuedBody = $section->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
+            $issuedBody->addText("Issued this ", ['name' => 'Times New Roman', 'size' => 12]);
+            $issuedBody->addText($issuedDate, ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
+            $issuedBody->addText(" at the Barangay Hall of Barangay ", ['name' => 'Times New Roman', 'size' => 12]);
+            $issuedBody->addText("{$barangayName}, {$city}, {$province}", ['bold' => true, 'name' => 'Times New Roman', 'size' => 12]);
+            $issuedBody->addText(".", ['name' => 'Times New Roman', 'size' => 12]);
             $section->addTextBreak(1);
 
-            $section->addText("Tracking No: {$request->tracking_number}", ['name' => 'Times New Roman', 'size' => 10, 'italic' => true]);
+            $section->addText("Tracking No: {$request->tracking_number}", ['name' => 'Times New Roman', 'size' => 10, 'italic' => true, 'bold' => true]);
 
             // Signatures
             $section->addTextBreak(3);
@@ -1805,6 +2089,15 @@ class AdminDashboardController extends Controller
             $user->notify(new \App\Notifications\DocumentReadyNotification($request));
         }
 
+        \App\Services\WebSocketService::broadcast('request.status_changed', [
+            'id'              => $request->id,
+            'tracking_number' => $request->tracking_number,
+            'status'          => 'Ready',
+            'applicant'       => $request->resident_name,
+            'document_type'   => $request->document_type,
+            'message'         => "Request #{$request->tracking_number} is Ready for Pick-up!",
+        ]);
+
         return back()->with('success', 'Document marked as Ready for Pick-up! Notification sent to the resident.');
     }
 
@@ -1815,6 +2108,15 @@ class AdminDashboardController extends Controller
         $request->save();
 
         ActivityLog::record('request_completed', "Marked request #{$request->tracking_number} as Completed (claimed by resident).");
+
+        \App\Services\WebSocketService::broadcast('request.status_changed', [
+            'id'              => $request->id,
+            'tracking_number' => $request->tracking_number,
+            'status'          => 'Completed',
+            'applicant'       => $request->resident_name,
+            'document_type'   => $request->document_type,
+            'message'         => "Request #{$request->tracking_number} marked as Completed.",
+        ]);
 
         return back()->with('success', 'Document marked as Completed!');
     }

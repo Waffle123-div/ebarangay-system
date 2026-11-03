@@ -420,12 +420,6 @@
                         <span>My IDs / Verification</span>
                     </button>
 
-                    <button class="nav-link {{ $activeTab === 'activity' ? 'active' : '' }}"
-                            id="tab-activity" data-bs-toggle="tab" data-bs-target="#pane-activity"
-                            type="button" role="tab">
-                        <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
-                        <span>Activity Log</span>
-                    </button>
 
                     <hr class="my-2" style="border-color: #e5e7eb; opacity: 0.8;">
 
@@ -759,6 +753,8 @@
                                         <div style="font-size:12px;color:#6b7280;">
                                             @if($user->google_id)
                                                 Connected as {{ $user->email }}
+                                            @elseif($user->hasVerifiedEmail() && str_ends_with(strtolower($user->email ?? ''), '@gmail.com'))
+                                                Gmail email verified
                                             @else
                                                 Not connected
                                             @endif
@@ -768,6 +764,10 @@
                                 @if($user->google_id)
                                     <span class="badge badge-verified rounded-pill px-3 py-2">
                                         <i class="fa-solid fa-link me-1"></i>Connected
+                                    </span>
+                                @elseif($user->hasVerifiedEmail() && str_ends_with(strtolower($user->email ?? ''), '@gmail.com'))
+                                    <span class="badge badge-verified rounded-pill px-3 py-2">
+                                        <i class="fa-solid fa-circle-check me-1"></i>Verified
                                     </span>
                                 @else
                                     <a href="{{ route('google.login') }}" class="btn btn-sm btn-outline-secondary rounded-3">
@@ -1149,58 +1149,6 @@
                     </div>
                 </div>{{-- end pane-ids --}}
 
-
-                {{-- ==============================
-                     TAB 5 — ACTIVITY LOG
-                     ============================== --}}
-                <div class="tab-pane fade {{ $activeTab === 'activity' ? 'show active' : '' }}"
-                     id="pane-activity" role="tabpanel">
-
-                    <div class="settings-card mb-4">
-                        <div class="settings-card-header">
-                            <div class="section-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                            <div>
-                                <h5>Activity Log</h5>
-                                <p>Recent actions performed on your account</p>
-                            </div>
-                        </div>
-                        <div class="settings-card-body">
-                            @if($activityLogs->isEmpty())
-                                <div class="text-center py-5 text-muted">
-                                    <i class="fa-regular fa-clock-rotate-left fa-3x mb-3 d-block" style="opacity:0.3;"></i>
-                                    <div class="fw-bold mb-1">No activity recorded yet</div>
-                                    <small>Your account actions will appear here.</small>
-                                </div>
-                            @else
-                                @foreach($activityLogs as $log)
-                                    <div class="activity-row">
-                                        <div class="activity-dot mt-2"></div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <div class="fw-bold" style="font-size:14px;">{{ $log->action }}</div>
-                                                    @if($log->description)
-                                                        <div class="text-muted" style="font-size:12px;">{{ $log->description }}</div>
-                                                    @endif
-                                                    <div class="mt-1" style="font-size:11px;color:#9ca3af;">
-                                                        @if($log->ip_address)
-                                                            <i class="fa-solid fa-location-dot me-1"></i>{{ $log->ip_address }}
-                                                            &bull;
-                                                        @endif
-                                                        {{ $log->created_at->format('M d, Y h:i A') }}
-                                                    </div>
-                                                </div>
-                                                <div style="font-size:11px;color:#9ca3af;white-space:nowrap;margin-left:12px;">
-                                                    {{ $log->created_at->diffForHumans() }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @endif
-                        </div>
-                    </div>
-                </div>{{-- end pane-activity --}}
 
 
                 {{-- ==============================

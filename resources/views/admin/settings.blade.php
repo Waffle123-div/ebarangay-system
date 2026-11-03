@@ -4,7 +4,6 @@
 <div class="container-fluid px-3 px-sm-4 py-3 py-sm-4">
 
     <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; Settings</div>
         <h2 class="header-title">Settings & Configuration</h2>
         <p class="header-subtitle mb-0">Manage admin credentials, barangay profile, fee collection, policies, and system settings.</p>
     </div>
@@ -44,8 +43,8 @@
                 {{-- Profile mini header --}}
                 <div style="height:90px; background: linear-gradient(135deg, #0F2240 0%, #18365D 55%, #2B6CB0 100%);"></div>
                 <div class="d-flex justify-content-center" style="margin-top:-44px;">
-                    <div class="bg-white rounded-circle" style="padding:3px; box-shadow: 0 4px 12px rgba(24,54,93,0.25);">
-                        <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase"
+                    <div class="bg-white rounded-circle admin-avatar-outer" style="padding:3px; box-shadow: 0 4px 12px rgba(24,54,93,0.25);">
+                        <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials"
                              style="width:82px;height:82px;font-size:26px;background:linear-gradient(135deg,#EBF4FF,#BEE3F8);color:#18365D; border:3px solid #fff;">
                             {{ strtoupper(substr($user->name, 0, 2)) }}
                         </div>
@@ -54,14 +53,14 @@
                 <div class="card-body text-center pt-2 pb-3 px-3">
                     <h6 class="fw-bold text-dark mb-0 text-truncate">{{ $user->name }}</h6>
                     <p class="text-muted small mb-2 text-truncate" style="font-size:12px;">{{ $user->email }}</p>
-                    <span class="badge px-3 py-1 rounded-pill mb-3" style="background:#E6FFFA;color:#22706E;font-size:11px;">
+                    <span class="badge status-badge status-active px-3 py-1 rounded-pill mb-3" style="font-size:11px;">
                         <i class="fa-solid fa-circle me-1" style="font-size:6px;vertical-align:middle;"></i> Active Admin
                     </span>
 
                     {{-- Navigation Links Group --}}
                     <div class="list-group list-group-flush text-start rounded-3 overflow-hidden border">
                         
-                        <div class="px-3 py-2 text-uppercase fw-bold text-muted small d-flex align-items-center gap-2" style="font-size:11px; letter-spacing:0.8px; background:#EBF4FF; color:#2B6CB0 !important;">
+                        <div class="px-3 py-2 text-uppercase fw-bold small d-flex align-items-center gap-2 settings-nav-section-header" style="font-size:11px; letter-spacing:0.8px;">
                             <i class="fa-solid fa-user-shield" style="font-size:13px;"></i> Admin Account
                         </div>
                         <a href="#profile-tab" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2.5 px-3 active-tab-link fw-semibold admin-settings-nav-item" 
@@ -79,7 +78,7 @@
                             <span>Change Password</span>
                         </a>
 
-                        <div class="px-3 py-2 text-uppercase fw-bold text-muted small border-top d-flex align-items-center gap-2" style="font-size:11px; letter-spacing:0.8px; background:#EBF4FF; color:#2B6CB0 !important;">
+                        <div class="px-3 py-2 text-uppercase fw-bold small border-top d-flex align-items-center gap-2 settings-nav-section-header" style="font-size:11px; letter-spacing:0.8px;">
                             <i class="fa-solid fa-landmark" style="font-size:13px;"></i> Barangay Config
                         </div>
                         <a href="#barangay-tab" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2.5 px-3 fw-semibold admin-settings-nav-item" 
@@ -96,13 +95,6 @@
                             </span>
                             <span>Document Policies</span>
                         </a>
-                        <a href="#residents-tab" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2.5 px-3 fw-semibold admin-settings-nav-item" 
-                           data-tab="residents-tab" id="nav-residents" style="font-size:14px;">
-                            <span class="admin-nav-icon icon-residents">
-                                <i class="fa-solid fa-users-gear"></i>
-                            </span>
-                            <span>Residents & Puroks</span>
-                        </a>
                         <a href="#announcements-tab" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2.5 px-3 fw-semibold admin-settings-nav-item" 
                            data-tab="announcements-tab" id="nav-announcements" style="font-size:14px;">
                             <span class="admin-nav-icon icon-announcements">
@@ -111,7 +103,7 @@
                             <span>Announcements</span>
                         </a>
 
-                        <div class="px-3 py-2 text-uppercase fw-bold text-muted small border-top d-flex align-items-center gap-2" style="font-size:11px; letter-spacing:0.8px; background:#EBF4FF; color:#2B6CB0 !important;">
+                        <div class="px-3 py-2 text-uppercase fw-bold small border-top d-flex align-items-center gap-2 settings-nav-section-header" style="font-size:11px; letter-spacing:0.8px;">
                             <i class="fa-solid fa-server" style="font-size:13px;"></i> System & Data
                         </div>
                         <a href="#system-tab" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2.5 px-3 fw-semibold admin-settings-nav-item" 
@@ -136,9 +128,9 @@
                 <div class="small text-muted mb-2">
                     Current LGU: <strong class="text-dark">{{ $settings['barangay_name'] ?? 'Barangay San Antonio' }}</strong>
                 </div>
-                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border small" style="background:#F7FAFC;">
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border small settings-stats-pill">
                     <span class="text-muted">Online Requests</span>
-                    <span class="badge {{ ($settings['online_requests_enabled'] ?? '1') == '1' ? '' : 'bg-secondary' }}" style="{{ ($settings['online_requests_enabled'] ?? '1') == '1' ? 'background:#E6FFFA;color:#22706E;' : '' }}">
+                    <span class="badge {{ ($settings['online_requests_enabled'] ?? '1') == '1' ? 'status-badge status-active' : 'status-badge status-inactive' }}">
                         {{ ($settings['online_requests_enabled'] ?? '1') == '1' ? 'Active' : 'Paused' }}
                     </span>
                 </div>
@@ -157,7 +149,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#EBF4FF;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-profile" style="background:#EBF4FF;">
                                 <i class="fa-regular fa-id-card fs-5" style="color:#18365D;"></i>
                             </div>
                             <div>
@@ -204,7 +196,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#E6FFFA;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-password" style="background:#E6FFFA;">
                                 <i class="fa-solid fa-shield-halved fs-5" style="color:#319795;"></i>
                             </div>
                             <div>
@@ -295,7 +287,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#EBF4FF;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-barangay" style="background:#EBF4FF;">
                                 <i class="fa-solid fa-landmark fs-5" style="color:#18365D;"></i>
                             </div>
                             <div>
@@ -442,7 +434,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#E6FFFA;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-documents" style="background:#E6FFFA;">
                                 <i class="fa-solid fa-file-lines fs-5" style="color:#319795;"></i>
                             </div>
                             <div>
@@ -522,81 +514,13 @@
             </div>
 
             {{-- ========================================== --}}
-            {{-- TAB 6: RESIDENTS & PUROKS                  --}}
-            {{-- ========================================== --}}
-            <div id="residents-tab" class="settings-tab d-none">
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#EBF4FF;">
-                                <i class="fa-solid fa-users-gear fs-5" style="color:#18365D;"></i>
-                            </div>
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">Resident Registration & Purok Directory</h5>
-                                <p class="text-muted small mb-0">Manage resident onboarding rules, valid ID verification policies, and covered Puroks / Sitios.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <form action="{{ route('admin.settings.barangay') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="_group" value="residents">
-
-                            <div class="row g-4 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-semibold">Resident Verification Mode <span class="text-danger">*</span></label>
-                                    <select name="resident_verification_mode" class="form-select px-3 py-2">
-                                        <option value="manual" {{ ($settings['resident_verification_mode'] ?? 'manual') === 'manual' ? 'selected' : '' }}>
-                                            Strict — Manual Admin Approval (Requires Valid ID check)
-                                        </option>
-                                        <option value="auto" {{ ($settings['resident_verification_mode'] ?? 'manual') === 'auto' ? 'selected' : '' }}>
-                                            Automated — Instant Approval (After Email / Phone OTP)
-                                        </option>
-                                    </select>
-                                    <span class="text-muted small" style="font-size:11px;">Current mode: Admin inspects resident ID photos in the Approvals queue before activation.</span>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-semibold">Minimum Age for Self-Registration <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="number" name="minimum_registration_age" min="1" max="100" class="form-control px-3 py-2"
-                                               value="{{ old('minimum_registration_age', $settings['minimum_registration_age'] ?? '15') }}" required>
-                                        <span class="input-group-text bg-light text-muted">Years Old</span>
-                                    </div>
-                                    <span class="text-muted small" style="font-size:11px;">Residents below this age must be registered under their guardian.</span>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-semibold">Active Puroks & Sitios (One per line) <span class="text-danger">*</span></label>
-                                    <textarea name="purok_list" rows="6" class="form-control px-3 py-2 font-monospace small" placeholder="Purok 1&#10;Purok 2&#10;Sitio Ilaya..." required>{{ old('purok_list', $settings['purok_list'] ?? "Purok 1\nPurok 2\nPurok 3\nPurok 4\nPurok 5\nSitio Ilaya\nSitio Ibaba\nGreenwoods Village") }}</textarea>
-                                    <span class="text-muted small" style="font-size:11px;">Populates the Purok dropdown in the resident registration & profile forms.</span>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small fw-semibold">Accepted Valid Government IDs (One per line) <span class="text-danger">*</span></label>
-                                    <textarea name="accepted_ids" rows="6" class="form-control px-3 py-2 font-monospace small" placeholder="PhilSys National ID&#10;Passport..." required>{{ old('accepted_ids', $settings['accepted_ids'] ?? "Philippine Passport\nPhilSys National ID\nDriver's License\nUMID / SSS ID\nVoter's ID / Certification\nPostal ID\nPRC ID\nStudent ID (with Enrollment Form)") }}</textarea>
-                                    <span class="text-muted small" style="font-size:11px;">Options shown when residents upload ID for account verification.</span>
-                                </div>
-                            </div>
-
-                            <div class="d-flex justify-content-end mt-4">
-                                <button type="submit" class="btn btn-primary px-5 fw-semibold shadow-sm">
-                                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Resident Rules
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            {{-- ========================================== --}}
-            {{-- TAB 7: ANNOUNCEMENTS                       --}}
+            {{-- TAB 6: ANNOUNCEMENTS                       --}}
             {{-- ========================================== --}}
             <div id="announcements-tab" class="settings-tab d-none">
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#FFF5F5;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-announcements" style="background:#FFF5F5;">
                                 <i class="fa-solid fa-bullhorn fs-5 text-danger"></i>
                             </div>
                             <div>
@@ -764,7 +688,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-header bg-white border-bottom px-4 pt-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center" style="background:#EDF2F7;">
+                            <div class="p-2 rounded-3 d-flex align-items-center justify-content-center settings-header-icon settings-header-icon-system" style="background:#EDF2F7;">
                                 <i class="fa-solid fa-server fs-5" style="color:#4A5568;"></i>
                             </div>
                             <div>
@@ -892,7 +816,7 @@
     justify-content: center;
 }
 
-/* Category-specific icon color themes */
+/* Category-specific icon color themes - Light Mode */
 .icon-profile       { background: #eff6ff; color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.18); }
 .icon-password      { background: #f0fdfa; color: #0d9488; border: 1px solid rgba(13, 148, 136, 0.18); }
 .icon-barangay      { background: #eef2ff; color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.18); }
@@ -907,7 +831,32 @@
     transform: scale(1.08);
 }
 
-/* Settings Tab Active State */
+/* Settings Nav Section Headers */
+.settings-nav-section-header {
+    background: #EBF4FF;
+    color: #2B6CB0 !important;
+}
+html[data-theme="dark"] .settings-nav-section-header,
+html[data-bs-theme="dark"] .settings-nav-section-header {
+    background: #182238 !important;
+    color: #38bdf8 !important;
+    border-color: #1e293b !important;
+}
+
+/* Inactive Nav Items - Dark Mode */
+html[data-theme="dark"] .admin-settings-nav-item,
+html[data-bs-theme="dark"] .admin-settings-nav-item {
+    background-color: #131d31 !important;
+    color: #cbd5e1 !important;
+    border-color: #1e293b !important;
+}
+html[data-theme="dark"] .admin-settings-nav-item:hover,
+html[data-bs-theme="dark"] .admin-settings-nav-item:hover {
+    background-color: #182238 !important;
+    color: #ffffff !important;
+}
+
+/* Settings Tab Active State - Light Mode */
 .list-group-item.active-tab-link,
 a[data-tab].tab-active {
     background-color: #EBF4FF !important;
@@ -916,6 +865,24 @@ a[data-tab].tab-active {
     font-weight: 700 !important;
 }
 
+/* Settings Tab Active State - Dark Mode */
+html[data-theme="dark"] .list-group-item.active-tab-link,
+html[data-theme="dark"] a[data-tab].tab-active,
+html[data-bs-theme="dark"] .list-group-item.active-tab-link,
+html[data-bs-theme="dark"] a[data-tab].tab-active {
+    background-color: rgba(37, 99, 235, 0.22) !important;
+    color: #60a5fa !important;
+    border-left: 3px solid #3b82f6 !important;
+}
+html[data-theme="dark"] .list-group-item.active-tab-link span:not(.admin-nav-icon),
+html[data-theme="dark"] a[data-tab].tab-active span:not(.admin-nav-icon),
+html[data-bs-theme="dark"] .list-group-item.active-tab-link span:not(.admin-nav-icon),
+html[data-bs-theme="dark"] a[data-tab].tab-active span:not(.admin-nav-icon) {
+    color: #93c5fd !important;
+    font-weight: 700 !important;
+}
+
+/* Active Nav Icon - Light Mode */
 .admin-settings-nav-item.active .admin-nav-icon,
 .admin-settings-nav-item.tab-active .admin-nav-icon,
 .admin-settings-nav-item.active-tab-link .admin-nav-icon {
@@ -928,6 +895,135 @@ a[data-tab].tab-active {
 .admin-settings-nav-item.tab-active .admin-nav-icon i,
 .admin-settings-nav-item.active-tab-link .admin-nav-icon i {
     color: #ffffff !important;
+}
+
+/* Active Nav Icon - Dark Mode */
+html[data-theme="dark"] .admin-settings-nav-item.active .admin-nav-icon,
+html[data-theme="dark"] .admin-settings-nav-item.tab-active .admin-nav-icon,
+html[data-theme="dark"] .admin-settings-nav-item.active-tab-link .admin-nav-icon,
+html[data-bs-theme="dark"] .admin-settings-nav-item.active .admin-nav-icon,
+html[data-bs-theme="dark"] .admin-settings-nav-item.tab-active .admin-nav-icon,
+html[data-bs-theme="dark"] .admin-settings-nav-item.active-tab-link .admin-nav-icon {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+}
+
+/* Category-specific icon themes - Dark Mode (High contrast & vibrant colors) */
+html[data-theme="dark"] .icon-profile, html[data-bs-theme="dark"] .icon-profile {
+    background: rgba(37, 99, 235, 0.18) !important; color: #60a5fa !important; border: 1px solid rgba(96, 165, 250, 0.35) !important;
+}
+html[data-theme="dark"] .icon-password, html[data-bs-theme="dark"] .icon-password {
+    background: rgba(13, 148, 136, 0.18) !important; color: #2dd4bf !important; border: 1px solid rgba(45, 212, 191, 0.35) !important;
+}
+html[data-theme="dark"] .icon-barangay, html[data-bs-theme="dark"] .icon-barangay {
+    background: rgba(99, 102, 241, 0.18) !important; color: #a5b4fc !important; border: 1px solid rgba(165, 180, 252, 0.35) !important;
+}
+html[data-theme="dark"] .icon-documents, html[data-bs-theme="dark"] .icon-documents {
+    background: rgba(2, 132, 199, 0.18) !important; color: #38bdf8 !important; border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+html[data-theme="dark"] .icon-residents, html[data-bs-theme="dark"] .icon-residents {
+    background: rgba(168, 85, 247, 0.18) !important; color: #c084fc !important; border: 1px solid rgba(192, 132, 252, 0.35) !important;
+}
+html[data-theme="dark"] .icon-announcements, html[data-bs-theme="dark"] .icon-announcements {
+    background: rgba(244, 63, 94, 0.18) !important; color: #fb7185 !important; border: 1px solid rgba(251, 113, 133, 0.35) !important;
+}
+html[data-theme="dark"] .icon-system, html[data-bs-theme="dark"] .icon-system {
+    background: rgba(148, 163, 184, 0.18) !important; color: #cbd5e1 !important; border: 1px solid rgba(203, 213, 225, 0.35) !important;
+}
+html[data-theme="dark"] .icon-lgu, html[data-bs-theme="dark"] .icon-lgu {
+    background: rgba(37, 99, 235, 0.18) !important; color: #60a5fa !important; border: 1px solid rgba(96, 165, 250, 0.35) !important;
+}
+
+/* Explicitly force child icons to adopt their vivid category accent colors */
+html[data-theme="dark"] .icon-profile i, html[data-bs-theme="dark"] .icon-profile i { color: #60a5fa !important; }
+html[data-theme="dark"] .icon-password i, html[data-bs-theme="dark"] .icon-password i { color: #2dd4bf !important; }
+html[data-theme="dark"] .icon-barangay i, html[data-bs-theme="dark"] .icon-barangay i { color: #a5b4fc !important; }
+html[data-theme="dark"] .icon-documents i, html[data-bs-theme="dark"] .icon-documents i { color: #38bdf8 !important; }
+html[data-theme="dark"] .icon-residents i, html[data-bs-theme="dark"] .icon-residents i { color: #c084fc !important; }
+html[data-theme="dark"] .icon-announcements i, html[data-bs-theme="dark"] .icon-announcements i { color: #fb7185 !important; }
+html[data-theme="dark"] .icon-system i, html[data-bs-theme="dark"] .icon-system i { color: #cbd5e1 !important; }
+html[data-theme="dark"] .icon-lgu i, html[data-bs-theme="dark"] .icon-lgu i { color: #60a5fa !important; }
+
+/* Tab Header Icon Badges in Dark Mode */
+html[data-theme="dark"] .settings-header-icon-profile,
+html[data-bs-theme="dark"] .settings-header-icon-profile,
+html[data-theme="dark"] .settings-header-icon-barangay,
+html[data-bs-theme="dark"] .settings-header-icon-barangay,
+html[data-theme="dark"] .settings-header-icon-residents,
+html[data-bs-theme="dark"] .settings-header-icon-residents {
+    background: rgba(37, 99, 235, 0.2) !important;
+    border: 1px solid rgba(96, 165, 250, 0.35) !important;
+}
+html[data-theme="dark"] .settings-header-icon-profile i,
+html[data-bs-theme="dark"] .settings-header-icon-profile i,
+html[data-theme="dark"] .settings-header-icon-barangay i,
+html[data-bs-theme="dark"] .settings-header-icon-barangay i,
+html[data-theme="dark"] .settings-header-icon-residents i,
+html[data-bs-theme="dark"] .settings-header-icon-residents i {
+    color: #60a5fa !important;
+}
+
+html[data-theme="dark"] .settings-header-icon-password,
+html[data-bs-theme="dark"] .settings-header-icon-password,
+html[data-theme="dark"] .settings-header-icon-documents,
+html[data-bs-theme="dark"] .settings-header-icon-documents {
+    background: rgba(13, 148, 136, 0.2) !important;
+    border: 1px solid rgba(45, 212, 191, 0.35) !important;
+}
+html[data-theme="dark"] .settings-header-icon-password i,
+html[data-bs-theme="dark"] .settings-header-icon-password i,
+html[data-theme="dark"] .settings-header-icon-documents i,
+html[data-bs-theme="dark"] .settings-header-icon-documents i {
+    color: #2dd4bf !important;
+}
+
+html[data-theme="dark"] .settings-header-icon-announcements,
+html[data-bs-theme="dark"] .settings-header-icon-announcements {
+    background: rgba(225, 29, 72, 0.2) !important;
+    border: 1px solid rgba(251, 113, 133, 0.35) !important;
+}
+html[data-theme="dark"] .settings-header-icon-announcements i,
+html[data-bs-theme="dark"] .settings-header-icon-announcements i {
+    color: #fb7185 !important;
+}
+
+html[data-theme="dark"] .settings-header-icon-system,
+html[data-bs-theme="dark"] .settings-header-icon-system {
+    background: rgba(148, 163, 184, 0.2) !important;
+    border: 1px solid rgba(203, 213, 225, 0.35) !important;
+}
+html[data-theme="dark"] .settings-header-icon-system i,
+html[data-bs-theme="dark"] .settings-header-icon-system i {
+    color: #cbd5e1 !important;
+}
+
+/* Avatar and Quick Stats in Dark Mode */
+html[data-theme="dark"] .admin-avatar-initials,
+html[data-bs-theme="dark"] .admin-avatar-initials {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    color: #38bdf8 !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .admin-avatar-outer,
+html[data-bs-theme="dark"] .admin-avatar-outer {
+    background-color: #131d31 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+.settings-stats-pill {
+    background: #F7FAFC;
+}
+html[data-theme="dark"] .settings-stats-pill,
+html[data-bs-theme="dark"] .settings-stats-pill {
+    background: #182238 !important;
+    border-color: #1e293b !important;
+}
+html[data-theme="dark"] #bannerPreviewBox,
+html[data-bs-theme="dark"] #bannerPreviewBox {
+    background: rgba(30, 58, 138, 0.25) !important;
+    border-color: rgba(96, 165, 250, 0.4) !important;
+    color: #bfdbfe !important;
 }
 
 .settings-tab {
@@ -959,16 +1055,13 @@ document.querySelectorAll('a[data-tab]').forEach(link => {
         // Reset nav styles
         document.querySelectorAll('a[data-tab]').forEach(l => {
             l.classList.remove('active', 'tab-active', 'active-tab-link');
-            l.style.backgroundColor = '';
-            l.style.color = '';
-            l.style.borderLeft = '';
+            l.style.removeProperty('background-color');
+            l.style.removeProperty('color');
+            l.style.removeProperty('border-left');
         });
 
         // Activate clicked nav
         this.classList.add('active', 'tab-active', 'active-tab-link');
-        this.style.backgroundColor = '#EBF4FF';
-        this.style.color = '#18365D';
-        this.style.borderLeft = '3px solid #18365D';
 
         // Update URL hash without scroll
         if (history.pushState) {

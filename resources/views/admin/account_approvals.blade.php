@@ -53,10 +53,21 @@
                 padding: 14px;
             }
         }
+
+        html[data-bs-theme="dark"] #bulkActionsBar,
+        html[data-theme="dark"] #bulkActionsBar {
+            background-color: rgba(37, 99, 235, 0.15) !important;
+            border-color: #334155 !important;
+        }
+        html[data-bs-theme="dark"] #deselectAllBtn,
+        html[data-theme="dark"] #deselectAllBtn {
+            background: #1e293b !important;
+            color: #cbd5e1 !important;
+            border-color: #475569 !important;
+        }
     </style>
 
     <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; <span class="text-dark">Approvals</span></div>
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h2 class="header-title mb-0">Account Approvals</h2>
             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1 rounded-pill small fw-semibold">
@@ -119,12 +130,34 @@
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        {{-- Bulk Selection Bar --}}
+        <div id="bulkActionsBar" class="d-none bg-primary bg-opacity-10 border-bottom px-3 px-md-4 py-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2 transition-all">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary rounded-pill px-3 py-1.5 fw-bold" id="selectedCountBadge">0 Selected</span>
+                <span class="text-muted small d-none d-sm-inline">Select multiple resident accounts to decide whether to approve or reject.</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 px-3 fw-semibold bg-white" id="deselectAllBtn">
+                    <i class="fa-solid fa-xmark me-1"></i> Deselect
+                </button>
+                <button type="button" class="btn btn-sm btn-success rounded-3 px-3 fw-semibold shadow-sm" id="bulkApproveBtn">
+                    <i class="fa-solid fa-check me-1"></i> Approve Selected (<span id="bulkApproveCount">0</span>)
+                </button>
+                <button type="button" class="btn btn-sm btn-danger rounded-3 px-3 fw-semibold shadow-sm" id="bulkRejectBtn">
+                    <i class="fa-solid fa-xmark me-1"></i> Reject Selected (<span id="bulkRejectCount">0</span>)
+                </button>
+            </div>
+        </div>
+
         {{-- Desktop Table View (Screens >= 768px) --}}
         <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0 table-approvals text-center">
                 <thead class="text-muted small" style="background-color: var(--color-bg);">
                     <tr>
-                        <th class="ps-4 py-3 border-0 text-start" style="min-width: 170px;">NAME</th>
+                        <th class="ps-3 py-3 border-0 text-center" style="width: 42px;">
+                            <input class="form-check-input" type="checkbox" id="selectAllApprovals" title="Select All">
+                        </th>
+                        <th class="ps-2 py-3 border-0 text-start" style="min-width: 170px;">NAME</th>
                         <th class="py-3 border-0" style="min-width: 180px;">EMAIL</th>
                         <th class="py-3 border-0 text-nowrap" style="width: 140px;">DATE SUBMITTED</th>
                         <th class="py-3 border-0 text-nowrap" style="width: 140px;">ID TYPE</th>
@@ -135,7 +168,10 @@
                 <tbody class="border-top-0">
                     @forelse($pendingUsers as $user)
                     <tr>
-                        <td class="ps-4 fw-bold text-dark text-start">
+                        <td class="ps-3 text-center" style="width: 42px;">
+                            <input class="form-check-input approval-select-checkbox" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}">
+                        </td>
+                        <td class="ps-2 fw-bold text-dark text-start">
                             <div class="d-flex align-items-center">
                                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-2 fw-bold text-uppercase flex-shrink-0" style="width: 32px; height: 32px; font-size: 12px;">
                                     {{ substr(strip_tags($user->name), 0, 2) }}
@@ -206,7 +242,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
+                        <td colspan="7" class="text-center py-5 text-muted">
                             <i class="fa-solid fa-user-check fa-3x mb-2 text-light d-block"></i>
                             <span class="d-block mb-1 fw-bold text-dark">No Accounts Found</span>
                             <span class="small">No {{ str_replace('_', ' ', $currentStatus) }} accounts to review at this time.</span>
@@ -224,6 +260,7 @@
                     {{-- Header: Resident Name + Status --}}
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
+                            <input class="form-check-input approval-select-checkbox flex-shrink-0" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}">
                             <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase flex-shrink-0" style="width: 32px; height: 32px; font-size: 12px;">
                                 {{ substr(strip_tags($user->name), 0, 2) }}
                             </div>
@@ -486,5 +523,250 @@
             modal.show();
         }
     }
+
+    // ---- MULTI-SELECT & BULK APPROVE/REJECT ----
+    document.addEventListener('DOMContentLoaded', function () {
+        const bulkActionsBar = document.getElementById('bulkActionsBar');
+        const selectedCountBadge = document.getElementById('selectedCountBadge');
+        const bulkApproveCount = document.getElementById('bulkApproveCount');
+        const bulkRejectCount = document.getElementById('bulkRejectCount');
+        const selectAllCheckbox = document.getElementById('selectAllApprovals');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+        const bulkRejectBtn = document.getElementById('bulkRejectBtn');
+
+        const bulkApproveModalEl = document.getElementById('approvalsBulkApproveModal');
+        const bulkApproveModal = bulkApproveModalEl ? new bootstrap.Modal(bulkApproveModalEl) : null;
+        const bulkApproveHiddenIds = document.getElementById('bulk_approve_hidden_ids');
+        const bulkApproveModalCount = document.getElementById('bulk_approve_modal_count');
+        const bulkApproveNamesList = document.getElementById('bulk_approve_names_list');
+        const approvalsBulkApproveForm = document.getElementById('approvalsBulkApproveForm');
+        const confirmBulkApproveSubmitBtn = document.getElementById('confirmBulkApproveSubmitBtn');
+
+        const bulkRejectModalEl = document.getElementById('approvalsBulkRejectModal');
+        const bulkRejectModal = bulkRejectModalEl ? new bootstrap.Modal(bulkRejectModalEl) : null;
+        const bulkRejectHiddenIds = document.getElementById('bulk_reject_hidden_ids');
+        const bulkRejectModalCount = document.getElementById('bulk_reject_modal_count');
+        const bulkRejectNamesList = document.getElementById('bulk_reject_names_list');
+        const approvalsBulkRejectForm = document.getElementById('approvalsBulkRejectForm');
+        const confirmBulkRejectSubmitBtn = document.getElementById('confirmBulkRejectSubmitBtn');
+
+        function getCheckboxes() {
+            return Array.from(document.querySelectorAll('.approval-select-checkbox'));
+        }
+
+        function updateBulkBar() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.approval-select-checkbox:checked'));
+            const count = checkedBoxes.length;
+
+            if (count > 0) {
+                bulkActionsBar?.classList.remove('d-none');
+                if (selectedCountBadge) selectedCountBadge.textContent = `${count} Selected`;
+                if (bulkApproveCount) bulkApproveCount.textContent = count;
+                if (bulkRejectCount) bulkRejectCount.textContent = count;
+            } else {
+                bulkActionsBar?.classList.add('d-none');
+            }
+
+            // Highlight table rows and mobile cards
+            getCheckboxes().forEach(cb => {
+                const row = cb.closest('tr');
+                if (row) {
+                    if (cb.checked) {
+                        row.classList.add('table-primary');
+                    } else {
+                        row.classList.remove('table-primary');
+                    }
+                }
+                const card = cb.closest('.mobile-approval-card');
+                if (card) {
+                    if (cb.checked) {
+                        card.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+                    } else {
+                        card.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+                    }
+                }
+            });
+
+            if (selectAllCheckbox) {
+                const tableBoxes = Array.from(document.querySelectorAll('table .approval-select-checkbox'));
+                const checkedTableBoxes = Array.from(document.querySelectorAll('table .approval-select-checkbox:checked'));
+                selectAllCheckbox.checked = (tableBoxes.length > 0 && checkedTableBoxes.length === tableBoxes.length);
+                selectAllCheckbox.indeterminate = (checkedTableBoxes.length > 0 && checkedTableBoxes.length < tableBoxes.length);
+            }
+        }
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function () {
+                getCheckboxes().forEach(cb => {
+                    cb.checked = selectAllCheckbox.checked;
+                });
+                updateBulkBar();
+            });
+        }
+
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.classList.contains('approval-select-checkbox')) {
+                const val = e.target.value;
+                const checked = e.target.checked;
+                document.querySelectorAll(`.approval-select-checkbox[value="${val}"]`).forEach(cb => {
+                    cb.checked = checked;
+                });
+                updateBulkBar();
+            }
+        });
+
+        if (deselectAllBtn) {
+            deselectAllBtn.addEventListener('click', function () {
+                getCheckboxes().forEach(cb => cb.checked = false);
+                updateBulkBar();
+            });
+        }
+
+        // BULK APPROVE BUTTON CLICK
+        if (bulkApproveBtn && bulkApproveModal) {
+            bulkApproveBtn.addEventListener('click', function () {
+                const checkedBoxes = Array.from(document.querySelectorAll('.approval-select-checkbox:checked'));
+                if (checkedBoxes.length === 0) return;
+
+                if (bulkApproveHiddenIds) bulkApproveHiddenIds.innerHTML = '';
+                if (bulkApproveNamesList) bulkApproveNamesList.innerHTML = '';
+
+                const seenIds = new Set();
+                checkedBoxes.forEach(cb => {
+                    if (seenIds.has(cb.value)) return;
+                    seenIds.add(cb.value);
+
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'ids[]';
+                    hidden.value = cb.value;
+                    bulkApproveHiddenIds?.appendChild(hidden);
+
+                    const li = document.createElement('li');
+                    li.textContent = cb.getAttribute('data-name') || `User ID #${cb.value}`;
+                    bulkApproveNamesList?.appendChild(li);
+                });
+
+                if (bulkApproveModalCount) bulkApproveModalCount.textContent = `${seenIds.size}`;
+                bulkApproveModal.show();
+            });
+        }
+
+        // BULK REJECT BUTTON CLICK
+        if (bulkRejectBtn && bulkRejectModal) {
+            bulkRejectBtn.addEventListener('click', function () {
+                const checkedBoxes = Array.from(document.querySelectorAll('.approval-select-checkbox:checked'));
+                if (checkedBoxes.length === 0) return;
+
+                if (bulkRejectHiddenIds) bulkRejectHiddenIds.innerHTML = '';
+                if (bulkRejectNamesList) bulkRejectNamesList.innerHTML = '';
+
+                const seenIds = new Set();
+                checkedBoxes.forEach(cb => {
+                    if (seenIds.has(cb.value)) return;
+                    seenIds.add(cb.value);
+
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'ids[]';
+                    hidden.value = cb.value;
+                    bulkRejectHiddenIds?.appendChild(hidden);
+
+                    const li = document.createElement('li');
+                    li.textContent = cb.getAttribute('data-name') || `User ID #${cb.value}`;
+                    bulkRejectNamesList?.appendChild(li);
+                });
+
+                if (bulkRejectModalCount) bulkRejectModalCount.textContent = `${seenIds.size}`;
+                bulkRejectModal.show();
+            });
+        }
+
+        // Form submit spinner protection
+        if (approvalsBulkApproveForm && confirmBulkApproveSubmitBtn) {
+            approvalsBulkApproveForm.addEventListener('submit', function () {
+                confirmBulkApproveSubmitBtn.disabled = true;
+                confirmBulkApproveSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Approving...';
+            });
+        }
+        if (approvalsBulkRejectForm && confirmBulkRejectSubmitBtn) {
+            approvalsBulkRejectForm.addEventListener('submit', function () {
+                confirmBulkRejectSubmitBtn.disabled = true;
+                confirmBulkRejectSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Rejecting...';
+            });
+        }
+    });
+</script>
+
+{{-- MODAL: BULK APPROVE CONFIRMATION --}}
+<div class="modal fade" id="approvalsBulkApproveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom py-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <h5 class="modal-title fw-bold mb-0">Approve Multiple Accounts</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">
+                    Are you sure you want to approve <strong id="bulk_approve_modal_count" class="text-success"></strong> selected resident account(s)? These accounts will be granted active portal access and sent an approval notification.
+                </p>
+                <div class="p-3 bg-body-tertiary rounded-3 border mb-2" style="max-height: 180px; overflow-y: auto;">
+                    <ul id="bulk_approve_names_list" class="mb-0 ps-3 small"></ul>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-3 px-4">
+                <button type="button" class="btn btn-light border rounded-3 px-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                <form id="approvalsBulkApproveForm" action="{{ route('admin.approvals.bulk-approve') }}" method="POST" class="d-inline">
+                    @csrf
+                    <div id="bulk_approve_hidden_ids"></div>
+                    <button type="submit" class="btn btn-success rounded-3 px-4 fw-semibold shadow-sm" id="confirmBulkApproveSubmitBtn">
+                        <i class="fa-solid fa-check me-1"></i> Confirm Approval
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL: BULK REJECT CONFIRMATION --}}
+<div class="modal fade" id="approvalsBulkRejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom py-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                    <h5 class="modal-title fw-bold mb-0">Reject Multiple Accounts</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">
+                    Are you sure you want to reject <strong id="bulk_reject_modal_count" class="text-danger"></strong> selected resident account(s)?
+                </p>
+                <div class="p-3 bg-body-tertiary rounded-3 border mb-2" style="max-height: 180px; overflow-y: auto;">
+                    <ul id="bulk_reject_names_list" class="mb-0 ps-3 small"></ul>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-3 px-4">
+                <button type="button" class="btn btn-light border rounded-3 px-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                <form id="approvalsBulkRejectForm" action="{{ route('admin.approvals.bulk-reject') }}" method="POST" class="d-inline">
+                    @csrf
+                    <div id="bulk_reject_hidden_ids"></div>
+                    <button type="submit" class="btn btn-danger rounded-3 px-4 fw-semibold shadow-sm" id="confirmBulkRejectSubmitBtn">
+                        <i class="fa-solid fa-xmark me-1"></i> Confirm Rejection
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </script>
 @endsection

@@ -271,6 +271,127 @@
     background-color: var(--color-primary-50) !important;
     color: var(--color-primary) !important;
 }
+
+/* ---- Doc Type Grid Cards ---- */
+.doc-type-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+.doc-type-card:hover {
+    border-color: var(--color-primary) !important;
+    background: var(--color-bg-subtle, #f0f7ff);
+}
+.doc-type-card.selected {
+    border-color: var(--color-primary) !important;
+    background: rgba(30, 64, 175, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+}
+.doc-type-card.selected .doc-type-icon {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+}
+.doc-type-card.selected span.doc-type-name {
+    color: var(--color-primary) !important;
+}
+
+/* Dark Mode Overrides for Request Document */
+html[data-theme="dark"] .doc-type-card,
+html[data-bs-theme="dark"] .doc-type-card {
+    background: #131d31 !important;
+    border-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+html[data-theme="dark"] .doc-type-card:hover,
+html[data-bs-theme="dark"] .doc-type-card:hover {
+    background: #182238 !important;
+    border-color: #38bdf8 !important;
+}
+html[data-theme="dark"] .doc-type-card.selected,
+html[data-bs-theme="dark"] .doc-type-card.selected {
+    background: rgba(43, 108, 176, 0.3) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+}
+html[data-theme="dark"] .doc-type-card .doc-type-name,
+html[data-bs-theme="dark"] .doc-type-card .doc-type-name {
+    color: #f8fafc !important;
+}
+html[data-theme="dark"] .doc-type-card.selected .doc-type-name,
+html[data-bs-theme="dark"] .doc-type-card.selected .doc-type-name {
+    color: #38bdf8 !important;
+}
+html[data-theme="dark"] .doc-type-card .doc-type-icon,
+html[data-bs-theme="dark"] .doc-type-card .doc-type-icon {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;
+}
+html[data-theme="dark"] .doc-type-card.selected .doc-type-icon,
+html[data-bs-theme="dark"] .doc-type-card.selected .doc-type-icon {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+html[data-theme="dark"] .doc-type-card .text-muted,
+html[data-bs-theme="dark"] .doc-type-card .text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Purpose Chips in Dark Mode */
+html[data-theme="dark"] .gp-chip,
+html[data-bs-theme="dark"] .gp-chip {
+    background: #182238 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+html[data-theme="dark"] .gp-chip:hover,
+html[data-bs-theme="dark"] .gp-chip:hover {
+    background: #1e293b !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+}
+html[data-theme="dark"] .gp-chip.gp-selected,
+html[data-bs-theme="dark"] .gp-chip.gp-selected {
+    background: #1e40af !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+}
+
+/* Business Permit Modal Option in Dark Mode */
+html[data-theme="dark"] .bp-modal-option,
+html[data-bs-theme="dark"] .bp-modal-option {
+    background: #182238 !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html[data-theme="dark"] .bp-modal-option:hover,
+html[data-bs-theme="dark"] .bp-modal-option:hover {
+    background: #1e293b !important;
+    border-color: #38bdf8 !important;
+}
+html[data-theme="dark"] .bp-modal-option.bp-selected,
+html[data-bs-theme="dark"] .bp-modal-option.bp-selected {
+    background: rgba(30, 64, 175, 0.3) !important;
+    border-color: #38bdf8 !important;
+}
+html[data-theme="dark"] .bp-modal-option .text-muted,
+html[data-bs-theme="dark"] .bp-modal-option .text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Payment Notice in Dark Mode */
+html[data-theme="dark"] .payment-notice,
+html[data-bs-theme="dark"] .payment-notice {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fde68a !important;
+}
+html[data-theme="dark"] .payment-notice h6,
+html[data-bs-theme="dark"] .payment-notice h6,
+html[data-theme="dark"] .payment-notice .text-dark,
+html[data-bs-theme="dark"] .payment-notice .text-dark {
+    color: #fef08a !important;
+}
 </style>
 
 <div class="container py-4">
@@ -393,7 +514,13 @@
                             $docName = is_string($doc) ? $doc : $doc->name;
                             $docIcon = is_object($doc) ? $doc->icon : 'fa-file-lines';
                             $isBusiness = str_contains(strtolower($docName), 'business');
-                            $docFeeFormatted = $isBusiness ? 'TO BE SETTLED' : 'FREE';
+                            if (is_object($doc) && $doc->fee !== null && (float)$doc->fee > 0) {
+                                $docFeeFormatted = '₱' . number_format((float)$doc->fee, 2);
+                            } elseif ($isBusiness) {
+                                $docFeeFormatted = 'TO BE SETTLED';
+                            } else {
+                                $docFeeFormatted = 'FREE';
+                            }
                         @endphp
                         <div class="col-6 col-md-4 doc-type-item" data-value="{{ $docName }}" data-icon="{{ $docIcon }}">
                             <div class="doc-type-card d-flex align-items-center gap-2 p-2 border rounded-3 cursor-pointer {{ $selectedDoc === $docName ? 'selected' : '' }}"
@@ -946,7 +1073,7 @@
                             <i class="fa-solid fa-arrow-left me-1"></i> Back
                         </button>
                         <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1" id="btnConfirmSubmit" style="font-size:13px;">
-                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Request
+                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Document Request
                         </button>
                     </div>
                 </div>
@@ -1006,7 +1133,17 @@ document.addEventListener('DOMContentLoaded', function() {
         foreach ($docTypesList as $dt) {
             $dtName = is_object($dt) ? $dt->name : $dt;
             $isBus  = str_contains(strtolower($dtName), 'business');
-            $feeText = $isBus ? 'TO BE SETTLED' : 'FREE';
+            
+            if (is_object($dt) && $dt->fee !== null && (float)$dt->fee > 0) {
+                $feeText = '₱' . number_format((float)$dt->fee, 2);
+                $feeAmount = (float)$dt->fee;
+            } elseif ($isBus) {
+                $feeText = 'TO BE SETTLED';
+                $feeAmount = 0;
+            } else {
+                $feeText = 'FREE';
+                $feeAmount = 0;
+            }
 
             if (is_object($dt)) {
                 $reqs = $dt->requirements_list ?: ['Valid Government-Issued ID'];
@@ -1014,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'requirements'   => $reqs,
                     'processingTime' => $dt->processing_days ?: '1-2 Business Days',
                     'fee'            => $feeText,
-                    'feeAmount'      => 0,
+                    'feeAmount'      => $feeAmount,
                     'description'    => $dt->description ?: '',
                 ];
                 $docIconsMap[$dtName] = $dt->icon;
@@ -1023,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'requirements'   => ['Valid Government-Issued ID'],
                     'processingTime' => '1-2 Business Days',
                     'fee'            => $feeText,
-                    'feeAmount'      => 0,
+                    'feeAmount'      => $feeAmount,
                     'description'    => '',
                 ];
                 $docIconsMap[$dtName] = 'fa-file-lines';
@@ -1155,15 +1292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         docTypeNoResults.style.display = visibleCount === 0 ? 'block' : 'none';
     });
 
-    const style = document.createElement('style');
-    style.textContent = `
-        .doc-type-card { cursor:pointer; transition: all 0.2s ease; background:#fff; }
-        .doc-type-card:hover { border-color: var(--color-primary) !important; background: var(--color-primary-50); }
-        .doc-type-card.selected { border-color: var(--color-primary) !important; background: var(--color-primary-50); box-shadow: 0 0 0 3px rgba(30,64,175,0.1); }
-        .doc-type-card.selected .doc-type-icon { background: var(--color-primary) !important; color: #fff !important; }
-        .doc-type-card.selected span.doc-type-name { color: var(--color-primary) !important; }
-    `;
-    document.head.appendChild(style);
+
 
     const sharedUploadSection = document.getElementById('sharedUploadSection');
     const bpUploadSlot = document.getElementById('bpUploadSlot');

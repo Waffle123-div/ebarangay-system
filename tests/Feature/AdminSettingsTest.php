@@ -63,7 +63,7 @@ class AdminSettingsTest extends TestCase
         $response->assertSee('Officials');
         $response->assertDontSee('Payments & GCash');
         $response->assertSee('Document Policies');
-        $response->assertSee('Puroks');
+        $response->assertDontSee('Residents & Puroks');
         $response->assertSee('Public Announcement Banner');
         $response->assertSee('Disaster Recovery');
     }

@@ -59,11 +59,11 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
         }
 
-        .gateway-panel { display: block; }
-        .manual-form-panel { display: none; }
+        .gateway-panel { display: none !important; }
+        .manual-form-panel { display: block; }
 
         /* Progress bar */
-        .step-indicator { width: 20%; height: 4px; background-color: #e9ecef; transition: background-color 0.3s ease; }
+        .step-indicator { width: 33.333%; height: 4px; background-color: #e9ecef; transition: background-color 0.3s ease; }
         .step-indicator.active { background-color: var(--color-primary); }
 
         /* Step panels */
@@ -335,41 +335,20 @@
                 <div class="card auth-card-container rounded-4 p-4 p-md-5 my-3">
 
                     {{-- ============================================ --}}
-                    {{-- GATEWAY PANEL (Choose Method) --}}
+                    {{-- REGISTRATION WIZARD --}}
                     {{-- ============================================ --}}
-                    <div id="gatewayPanel" class="gateway-panel text-center mx-auto" style="max-width: 440px; {{ $viaGoogle ? 'display:none;' : '' }}">
-                        <div class="mb-4">
-                            <i class="fa-solid fa-id-card text-primary fs-1 mb-2"></i>
-                            <h4 class="fw-bold text-dark">Create an Account</h4>
-                            <p class="text-muted small">Register to request barangay documents</p>
-                        </div>
-
-                        <button type="button" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold mb-4" onclick="showManualForm()">
-                            Create an Account 
-                        </button>
-
-                        <div class="text-center small">
-                            Already have an account? <a href="{{ route('resident.login') }}" class="text-primary text-decoration-none fw-bold">Log In Here</a>
-                        </div>
-                    </div>
-
-                    {{-- ============================================ --}}
-                    {{-- MANUAL REGISTRATION WIZARD --}}
-                    {{-- ============================================ --}}
-                    <div id="manualFormPanel" class="manual-form-panel" style="{{ $viaGoogle ? 'display:block;' : '' }}">
+                    <div id="manualFormPanel" class="manual-form-panel">
 
                         {{-- Progress Bar --}}
                         <div class="d-flex mb-4">
                             <div class="step-indicator active rounded-start" data-step="1"></div>
                             <div class="step-indicator ms-1" data-step="2"></div>
-                            <div class="step-indicator ms-1" data-step="3"></div>
-                            <div class="step-indicator ms-1" data-step="4"></div>
-                            <div class="step-indicator ms-1 rounded-end" data-step="5"></div>
+                            <div class="step-indicator ms-1 rounded-end" data-step="3"></div>
                         </div>
 
                         {{-- Step Title --}}
                         <div class="text-center mb-3">
-                            <h4 class="fw-bold text-dark mb-1" id="stepTitle">Step 1 of 5</h4>
+                            <h4 class="fw-bold text-dark mb-1" id="stepTitle">Step 1 of 3</h4>
                             <p class="text-muted small" id="stepSubtitle">Resident Identity</p>
                         </div>
 
@@ -525,7 +504,7 @@
                                 </div>
 
                                 <div class="d-flex gap-2 mt-3">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="showGateway()"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
+                                    <a href="{{ route('resident.login') }}" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
                                     <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(2)">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
                                 </div>
                             </div>
@@ -544,14 +523,14 @@
 
                                     <div class="row text-start">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Mobile Number <span class="text-muted" style="font-size: 11px;">(Or Email)</span></label>
+                                            <label class="form-label small fw-semibold">Mobile Number</label>
                                             <input type="text" name="phone_number" class="form-control rounded-3" value="{{ old('phone_number') }}" placeholder="09XXXXXXXXX">
                                             @if($viaGoogle)
                                                 <div class="form-text small text-muted">Optional when signing in with Google.</div>
                                             @endif
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label small fw-semibold">Email Address <span class="text-muted" style="font-size: 11px;">(Or Mobile)</span></label>
+                                            <label class="form-label small fw-semibold">Email Address</label>
                                             @if($viaGoogle)
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light border-end-0" style="border-color:#dee2e6;">
@@ -589,12 +568,21 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label small fw-semibold">Password <span class="text-danger">*</span></label>
                                                 <div class="position-relative">
-                                                    <input type="password" name="password" id="regPassword" class="form-control rounded-3" required>
+                                                    <input type="password" name="password" id="regPassword" class="form-control rounded-3" required oninput="checkPasswordStrength(this.value)">
                                                     <button type="button" class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 p-0 border-0 bg-transparent text-muted" onclick="togglePassword('regPassword', this)">
                                                         <i class="fa-solid fa-eye"></i>
                                                     </button>
                                                 </div>
-                                                <div class="form-text small text-muted">Minimum 8 characters</div>
+                                                {{-- Password Strength Meter --}}
+                                                <div class="mt-1">
+                                                    <div class="d-flex gap-1 mb-1" id="strengthBars">
+                                                        <div class="flex-fill rounded" id="bar1" style="height:4px;background:#e5e7eb;"></div>
+                                                        <div class="flex-fill rounded" id="bar2" style="height:4px;background:#e5e7eb;"></div>
+                                                        <div class="flex-fill rounded" id="bar3" style="height:4px;background:#e5e7eb;"></div>
+                                                        <div class="flex-fill rounded" id="bar4" style="height:4px;background:#e5e7eb;"></div>
+                                                    </div>
+                                                    <div class="small" id="strengthLabel" style="font-size:11px;color:#9ca3af;">Minimum 8 characters</div>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label small fw-semibold">Confirm Password <span class="text-danger">*</span></label>
@@ -618,175 +606,164 @@
                             </div>
 
                             {{-- ========================================== --}}
-                            {{-- STEP 3: ADMIN VERIFICATION REQUIREMENTS --}}
+                            {{-- STEP 3: ADMIN VERIFICATION & AGREEMENTS --}}
                             {{-- ========================================== --}}
                             <div class="step-panel" id="panel-step-3">
-                                <div class="alert alert-warning border-0 small text-start mb-4">
-                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                                    Access is restricted to valid residents. Please attach a valid ID or document to verify your identity.
-                                </div>
-
-                                <div class="mb-3 text-start">
-                                    <label class="form-label small fw-semibold">Type of ID / Document <span class="text-danger">*</span></label>
-                                    <select name="id_type" id="idTypeSelect" class="form-select rounded-3" required>
-                                        <option value="" disabled selected>Select ID Type...</option>
-                                        <option value="National ID" {{ old('id_type') == 'National ID' ? 'selected' : '' }}>National ID</option>
-                                        <option value="Driver's License" {{ old('id_type') == "Driver's License" ? 'selected' : '' }}>Driver's License</option>
-                                        <option value="Voter's ID" {{ old('id_type') == "Voter's ID" ? 'selected' : '' }}>Voter's ID</option>
-                                        <option value="Student ID" {{ old('id_type') == 'Student ID' ? 'selected' : '' }}>Student ID</option>
-                                        <option value="Others" {{ old('id_type') == 'Others' ? 'selected' : '' }}>Others (Voter's Certificate, PSA, etc.)</option>
-                                    </select>
-                                </div>
-
-                                <div class="mb-4 text-start">
-                                    <label class="form-label small fw-semibold">Upload ID Image <span class="text-danger">*</span></label>
-                                    <input class="form-control rounded-3" type="file" name="proof_of_residency" id="idUploadInput" accept="image/*,application/pdf" required>
-                                    <div class="form-text small text-muted">Accepted formats: JPG, JPEG, PNG, PDF (Max 10MB).</div>
-                                </div>
-
-                                {{-- ============================================ --}}
-                                {{-- SECTION: LIVE FACIAL VERIFICATION          --}}
-                                {{-- ============================================ --}}
-                                <div class="mb-4 text-start">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <label class="form-label small fw-bold mb-0 text-dark">
-                                            <i class="fa-solid fa-camera text-primary me-1"></i> Live Face Verification <span class="text-danger">*</span>
-                                        </label>
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5 rounded-pill" style="font-size: 11px;">
-                                            Biometric Check
-                                        </span>
-                                    </div>
-                                    <p class="text-muted small mb-3" style="font-size: 12px;">
-                                        Please take a clear, well-lit live selfie to verify against your ID. Look straight at the camera without sunglasses, hats, or masks.
-                                    </p>
-
-                                    <div class="face-cam-card p-3 p-md-4 text-center" id="faceCameraContainer">
-                                        <div id="facePromptState">
-                                            <div class="py-4 px-2">
-                                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
-                                                    <i class="fa-solid fa-camera fs-2"></i>
-                                                </div>
-                                                <h5 class="fw-bold text-dark mb-1">Live Facial Camera</h5>
-                                                <p class="text-muted small mb-3" style="max-width: 460px; margin: 0 auto; font-size: 13px;">
-                                                    Take a real-time photo of your face for identity verification against your uploaded government ID.
-                                                </p>
-                                                
-                                                <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
-                                                    <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
-                                                        <i class="fa-regular fa-sun text-warning me-1"></i> Good Lighting
-                                                    </span>
-                                                    <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
-                                                        <i class="fa-solid fa-glasses text-secondary me-1"></i> No Sunglasses / Mask
-                                                    </span>
-                                                    <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
-                                                        <i class="fa-regular fa-face-smile text-primary me-1"></i> Look Straight Ahead
-                                                    </span>
-                                                </div>
-
-                                                <div class="d-flex flex-column align-items-center gap-2">
-                                                    <button type="button" class="btn btn-primary px-4 py-2.5 rounded-3 fw-bold shadow-sm" style="font-size: 15px;" onclick="startFaceCamera()">
-                                                        <i class="fa-solid fa-video me-2"></i> Start Live Face Camera
-                                                    </button>
-                                                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="toggleSelfieUploadFallback()">
-                                                        <i class="fa-solid fa-arrow-up-from-bracket me-1"></i> Or upload a selfie image file instead
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div id="faceCapturedState" class="d-none">
-                                            <div class="face-captured-viewport position-relative">
-                                                <img id="faceCapturedPreview" src="" alt="Live Face Preview">
-                                                <span class="position-absolute top-0 end-0 m-3 badge bg-success shadow rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 12px;">
-                                                    <i class="fa-solid fa-circle-check"></i> Face Snapshot Captured
-                                                </span>
-                                            </div>
-
-                                            <div class="alert alert-success bg-success bg-opacity-10 border border-success border-opacity-25 py-2.5 px-3 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 mx-auto text-start" style="max-width: 520px;">
-                                                <div class="text-success small fw-semibold">
-                                                    <i class="fa-solid fa-check-double me-1.5"></i> Photo is clearly visible and ready for review.
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-success bg-white rounded-3 fw-semibold px-3 py-1 shadow-sm" onclick="retakeFacePhoto()">
-                                                    <i class="fa-solid fa-rotate-left me-1"></i> Retake Photo
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div id="selfieUploadFallbackBox" class="d-none text-start p-3 mt-3 border rounded-3 bg-white">
-                                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                                <label class="form-label small fw-bold text-dark mb-0">
-                                                    <i class="fa-solid fa-image text-primary me-1"></i> Upload Selfie Portrait:
-                                                </label>
-                                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-primary fw-semibold" onclick="useFaceCameraInstead()">
-                                                    <i class="fa-solid fa-video me-1"></i> Use Live Camera Instead
-                                                </button>
-                                            </div>
-                                            <input type="file" name="selfie_upload" id="selfieUploadInput" class="form-control rounded-3" accept="image/*" onchange="handleSelfieFileSelect(this)">
-                                            <div class="form-text small text-muted">Upload a clear photo showing your face directly (JPG, PNG, max 10MB).</div>
-                                        </div>
+                                <div class="step-scroll">
+                                    <div class="alert alert-warning border-0 small text-start mb-4">
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                        Access is restricted to valid residents. Please attach a valid ID or document to verify your identity.
                                     </div>
 
-                                    <input type="hidden" name="selfie_photo" id="selfiePhotoInput" value="">
-                                    <canvas id="faceSnapshotCanvas" class="d-none"></canvas>
+                                    <div class="mb-3 text-start">
+                                        <label class="form-label small fw-semibold">Type of ID / Document <span class="text-danger">*</span></label>
+                                        <select name="id_type" id="idTypeSelect" class="form-select rounded-3" required>
+                                            <option value="" disabled selected>Select ID Type...</option>
+                                            <option value="National ID" {{ old('id_type') == 'National ID' ? 'selected' : '' }}>National ID</option>
+                                            <option value="Driver's License" {{ old('id_type') == "Driver's License" ? 'selected' : '' }}>Driver's License</option>
+                                            <option value="Voter's ID" {{ old('id_type') == "Voter's ID" ? 'selected' : '' }}>Voter's ID</option>
+                                            <option value="Student ID" {{ old('id_type') == 'Student ID' ? 'selected' : '' }}>Student ID</option>
+                                            <option value="Others" {{ old('id_type') == 'Others' ? 'selected' : '' }}>Others (Voter's Certificate, PSA, etc.)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-4 text-start">
+                                        <label class="form-label small fw-semibold">Upload ID Image <span class="text-danger">*</span></label>
+                                        <input class="form-control rounded-3" type="file" name="proof_of_residency" id="idUploadInput" accept="image/*,application/pdf" required>
+                                        <div class="form-text small text-muted">Accepted formats: JPG, JPEG, PNG, PDF (Max 10MB).</div>
+                                    </div>
+
+                                    {{-- ============================================ --}}
+                                    {{-- SECTION: LIVE FACIAL VERIFICATION          --}}
+                                    {{-- ============================================ --}}
+                                    <div class="mb-4 text-start">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <label class="form-label small fw-bold mb-0 text-dark">
+                                                <i class="fa-solid fa-camera text-primary me-1"></i> Live Face Verification <span class="text-danger">*</span>
+                                            </label>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5 rounded-pill" style="font-size: 11px;">
+                                                Biometric Check
+                                            </span>
+                                        </div>
+                                        <p class="text-muted small mb-3" style="font-size: 12px;">
+                                            Please take a clear, well-lit live selfie to verify against your ID. Look straight at the camera without sunglasses, hats, or masks.
+                                        </p>
+
+                                        <div class="face-cam-card p-3 p-md-4 text-center" id="faceCameraContainer">
+                                            <div id="facePromptState">
+                                                <div class="py-4 px-2">
+                                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+                                                        <i class="fa-solid fa-camera fs-2"></i>
+                                                    </div>
+                                                    <h5 class="fw-bold text-dark mb-1">Live Facial Camera</h5>
+                                                    <p class="text-muted small mb-3" style="max-width: 460px; margin: 0 auto; font-size: 13px;">
+                                                        Take a real-time photo of your face for identity verification against your uploaded government ID.
+                                                    </p>
+                                                    
+                                                    <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
+                                                        <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
+                                                            <i class="fa-regular fa-sun text-warning me-1"></i> Good Lighting
+                                                        </span>
+                                                        <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
+                                                            <i class="fa-solid fa-glasses text-secondary me-1"></i> No Sunglasses / Mask
+                                                        </span>
+                                                        <span class="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill" style="font-size: 11.5px;">
+                                                            <i class="fa-regular fa-face-smile text-primary me-1"></i> Look Straight Ahead
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="d-flex flex-column align-items-center gap-2">
+                                                        <button type="button" class="btn btn-primary px-4 py-2.5 rounded-3 fw-bold shadow-sm" style="font-size: 15px;" onclick="startFaceCamera()">
+                                                            <i class="fa-solid fa-video me-2"></i> Start Live Face Camera
+                                                        </button>
+                                                        <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="toggleSelfieUploadFallback()">
+                                                            <i class="fa-solid fa-arrow-up-from-bracket me-1"></i> Or upload a selfie image file instead
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="faceCapturedState" class="d-none">
+                                                <div class="face-captured-viewport position-relative">
+                                                    <img id="faceCapturedPreview" src="" alt="Live Face Preview">
+                                                    <span class="position-absolute top-0 end-0 m-3 badge bg-success shadow rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                                                        <i class="fa-solid fa-circle-check"></i> Face Snapshot Captured
+                                                    </span>
+                                                </div>
+
+                                                <div class="alert alert-success bg-success bg-opacity-10 border border-success border-opacity-25 py-2.5 px-3 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 mx-auto text-start" style="max-width: 520px;">
+                                                    <div class="text-success small fw-semibold">
+                                                        <i class="fa-solid fa-check-double me-1.5"></i> Photo is clearly visible and ready for review.
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-success bg-white rounded-3 fw-semibold px-3 py-1 shadow-sm" onclick="retakeFacePhoto()">
+                                                        <i class="fa-solid fa-rotate-left me-1"></i> Retake Photo
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div id="selfieUploadFallbackBox" class="d-none text-start p-3 mt-3 border rounded-3 bg-white">
+                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                    <label class="form-label small fw-bold text-dark mb-0">
+                                                        <i class="fa-solid fa-image text-primary me-1"></i> Upload Selfie Portrait:
+                                                    </label>
+                                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-primary fw-semibold" onclick="useFaceCameraInstead()">
+                                                        <i class="fa-solid fa-video me-1"></i> Use Live Camera Instead
+                                                    </button>
+                                                </div>
+                                                <input type="file" name="selfie_upload" id="selfieUploadInput" class="form-control rounded-3" accept="image/*" onchange="handleSelfieFileSelect(this)">
+                                                <div class="form-text small text-muted">Upload a clear photo showing your face directly (JPG, PNG, max 10MB).</div>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="selfie_photo" id="selfiePhotoInput" value="">
+                                        <canvas id="faceSnapshotCanvas" class="d-none"></canvas>
+                                    </div>
+
+                                    {{-- ============================================ --}}
+                                    {{-- DATA PRIVACY & TERMS AGREEMENTS             --}}
+                                    {{-- ============================================ --}}
+                                    <div class="mt-4 pt-3 border-top text-start">
+                                        <div class="section-label mb-2"><i class="fa-solid fa-shield-halved me-1"></i> Data Privacy &amp; Consent</div>
+                                        <div class="mb-3 p-3 bg-light rounded-3 small text-muted terms-box">
+                                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-shield-halved me-1"></i> Data Privacy Act of 2012 (RA 10173)</h6>
+                                            <p>In compliance with the Data Privacy Act of 2012 and its Implementing Rules and Regulations, the Barangay Cogon East administration ensures that all personal information collected through this platform shall be processed fairly and lawfully.</p>
+                                            <p>Your personal data will be used solely for the purpose of verifying your identity, processing your barangay document requests, and maintaining accurate residency records. This information shall not be shared, sold, or disclosed to any third party without your explicit consent, except when required by law.</p>
+                                            <p class="mb-0">You have the right to access, correct, and request the removal of your personal data at any time by contacting the barangay office.</p>
+                                        </div>
+
+                                        <div class="form-check mb-4">
+                                            <input class="form-check-input" type="checkbox" name="privacy" value="1" id="agreePrivacy" required>
+                                            <label class="form-check-label small text-muted" for="agreePrivacy">
+                                                I have read and agree to the <strong>Data Privacy Act</strong> notice above <span class="text-danger">*</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="section-label mb-2"><i class="fa-solid fa-file-contract me-1"></i> Terms &amp; Conditions</div>
+                                        <div class="mb-3 p-3 bg-light rounded-3 small text-muted terms-box">
+                                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-file-contract me-1"></i> Terms and Conditions</h6>
+                                            <p>By accessing this platform, you warrant that you are a legal resident of Barangay Cogon East, Carmen, Cebu. All document requests submitted through this web-based tracking system must consist of authentic personal declarations.</p>
+                                            <p>Falsification of administrative identity profiles or residency documentation will result in the immediate revocation of credentials and potential endorsement to local legal authorities.</p>
+                                            <p class="mb-0">The barangay reserves the right to verify all submitted documents and deny or revoke access to any account found to have submitted fraudulent information.</p>
+                                        </div>
+
+                                        <div class="form-check mb-4">
+                                            <input class="form-check-input" type="checkbox" name="terms" value="1" id="agreeTerms" required>
+                                            <label class="form-check-label small text-muted" for="agreeTerms">
+                                                I agree to the <strong>Terms and Conditions</strong> stated above <span class="text-danger">*</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="alert alert-primary border-0 small rounded-3 mb-2" role="alert">
+                                            <i class="fa-solid fa-clock me-1"></i>
+                                            After submitting, your account will be reviewed by the barangay admin. Please wait for approval before you can fully access the system.
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="d-flex gap-2 mt-4">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="stopFaceCamera(); goToStep(2)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(4)">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-                                </div>
-                            </div>
-
-                            {{-- ========================================== --}}
-                            {{-- STEP 4: DATA PRIVACY --}}
-                            {{-- ========================================== --}}
-                            <div class="step-panel" id="panel-step-4">
-
-                                <div class="mb-3 p-3 bg-light rounded-3 small text-muted text-start terms-box">
-                                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-shield-halved me-1"></i> Data Privacy Act of 2012 (RA 10173)</h6>
-                                    <p>In compliance with the Data Privacy Act of 2012 and its Implementing Rules and Regulations, the Barangay Cogon East administration ensures that all personal information collected through this platform shall be processed fairly and lawfully.</p>
-                                    <p>Your personal data will be used solely for the purpose of verifying your identity, processing your barangay document requests, and maintaining accurate residency records. This information shall not be shared, sold, or disclosed to any third party without your explicit consent, except when required by law.</p>
-                                    <p class="mb-0">You have the right to access, correct, and request the removal of your personal data at any time by contacting the barangay office.</p>
-                                </div>
-
-                                <div class="form-check mb-4 text-start">
-                                    <input class="form-check-input" type="checkbox" name="privacy" value="1" id="agreePrivacy" required>
-                                    <label class="form-check-label small text-muted" for="agreePrivacy">
-                                        I have read and agree to the <strong>Data Privacy Act</strong> notice above
-                                    </label>
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(3)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(5)">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-                                </div>
-                            </div>
-
-                            {{-- ========================================== --}}
-                            {{-- STEP 5: TERMS AND CONDITIONS --}}
-                            {{-- ========================================== --}}
-                            <div class="step-panel" id="panel-step-5">
-
-                                <div class="mb-3 p-3 bg-light rounded-3 small text-muted text-start terms-box">
-                                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-file-contract me-1"></i> Terms and Conditions</h6>
-                                    <p>By accessing this platform, you warrant that you are a legal resident of Barangay Cogon East, Carmen, Cebu. All document requests submitted through this web-based tracking system must consist of authentic personal declarations.</p>
-                                    <p>Falsification of administrative identity profiles or residency documentation will result in the immediate revocation of credentials and potential endorsement to local legal authorities.</p>
-                                    <p class="mb-0">The barangay reserves the right to verify all submitted documents and deny or revoke access to any account found to have submitted fraudulent information.</p>
-                                </div>
-
-                                <div class="form-check mb-4 text-start">
-                                    <input class="form-check-input" type="checkbox" name="terms" value="1" id="agreeTerms" required>
-                                    <label class="form-check-label small text-muted" for="agreeTerms">
-                                        I agree to the <strong>Terms and Conditions</strong> stated above
-                                    </label>
-                                </div>
-
-                                <div class="alert alert-primary border-0 small rounded-3 mb-4" role="alert">
-                                    <i class="fa-solid fa-clock me-1"></i>
-                                    After submitting, your account will be reviewed by the barangay admin. Please wait for approval before you can fully access the system.
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(4)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
+                                <div class="d-flex gap-2 mt-3">
+                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="stopFaceCamera(); goToStep(2)">
+                                        <i class="fa-solid fa-arrow-left me-1"></i> Back
+                                    </button>
                                     <button type="submit" id="btnSubmitRegister" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold">
                                         <i class="fa-solid fa-user-plus me-1"></i> Sign Up
                                     </button>
@@ -794,6 +771,10 @@
                             </div>
 
                         </form>
+
+                        <div class="text-center small mt-3">
+                            Already have an account? <a href="{{ route('resident.login') }}" class="text-primary text-decoration-none fw-bold">Log In Here</a>
+                        </div>
                     </div>
 
                 </div>
@@ -956,11 +937,9 @@
 
     <script>
         const stepTitles = {
-            1: { title: 'Step 1 of 5', subtitle: 'Resident Identity' },
-            2: { title: 'Step 2 of 5', subtitle: 'Credentials & Verification' },
-            3: { title: 'Step 3 of 5', subtitle: 'Admin Verification Requirements' },
-            4: { title: 'Step 4 of 5', subtitle: 'Data Privacy' },
-            5: { title: 'Step 5 of 5', subtitle: 'Terms and Conditions' }
+            1: { title: 'Step 1 of 3', subtitle: 'Resident Identity' },
+            2: { title: 'Step 2 of 3', subtitle: 'Credentials & Verification' },
+            3: { title: 'Step 3 of 3', subtitle: 'Admin Verification & Terms' }
         };
 
         let currentStep = 1;
@@ -983,13 +962,14 @@
         @endif
 
         function showManualForm() {
-            document.getElementById('gatewayPanel').style.display = 'none';
-            document.getElementById('manualFormPanel').style.display = 'block';
+            const gw = document.getElementById('gatewayPanel');
+            if (gw) gw.style.display = 'none';
+            const mf = document.getElementById('manualFormPanel');
+            if (mf) mf.style.display = 'block';
         }
 
         function showGateway() {
-            document.getElementById('manualFormPanel').style.display = 'none';
-            document.getElementById('gatewayPanel').style.display = 'block';
+            window.location.href = "{{ route('resident.login') }}";
         }
 
         function isContactTargetVerified() {
@@ -1602,32 +1582,24 @@
                     return false;
                 }
 
-                // When leaving step 3, stop the camera if active
-                stopFaceCamera();
-
-                return true;
-            }
-
-            if (step === 4) {
+                // Privacy check
                 const privacy = document.getElementById('agreePrivacy');
-
                 if (!privacy || !privacy.checked) {
                     if (privacy) privacy.classList.add('is-invalid');
                     showAlert('Please read and agree to the Data Privacy Act notice.');
                     return false;
                 }
 
-                return true;
-            }
-
-            if (step === 5) {
+                // Terms check
                 const terms = document.getElementById('agreeTerms');
-
                 if (!terms || !terms.checked) {
                     if (terms) terms.classList.add('is-invalid');
                     showAlert('Please agree to the Terms and Conditions.');
                     return false;
                 }
+
+                // Stop camera when valid
+                stopFaceCamera();
 
                 return true;
             }
@@ -1665,6 +1637,34 @@
                 input.type = 'password';
                 icon.className = 'fa-solid fa-eye';
             }
+        }
+
+        function checkPasswordStrength(password) {
+            const bars = ['bar1', 'bar2', 'bar3', 'bar4'];
+            const label = document.getElementById('strengthLabel');
+            let score = 0;
+
+            if (password.length >= 8) score++;
+            if (password.length >= 12) score++;
+            if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score = Math.min(score + 1, 4);
+
+            const levels = [
+                { color: '#e5e7eb', text: 'Minimum 8 characters', filled: 0 },
+                { color: '#ef4444', text: '\u26a0\ufe0f Weak — try adding numbers or symbols', filled: 1 },
+                { color: '#f97316', text: '\ud83d\udfe1 Fair — add uppercase or special characters', filled: 2 },
+                { color: '#22c55e', text: '\u2705 Good password', filled: 3 },
+                { color: '#16a34a', text: '\ud83d\udee1\ufe0f Strong password', filled: 4 },
+            ];
+
+            const level = password.length === 0 ? levels[0] : levels[Math.max(1, Math.min(score, 4))];
+
+            bars.forEach((id, i) => {
+                document.getElementById(id).style.background = i < level.filled ? level.color : '#e5e7eb';
+            });
+            label.textContent = level.text;
+            label.style.color = password.length === 0 ? '#9ca3af' : level.color;
         }
 
         // Remove error styling on input
@@ -1882,7 +1882,7 @@
 
         // Submit button validation & loading state
         document.getElementById('registerForm')?.addEventListener('submit', function(e) {
-            if (!validateStep(5)) {
+            if (!validateStep(3)) {
                 e.preventDefault();
                 return false;
             }

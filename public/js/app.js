@@ -29,20 +29,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
 
-  menuToggle.addEventListener('click', () => {
-    menuToggle.classList.toggle('active');
-    navLinks.classList.toggle('open');
-    document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
-  });
-
-  // Close menu on link click
-  navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      menuToggle.classList.remove('active');
-      navLinks.classList.remove('open');
-      document.body.style.overflow = '';
+  if (menuToggle && navLinks) {
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navLinks.classList.toggle('open');
+      const isOpen = navLinks.classList.contains('open');
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+      document.body.classList.toggle('mobile-menu-open', isOpen);
     });
-  });
+
+    // Close menu on link click
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuToggle.classList.remove('active');
+        navLinks.classList.remove('open');
+        document.body.style.overflow = '';
+        document.body.classList.remove('mobile-menu-open');
+        setTimeout(() => {
+          if (typeof revealVisibleFadeElements === 'function') {
+            revealVisibleFadeElements();
+          }
+        }, 150);
+        setTimeout(() => {
+          if (typeof revealVisibleFadeElements === 'function') {
+            revealVisibleFadeElements();
+          }
+        }, 500);
+      });
+    });
+  }
 
   // ============================
   // Active nav link highlighting
@@ -435,8 +450,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const observerOptions = {
     root: null,
-    rootMargin: '0px 0px -80px 0px',
-    threshold: 0.1
+    rootMargin: '0px 0px 50px 0px',
+    threshold: 0.01
   };
 
   const fadeObserver = new IntersectionObserver((entries) => {
@@ -450,59 +465,236 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fadeElements.forEach(el => fadeObserver.observe(el));
 
+  // Reveal elements immediately if they are in view (especially on anchor jump, responsive mode, or resize)
+  function revealVisibleFadeElements() {
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    fadeElements.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= vh + 60 && rect.bottom >= 0) {
+        el.classList.add('visible');
+      }
+    });
+  }
+
+  revealVisibleFadeElements();
+  window.addEventListener('resize', revealVisibleFadeElements, { passive: true });
+  window.addEventListener('scroll', revealVisibleFadeElements, { passive: true });
+
   // ============================
-  // Virtual Assistant Chat Widget
+  // ISTONG AI CHAT WIDGET
   // ============================
+  const chatWidget = document.getElementById('chatWidget');
   const chatToggle = document.getElementById('chatToggle');
   const chatWindow = document.getElementById('chatWindow');
   const chatBody = document.getElementById('chatBody');
   const chatPromptBtns = document.getElementById('chatPromptBtns');
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatSendBtn = document.getElementById('chatSendBtn');
+  const chatResetBtn = document.getElementById('chatResetBtn');
+  const chatCloseBtn = document.getElementById('chatCloseBtn');
+  const chatPill = document.getElementById('chatPill');
 
-  // Toggle chat
-  chatToggle.addEventListener('click', () => {
-    chatToggle.classList.toggle('active');
-    chatWindow.classList.toggle('open');
-  });
+  let istongHistory = [];
+  let isSending = false;
 
-  // E-Barangay specific bot responses
-  const botResponses = {
-    'how-to-request': `Here's how to request a document online:\n\n1️⃣ Register an account on E-Barangay\n2️⃣ Wait for barangay officials to verify your identity\n3️⃣ Log in and select the document you need\n4️⃣ Fill out the online request form\n5️⃣ Submit and get your tracking number\n6️⃣ Visit the Barangay Hall when your document is ready!\n\nYou can also scroll to the "Available Documents" section on this page to submit a request directly.`,
+  const initialIstongGreeting = `Maayong adlaw, silingan! 👋 Ako diay si <strong>Istong</strong>, ang opisyal nga digital assistant sa Barangay Cogon East.
+<br><br>
+Unsay ako ikatabang nimo karon? Pwede ka mangutana bahin sa:
+<br>&bull; Pamaagi sa pag-request og dokumento
+<br>&bull; Requirements ug mga bayronon (fees)
+<br>&bull; Pag-track sa status sa imong dokumento
+<br>&bull; Oras sa opisina ug serbisyo sa barangay
+<br><br>
+<em>Pangutana lang bisan Bisaya o English!</em>`;
 
-    'track': `To track your document request:\n\n🔍 Go to the "Track Request" section\n📋 Enter your tracking number (e.g., EB-2026-00142)\n📊 View your request status in real-time\n\nStatus stages:\n⏳ Pending → 🔄 Under Review → ✅ Approved → 📦 Ready for Pickup\n\nTry these sample tracking numbers:\n• EB-2026-00142 (Ready for Pickup)\n• EB-2026-00201 (Under Review)\n• EB-2026-00315 (Pending)`,
+  // Toggle open/close
+  if (chatToggle && chatWindow) {
+    chatToggle.addEventListener('click', () => {
+      const isOpen = chatWindow.classList.toggle('open');
+      chatToggle.classList.toggle('active', isOpen);
+      if (isOpen && chatInput) {
+        setTimeout(() => chatInput.focus(), 200);
+      }
+    });
+  }
 
-    'requirements': `Here are the common requirements:\n\n📄 Barangay Clearance:\n• Valid Government ID\n• 2x2 Photo\n• Proof of Residency\n• ₱100 fee\n\n🏠 Certificate of Residency:\n• Valid ID\n• Utility Bill or Lease Contract\n• ₱50 fee\n\n💰 Certificate of Indigency:\n• Valid ID\n• Brief Interview\n• FREE\n\n🏪 Business Clearance:\n• Valid ID, DTI Registration\n• ₱200 fee\n\n🪪 Barangay ID:\n• Valid ID, 1x1 Photo\n• ₱75 fee`,
+  // Header close button
+  if (chatCloseBtn && chatWindow && chatToggle) {
+    chatCloseBtn.addEventListener('click', () => {
+      chatWindow.classList.remove('open');
+      chatToggle.classList.remove('active');
+    });
+  }
 
-    'schedule': `Barangay Cogon East Office Hours:\n\n🕐 Monday – Friday: 8:00 AM – 5:00 PM\n🕐 Saturday: 8:00 AM – 12:00 NN (limited services)\n❌ Sunday & Holidays: Closed\n\n📍 Location: Barangay Hall, Cogon East, Carmen, Cebu\n📞 Contact: (032) 555-0100\n✉️ Email: ebarangay.cogoneast@gmail.com\n\n💻 Online requests via E-Barangay are available 24/7!`,
+  // Floating pill click
+  if (chatPill && chatWindow && chatToggle) {
+    chatPill.addEventListener('click', () => {
+      chatWindow.classList.add('open');
+      chatToggle.classList.add('active');
+      if (chatInput) setTimeout(() => chatInput.focus(), 200);
+    });
+  }
 
-    'concern': `To submit a community concern:\n\n1️⃣ Scroll down to the "Submit a Community Concern" section\n2️⃣ Enter your name and select the concern category\n3️⃣ Describe your concern in detail\n4️⃣ Click "Submit Concern"\n\nCategories available:\n🏗️ Infrastructure\n🛡️ Peace & Order\n🧹 Sanitation\n💡 Utilities\n\nBarangay officials will review and respond to your concern.`
-  };
+  // Reset / Clear chat
+  if (chatResetBtn && chatBody) {
+    chatResetBtn.addEventListener('click', () => {
+      istongHistory = [];
+      chatBody.innerHTML = `<div class="chat-msg bot">${initialIstongGreeting}</div>`;
+      scrollChatToBottom();
+      if (chatInput) chatInput.focus();
+    });
+  }
 
-  // Handle prompt button clicks
-  chatPromptBtns.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chat-prompt-btn');
-    if (!btn) return;
-
-    const promptKey = btn.dataset.prompt;
-    const userText = btn.textContent.trim();
-
-    // Add user message
-    const userMsg = document.createElement('div');
-    userMsg.className = 'chat-msg user';
-    userMsg.textContent = userText;
-    chatBody.appendChild(userMsg);
-
-    // Scroll to bottom
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    // Simulate typing delay
-    setTimeout(() => {
-      const botMsg = document.createElement('div');
-      botMsg.className = 'chat-msg bot';
-      botMsg.textContent = botResponses[promptKey] || "I'm sorry, I don't have information about that yet. Please visit the Barangay Hall or call (032) 555-0100 for assistance.";
-      chatBody.appendChild(botMsg);
+  function scrollChatToBottom() {
+    if (chatBody) {
       chatBody.scrollTop = chatBody.scrollHeight;
-    }, 600);
-  });
+    }
+  }
+
+  function formatMarkdownText(text) {
+    if (!text) return '';
+    // HTML Escape
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Bold
+    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    escaped = escaped.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+
+    // Numbered list items
+    escaped = escaped.replace(/^(\d+)\.\s+(.+)$/gm, '<li class="chat-list-num"><span class="chat-num-badge">$1</span> <span>$2</span></li>');
+
+    // Bullet items
+    escaped = escaped.replace(/^[•\-\*]\s+(.+)$/gm, '<li class="chat-list-item">&bull; $1</li>');
+
+    // Wrap list blocks
+    escaped = escaped.replace(/((?:<li class="chat-list-[^"]+">.*?<\/li>\s*)+)/g, '<ul class="chat-list">$1</ul>');
+
+    // Convert newlines outside tags
+    escaped = escaped.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+
+    return escaped;
+  }
+
+  function appendChatUserMessage(text) {
+    if (!chatBody) return;
+    const msg = document.createElement('div');
+    msg.className = 'chat-msg user';
+    msg.textContent = text;
+    chatBody.appendChild(msg);
+    scrollChatToBottom();
+  }
+
+  function appendChatBotMessage(html) {
+    if (!chatBody) return;
+    const msg = document.createElement('div');
+    msg.className = 'chat-msg bot';
+    msg.innerHTML = formatMarkdownText(html);
+    chatBody.appendChild(msg);
+    scrollChatToBottom();
+  }
+
+  function showChatTyping() {
+    if (!chatBody) return;
+    const typing = document.createElement('div');
+    typing.className = 'chat-msg bot typing-msg';
+    typing.id = 'chatTyping';
+    typing.innerHTML = `
+      <div class="typing-bubble">
+        <span></span><span></span><span></span>
+      </div>
+      <small class="typing-label">Naghunahuna si Istong...</small>
+    `;
+    chatBody.appendChild(typing);
+    scrollChatToBottom();
+  }
+
+  function hideChatTyping() {
+    const typing = document.getElementById('chatTyping');
+    if (typing) typing.remove();
+  }
+
+  async function handleSendToIstong(rawText) {
+    const text = (rawText || '').trim();
+    if (!text || isSending) return;
+
+    isSending = true;
+    if (chatInput) {
+      chatInput.value = '';
+      chatInput.disabled = true;
+    }
+    if (chatSendBtn) {
+      chatSendBtn.disabled = true;
+    }
+
+    appendChatUserMessage(text);
+    showChatTyping();
+
+    // Push user message into conversation history
+    istongHistory.push({ role: 'user', content: text });
+
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const response = await fetch('/chatbot/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ history: istongHistory })
+      });
+
+      hideChatTyping();
+
+      if (response.ok) {
+        const data = await response.json();
+        const replyText = data.reply || 'Pasensya silingan, wala koy tubag niana karon. Palihug sulayi og balik.';
+        istongHistory.push({ role: 'assistant', content: replyText });
+        appendChatBotMessage(replyText);
+      } else {
+        istongHistory.pop(); // remove failed user message from context
+        appendChatBotMessage('Pasensya silingan, medyo busy o naglisod ang atong server karon. Palihug sulayi pag-usab taud-taud.');
+      }
+    } catch (err) {
+      console.error('Istong AI fetch error:', err);
+      hideChatTyping();
+      istongHistory.pop();
+      appendChatBotMessage('Pasensya silingan, naputol ang atong koneksyon sa internet. Palihug susiha ang imong koneksyon ug sulayi pag-usab.');
+    } finally {
+      isSending = false;
+      if (chatInput) {
+        chatInput.disabled = false;
+        chatInput.focus();
+      }
+      if (chatSendBtn) {
+        chatSendBtn.disabled = false;
+      }
+    }
+  }
+
+  // Chat Form submission
+  if (chatForm && chatInput) {
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleSendToIstong(chatInput.value);
+    });
+  }
+
+  // Quick Prompt chips
+  if (chatPromptBtns) {
+    chatPromptBtns.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chat-prompt-btn');
+      if (!btn) return;
+      const query = btn.dataset.query || btn.textContent.replace(/^[\uD800-\uDBFF\uDC00-\uDFFF\s]+/g, '').trim();
+      handleSendToIstong(query);
+    });
+  }
 
   // ============================
   // Animated counter for hero stats
@@ -552,6 +744,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const heroSection = document.getElementById('hero');
   if (heroSection) {
     heroObserver.observe(heroSection);
+
+    // Hero interactive background mouse tracking with smooth lerp
+    let targetX = 50, targetY = 45;
+    let currentX = 50, currentY = 45;
+    let isMoving = false;
+    let heroRaf = null;
+
+    const updateHeroPos = () => {
+      currentX += (targetX - currentX) * 0.08;
+      currentY += (targetY - currentY) * 0.08;
+
+      heroSection.style.setProperty('--hero-mouse-x', `${currentX.toFixed(2)}%`);
+      heroSection.style.setProperty('--hero-mouse-y', `${currentY.toFixed(2)}%`);
+
+      // Tilt factor normalized from -1 to 1
+      const tiltX = ((currentX - 50) / 50).toFixed(3);
+      const tiltY = ((currentY - 50) / 50).toFixed(3);
+      heroSection.style.setProperty('--hero-tilt-x', tiltX);
+      heroSection.style.setProperty('--hero-tilt-y', tiltY);
+
+      if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
+        heroRaf = requestAnimationFrame(updateHeroPos);
+      } else {
+        isMoving = false;
+      }
+    };
+
+    heroSection.addEventListener('mousemove', (e) => {
+      const rect = heroSection.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * 100;
+      targetY = ((e.clientY - rect.top) / rect.height) * 100;
+      if (!isMoving) {
+        isMoving = true;
+        heroRaf = requestAnimationFrame(updateHeroPos);
+      }
+    }, { passive: true });
+
+    heroSection.addEventListener('mouseleave', () => {
+      targetX = 50;
+      targetY = 45;
+      if (!isMoving) {
+        isMoving = true;
+        heroRaf = requestAnimationFrame(updateHeroPos);
+      }
+    });
   }
 
   // ============================

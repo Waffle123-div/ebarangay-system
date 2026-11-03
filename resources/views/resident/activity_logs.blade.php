@@ -60,7 +60,7 @@
                         <tr>
                             <th class="ps-4 py-3 text-muted small fw-bold border-0">ACTION</th>
                             <th class="py-3 text-muted small fw-bold border-0">DESCRIPTION</th>
-                            <th class="py-3 text-muted small fw-bold border-0">IP ADDRESS</th>
+                            <th class="py-3 text-muted small fw-bold border-0 text-center">VIEW</th>
                             <th class="py-3 text-muted small fw-bold border-0 pe-4 text-end">DATE & TIME</th>
                         </tr>
                     </thead>
@@ -87,8 +87,19 @@
                             <td class="border-bottom py-3 text-dark fw-medium" style="font-size: 14px;">
                                 {{ $log->description }}
                             </td>
-                            <td class="border-bottom py-3 text-muted small font-monospace">
-                                {{ $log->ip_address ?? 'Local' }}
+                            <td class="border-bottom py-3 text-center">
+                                @php
+                                    preg_match('/#(REQ-[\w\-]+)/', $log->description, $matches);
+                                    $trackingNum = $matches[1] ?? null;
+                                    $docRequest = $trackingNum ? \App\Models\DocumentRequest::where('tracking_number', $trackingNum)->first() : null;
+                                @endphp
+                                @if($docRequest)
+                                    <a href="{{ route('resident.receipt.view', $docRequest->id) }}" class="btn btn-sm btn-outline-primary rounded-3 px-3" title="View Receipt">
+                                        <i class="fa-solid fa-eye me-1"></i> View
+                                    </a>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
                             </td>
                             <td class="border-bottom py-3 pe-4 text-muted small text-end">
                                 <div class="fw-semibold text-dark">{{ $log->created_at->format('M d, Y') }}</div>
@@ -113,7 +124,7 @@
             <div class="text-muted small">
                 Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} entries
             </div>
-            {{ $logs->links('vendor.pagination.bootstrap-5') }}
+            {{ $logs->links('pagination::bootstrap-5') }}
         </div>
         @endif
     </div>

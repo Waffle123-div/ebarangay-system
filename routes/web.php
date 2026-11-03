@@ -89,10 +89,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 
     // Account Approval Routes
     Route::get('/account-approvals', [AdminDashboardController::class, 'accountApprovals'])->name('approvals');
+    Route::post('/account-approvals/bulk-approve', [AdminDashboardController::class, 'bulkApproveAccounts'])->name('approvals.bulk-approve');
+    Route::post('/account-approvals/bulk-reject', [AdminDashboardController::class, 'bulkRejectAccounts'])->name('approvals.bulk-reject');
     Route::patch('/account-approvals/{id}/approve', [AdminDashboardController::class, 'approveAccount'])->name('approvals.approve');
     Route::patch('/account-approvals/{id}/reject', [AdminDashboardController::class, 'rejectAccount'])->name('approvals.reject');
 
     // User Management Action Routes
+    Route::post('/users', [AdminDashboardController::class, 'storeUser'])->name('users.store');
     Route::delete('/users/bulk-delete', [AdminDashboardController::class, 'bulkDestroyUsers'])->name('users.bulk-delete');
     Route::get('/users/{id}', [AdminDashboardController::class, 'viewUser'])->name('users.view');
     Route::patch('/users/{id}/update', [AdminDashboardController::class, 'updateUser'])->name('users.update');
@@ -304,5 +307,9 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     Route::delete('/settings/delete', [ResidentSettingsController::class, 'deleteAccount'])->name('settings.delete');
 
 });
+
+// Convenience aliases for receipt routes (allows both route('receipt.view') and route('resident.receipt.view'))
+Route::get('/receipt/{id}', [ResidentDashboardController::class, 'viewReceipt'])->name('receipt.view')->middleware(['auth', 'verified', 'require.pin']);
+Route::get('/receipt/{id}/download', [ResidentDashboardController::class, 'downloadReceipt'])->name('receipt.download')->middleware(['auth', 'verified', 'require.pin']);
 
 Route::post('/chatbot/message', [ChatbotController::class, 'handleChat'])->name('chatbot.message');

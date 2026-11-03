@@ -194,7 +194,7 @@ class DynamicDocumentTypeSelectionTest extends TestCase
             'purpose'        => 'SUBSIDY APPLICATION 2026',
         ]);
 
-        $response->assertRedirect(route('resident.dashboard'));
+        $response->assertRedirect(route('resident.request.track'));
 
         $created = DocumentRequest::where('document_type', $uniqueDocName)->latest()->first();
         $this->assertNotNull($created);

@@ -73,6 +73,8 @@ class AdminDocumentCrudTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Document Types Catalog');
         $response->assertSee('Barangay Clearance');
+        $this->assertStringNotContainsString('</td>' . PHP_EOL . '                                            data-requirements', $response->getContent());
+        $this->assertStringNotContainsString('</td>' . "\r\n" . '                                            data-requirements', $response->getContent());
     }
 
     public function test_admin_can_create_document_type(): void

@@ -2,8 +2,7 @@
 
 @section('content')
 @php
-    // Dynamically fetch the updated fee from any matching database column
-    $effectiveFee = (float) ($docRequest->fee ?? $docRequest->fee_amount ?? $docRequest->amount ?? $feeAmount ?? 0);
+    $effectiveFee = ($docRequest->fee !== null && (float)$docRequest->fee > 0) ? (float)$docRequest->fee : 0;
 @endphp
 
 <div class="container py-4">
@@ -95,11 +94,13 @@
                             <td class="fw-bold text-dark font-monospace py-3">{{ $docRequest->tracking_number }}</td>
                             <td class="fw-bold text-primary py-3">{{ $docRequest->document_type }}</td>
                             <td class="text-muted small py-3">{{ $docRequest->purpose ?: 'General Purpose' }}</td>
-                            <td class="fw-bold text-end py-3">
-                                @if($effectiveFee > 0)
-                                    <span class="text-success fw-bold fs-6">₱{{ number_format($effectiveFee, 2) }}</span>
+                                <td class="fw-bold text-end py-3">
+                                @if($docRequest->fee === null)
+                                    <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1 fw-bold">TO BE SETTLED</span>
+                                @elseif((float)$docRequest->fee > 0)
+                                    <span class="text-success fw-bold fs-6">₱{{ number_format((float)$docRequest->fee, 2) }}</span>
                                 @else
-                                    <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">TO BE SETTLED</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 fw-bold"><i class="fa-solid fa-circle-check me-1"></i>FREE</span>
                                 @endif
                             </td>
                         </tr>

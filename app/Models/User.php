@@ -113,6 +113,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ActivityLog::class)->latest();
     }
 
+    /**
+     * Document requests submitted by this user.
+     */
+    public function documentRequests()
+    {
+        return $this->hasMany(DocumentRequest::class, 'user_id')->latest();
+    }
+
     public function communityConcerns()
     {
         return $this->hasMany(CommunityConcern::class)->latest();

@@ -4,7 +4,6 @@
 <div class="container-fluid px-3 px-sm-4 py-3 py-sm-4">
     <div class="mb-4 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
         <div>
-            <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> &rsaquo; Reports</div>
             <h2 class="header-title mb-1">System Reports & Analytics</h2>
             <p class="header-subtitle mb-0">Overview of statistics and document issuances for Carmen</p>
         </div>

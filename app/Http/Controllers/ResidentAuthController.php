@@ -558,13 +558,13 @@ class ResidentAuthController extends Controller
                     $ext = 'png';
                 }
                 $selfieFileName = 'selfie_' . Str::random(24) . '.' . $ext;
-                Storage::disk('local')->put('selfies/' . $selfieFileName, $decoded);
+                Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
                 $selfiePath = 'selfies/' . $selfieFileName;
             }
         } elseif ($request->hasFile('selfie_upload')) {
-            $selfiePath = $request->file('selfie_upload')->store('selfies', 'local');
+            $selfiePath = $request->file('selfie_upload')->store('selfies', 'public');
         } elseif ($request->hasFile('selfie_photo')) {
-            $selfiePath = $request->file('selfie_photo')->store('selfies', 'local');
+            $selfiePath = $request->file('selfie_photo')->store('selfies', 'public');
         }
 
         // ==========================================

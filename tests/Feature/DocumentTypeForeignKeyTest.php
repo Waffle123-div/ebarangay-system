@@ -87,4 +87,29 @@ class DocumentTypeForeignKeyTest extends TestCase
         $this->assertNull($request->document_type_id);
         $this->assertEquals($uniqueName, $request->document_type); // Original historical string preserved
     }
+
+    public function test_user_has_many_document_requests_relationship(): void
+    {
+        $user = User::create([
+            'user_id'           => 'USR-' . strtoupper(substr(uniqid(), -6)),
+            'name'              => 'Rel Test User',
+            'email'             => 'rel_' . uniqid() . '@example.com',
+            'password'          => bcrypt('Password123!'),
+            'role'              => 'Resident',
+            'status'            => 'active',
+        ]);
+
+        $request = DocumentRequest::create([
+            'user_id'         => $user->id,
+            'tracking_number' => 'TRK-' . uniqid(),
+            'document_type'   => 'Barangay Clearance',
+            'status'          => 'Pending',
+            'first_name'      => 'Rel',
+            'last_name'       => 'User',
+            'resident_email'  => $user->email,
+        ]);
+
+        $this->assertTrue($user->documentRequests->contains('id', $request->id));
+        $this->assertEquals($user->id, $request->user->id);
+    }
 }

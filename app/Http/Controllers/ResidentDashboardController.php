@@ -286,6 +286,16 @@ class ResidentDashboardController extends Controller
         $log->user_agent = $request->userAgent();
         $log->save();
 
+        // Broadcast real-time event to Admin WebSocket
+        \App\Services\WebSocketService::broadcast('request.created', [
+            'id'              => $newRequest->id,
+            'tracking_number' => $newRequest->tracking_number,
+            'status'          => $newRequest->status,
+            'applicant'       => $newRequest->first_name . ' ' . $newRequest->last_name,
+            'document_type'   => $newRequest->document_type,
+            'message'         => "New Request #{$newRequest->tracking_number} ({$newRequest->document_type}) submitted by {$newRequest->first_name} {$newRequest->last_name}.",
+        ]);
+
         // Redirect directly to the Track Request page instead of the Dashboard
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

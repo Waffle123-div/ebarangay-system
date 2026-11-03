@@ -2,131 +2,828 @@
 
 @section('content')
 <div class="container-fluid px-3 px-sm-4 py-3 py-sm-4">
-    <div class="mb-4">
-        <div class="text-muted small mb-1"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a> > Requests</div>
-        <h2 class="header-title">Request Management</h2>
-        <p class="header-subtitle mb-0">Manage and process document requests from residents</p>
+    <div class="header-pipeline-bar d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-3">
+        {{-- Left: Title & Subtitle --}}
+        <div class="header-title-box">
+            <h2 class="header-title fw-bold m-0" style="font-size: 1.5rem; letter-spacing: -0.025em; line-height: 1.2;">Request Management</h2>
+            <p class="header-subtitle mb-0 mt-0.5 text-muted" style="font-size: 0.8125rem;">Manage and process document requests from residents</p>
+        </div>
+
+        {{-- Right: Live Indicator Badge --}}
+        <div class="d-flex align-items-center gap-2">
+            <span class="live-badge" id="live-status-indicator">
+                <span class="live-status-dot"></span>LIVE
+            </span>
+            <span class="text-muted" style="font-size: 11px;" id="last-refreshed-label">Auto-refreshes every 10s</span>
+        </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible show rounded-3 mb-4 shadow-sm" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="background-color: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0; margin-bottom: var(--spacing-gap, 14px) !important;">
+            <i class="fa-solid fa-circle-check me-2 text-success fa-lg"></i>
+            <span class="fw-medium">{{ session('success') }}</span>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-4 col-xl">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1">Total Requests</div>
-                        <h3 class="fw-bold mb-0 text-dark" id="kpi-total">{{ $totalRequests }}</h3>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-file-lines"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-muted" style="font-size: 12px;">All-time records</div>
+    <div class="stat-cards-grid" style="margin-bottom: var(--spacing-gap, 14px);">
+        {{-- Card 1: Total & Active Workload Requests --}}
+        <a href="{{ route('admin.requests', ['status' => 'All', 'quick_filter' => 'active']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ request('quick_filter') == 'active' ? 'active-kpi-card' : '' }}"
+           title="Filter active workload (Pending + Processing + Ready)">
+            <div class="stat-card-icon-box" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                <i class="fa-solid fa-folder-tree"></i>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1">Pending Reviews</div>
-                        <h3 class="fw-bold mb-0 text-warning" id="kpi-pending">{{ $pendingReviews }}</h3>
-                    </div>
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-clock"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-muted" style="font-size: 12px;">Requires attention</div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Total Requests</div>
+                <h3 class="stat-card-count" id="kpi-total">{{ $totalRequests }}</h3>
+                <div class="stat-card-subtext">All-time: {{ $totalRequests }} records</div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1">Approved Today</div>
-                        <h3 class="fw-bold mb-0 text-success" id="kpi-approved">{{ $approvedToday }}</h3>
-                    </div>
-                    <div class="bg-success bg-opacity-10 text-success rounded-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                </div>
-                <div class="mt-3 text-muted" style="font-size: 12px;">Processing complete</div>
+        </a>
+
+        {{-- Card 2: Pending Reviews --}}
+        <a href="{{ route('admin.requests', ['status' => 'Pending_Review']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ $currentStatus == 'Pending_Review' ? 'active-kpi-card' : '' }}"
+           title="Jump to Pending & Review stage">
+            <div class="stat-card-icon-box" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
+                <i class="fa-solid fa-clock"></i>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1">Overdue Requests</div>
-                        <h3 class="fw-bold mb-0 text-danger" id="kpi-overdue">{{ $overdueRequests }}</h3>
-                    </div>
-                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-bell"></i>
-                    </div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Pending Reviews</div>
+                <h3 class="stat-card-count" id="kpi-pending">{{ $pendingReviews }}</h3>
+                <div class="stat-card-subtext">
+                    @if($pendingReviews == 0)
+                        <span class="text-success fw-semibold">✓ All caught up</span>
+                    @else
+                        <span class="text-warning fw-semibold">Requires attention</span>
+                    @endif
                 </div>
-                <div class="mt-3 text-muted" style="font-size: 12px;">Past deadline</div>
             </div>
-        </div>
-        <div class="col-12 col-md-4 col-xl">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-bold mb-1">Avg Processing</div>
-                        <h3 class="fw-bold mb-0 text-dark" id="kpi-avg">{{ $avgProcessing }}</h3>
-                    </div>
-                    <div class="bg-info bg-opacity-10 text-info rounded-3 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid fa-stopwatch"></i>
-                    </div>
+        </a>
+
+        {{-- Card 3: Approved Today --}}
+        <a href="{{ route('admin.requests', ['quick_filter' => 'today']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ request('quick_filter') == 'today' ? 'active-kpi-card' : '' }}"
+           title="View requests approved / processed today">
+            <div class="stat-card-icon-box" style="background-color: #dcfce7; color: var(--color-green, #15803d); border: 1px solid #bbf7d0;">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Approved Today</div>
+                <h3 class="stat-card-count" style="color: var(--color-green, #15803d);" id="kpi-approved">{{ $approvedToday }}</h3>
+                <div class="stat-card-subtext">Processing complete</div>
+            </div>
+        </a>
+
+        {{-- Card 4: Overdue Requests (Dynamic Red Alert State) --}}
+        <a href="{{ route('admin.requests', ['quick_filter' => 'overdue']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ $overdueRequests > 0 ? 'overdue-alert-card' : '' }} {{ request('quick_filter') == 'overdue' ? 'active-kpi-card' : '' }}"
+           title="Jump to overdue requests (older than 48 hours)">
+            <div class="stat-card-icon-box" style="background-color: {{ $overdueRequests > 0 ? '#fee2e2' : '#f1f5f9' }}; color: {{ $overdueRequests > 0 ? '#b91c1c' : '#64748b' }}; border: 1px solid {{ $overdueRequests > 0 ? '#fca5a5' : '#e2e8f0' }};">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Overdue Requests</div>
+                <h3 class="stat-card-count" style="color: {{ $overdueRequests > 0 ? 'var(--color-red, #d92d3a)' : 'var(--color-text)' }};" id="kpi-overdue">{{ $overdueRequests }}</h3>
+                <div class="stat-card-subtext">
+                    @if($overdueRequests == 0)
+                        <span class="text-muted fw-medium"><i class="fa-solid fa-shield-check text-success me-1"></i>Within SLA ✓</span>
+                    @else
+                        <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Past deadline (SLA)</span>
+                    @endif
                 </div>
-                <div class="mt-3 text-muted" style="font-size: 12px;">Days per request</div>
+            </div>
+        </a>
+
+        {{-- Card 5: Avg Turnaround --}}
+        <div class="stat-card request-stat-card">
+            <div class="stat-card-icon-box" style="background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4;">
+                <i class="fa-solid fa-stopwatch"></i>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-card-label">Avg Turnaround</div>
+                <h3 class="stat-card-count" id="kpi-avg">{{ $avgProcessing > 0 ? $avgProcessing . ' d' : '—' }}</h3>
+                <div class="stat-card-subtext">Days per request</div>
             </div>
         </div>
     </div>
 
-    <ul class="nav nav-pills mb-4 nav-pills-status">
-        <li class="nav-item">
-            <a class="nav-link rounded-pill tab-pending {{ $currentStatus == 'Pending_Review' ? 'active' : '' }}" 
-               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Review']) }}">
-                <i class="fa-solid fa-inbox"></i> <span>Pending & Review</span>
-                <span class="status-count-badge" id="tab-badge-pending">{{ $tabCounts['Pending_Review'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill tab-processing {{ $currentStatus == 'Processing' ? 'active' : '' }}" 
-               href="{{ request()->fullUrlWithQuery(['status' => 'Processing']) }}">
-                <i class="fa-solid fa-gear"></i> <span>Processing</span>
-                <span class="status-count-badge" id="tab-badge-processing">{{ $tabCounts['Processing'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill tab-ready {{ $currentStatus == 'Ready' ? 'active' : '' }}" 
-               href="{{ request()->fullUrlWithQuery(['status' => 'Ready']) }}">
-                <i class="fa-solid fa-file-signature"></i> <span>Ready for Pick-up</span>
-                <span class="status-count-badge" id="tab-badge-ready">{{ $tabCounts['Ready'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill tab-completed {{ $currentStatus == 'Completed' ? 'active' : '' }}" 
-               href="{{ request()->fullUrlWithQuery(['status' => 'Completed']) }}">
-                <i class="fa-solid fa-check-double"></i> <span>Completed</span>
-                <span class="status-count-badge" id="tab-badge-completed">{{ $tabCounts['Completed'] }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link rounded-pill tab-rejected {{ $currentStatus == 'Rejected' ? 'active' : '' }}" 
-               href="{{ request()->fullUrlWithQuery(['status' => 'Rejected']) }}">
-                <i class="fa-solid fa-ban"></i> <span>Rejected</span>
-                <span class="status-count-badge" id="tab-badge-rejected">{{ $tabCounts['Rejected'] }}</span>
-            </a>
-        </li>
-    </ul>
-
     <style>
+        /* ═══════════════════════════════════════════════════════════
+           1. PROCESS PIPELINE WORKFLOW (FULL-WIDTH, LEADING ARROWS)
+           ═══════════════════════════════════════════════════════════ */
+        .process-pipeline-wrapper {
+            width: 100%;
+        }
+
+        .process-pipeline-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            background: var(--color-bg-subtle, #f8fafc);
+            padding: 5px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--color-border, #e2e8f0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .process-pipeline-stages {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: nowrap;
+            flex-grow: 1;
+        }
+
+        .pipeline-step-item {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .pipeline-pill-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 11px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: var(--radius-pill, 9999px);
+            border: 1.5px solid var(--color-border, #e2e8f0);
+            background-color: var(--color-surface, #ffffff);
+            color: var(--color-text, #0f172a);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            transition: all var(--transition-bounce, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
+            text-decoration: none;
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+            cursor: pointer;
+            min-height: 30px;
+        }
+
+        .pipeline-pill-link:hover {
+            transform: translateY(-1.5px);
+            border-color: var(--color-border-hover, #cbd5e1);
+            background-color: var(--color-bg-subtle, #f8fafc);
+            color: var(--color-text, #0f172a);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+        }
+
+        .pipeline-pill-link:active {
+            transform: translateY(0);
+        }
+
+        /* Sequential Step Number Badge (1, 2, 3, 4) */
+        .step-badge-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            font-size: 9.5px;
+            font-weight: 700;
+            background-color: var(--color-bg-subtle, #f8fafc);
+            color: var(--color-text-muted, #64748b);
+            border: 1px solid var(--color-border, #e2e8f0);
+            margin-right: 5px;
+            flex-shrink: 0;
+            transition: all var(--transition-fast, 0.15s ease);
+        }
+
+        .pipeline-pill-link .text-step-icon {
+            font-size: 11px;
+            margin-right: 5px;
+            color: var(--color-text-muted, #64748b);
+            transition: color var(--transition-fast, 0.15s ease);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           DIRECTIONAL ARROW CONNECTORS WITH LEADING LINES
+           ═══════════════════════════════════════════════════════════ */
+        .pipeline-arrow-connector {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 0 4px;
+            color: var(--color-text-light, #94a3b8);
+            flex-shrink: 0;
+            user-select: none;
+            position: relative;
+            transition: transform var(--transition-fast, 0.2s ease), color var(--transition-fast, 0.2s ease);
+        }
+
+        /* Leading Line (Shaft of the Leading Arrow) */
+        .pipeline-arrow-connector::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 2px;
+            background: currentColor;
+            border-radius: 999px;
+            opacity: 0.65;
+            transition: all var(--transition-fast, 0.2s ease);
+        }
+
+        .pipeline-arrow-connector svg {
+            width: 8px;
+            height: 8px;
+            stroke-width: 2.8;
+            transition: transform var(--transition-fast, 0.2s ease);
+            position: relative;
+            left: -1px;
+        }
+
+        /* Hover animation on leading line */
+        .pipeline-arrow-connector:hover,
+        .pipeline-step-item:hover + .pipeline-arrow-connector {
+            color: var(--color-blue, #2563b8);
+            transform: translateX(2px);
+        }
+
+        .pipeline-arrow-connector:hover::before,
+        .pipeline-step-item:hover + .pipeline-arrow-connector::before {
+            width: 22px;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(37, 99, 184, 0.4);
+        }
+
+        /* Dynamic Active Step Leading Lines */
+        .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector {
+            color: #d97706;
+        }
+        .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #d97706, #2563eb);
+            opacity: 0.95;
+            box-shadow: 0 0 6px rgba(217, 119, 6, 0.35);
+        }
+
+        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
+            color: #2563eb;
+        }
+        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #2563eb, #0284c7);
+            opacity: 0.95;
+            box-shadow: 0 0 6px rgba(37, 99, 235, 0.35);
+        }
+
+        .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector {
+            color: #0284c7;
+        }
+        .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #0284c7, #16a34a);
+            opacity: 0.95;
+            box-shadow: 0 0 6px rgba(2, 132, 199, 0.35);
+        }
+
+        /* Status Count Badge */
+        .pipeline-pill-link .status-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6.5px;
+            min-width: 19px;
+            border-radius: var(--radius-pill, 9999px);
+            margin-left: 5px;
+            line-height: 1.3;
+            background-color: var(--color-bg-subtle, #f8fafc);
+            color: #334155;
+            border: 1px solid var(--color-border, #e2e8f0);
+            transition: all var(--transition-fast, 0.15s ease);
+        }
+
+        /* Step Personality Inactive State (Creative Color Coding) */
+        .pipeline-pill-link.tab-pending {
+            border-color: #fde68a;
+            background-color: #fffdf5;
+            color: #92400e;
+        }
+        .pipeline-pill-link.tab-pending:hover {
+            border-color: #f59e0b;
+            background-color: #fef3c7;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+        }
+        .pipeline-pill-link.tab-pending .step-badge-number {
+            background-color: #fef3c7;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+        .pipeline-pill-link.tab-pending .status-count-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .pipeline-pill-link.tab-processing {
+            border-color: #bfdbfe;
+            background-color: #f8faff;
+            color: #1e40af;
+        }
+        .pipeline-pill-link.tab-processing:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .pipeline-pill-link.tab-processing .step-badge-number {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+        .pipeline-pill-link.tab-processing .status-count-badge {
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+
+        .pipeline-pill-link.tab-ready {
+            border-color: #a5f3fc;
+            background-color: #f0fdfa;
+            color: #0e7490;
+        }
+        .pipeline-pill-link.tab-ready:hover {
+            border-color: #06b6d4;
+            background-color: #ecfeff;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+        }
+        .pipeline-pill-link.tab-ready .step-badge-number {
+            background-color: #ecfeff;
+            color: #0891b2;
+            border-color: #a5f3fc;
+        }
+        .pipeline-pill-link.tab-ready .status-count-badge {
+            background-color: #ecfeff;
+            color: #0e7490;
+            border-color: #a5f3fc;
+        }
+
+        .pipeline-pill-link.tab-completed {
+            border-color: #bbf7d0;
+            background-color: #f7fee7;
+            color: #166534;
+        }
+        .pipeline-pill-link.tab-completed:hover {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+        .pipeline-pill-link.tab-completed .step-badge-number {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
+        }
+        .pipeline-pill-link.tab-completed .status-count-badge {
+            background-color: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        /* Active Stage Tab (Vibrant Gradient per Stage with Crisp White Badges) */
+        .pipeline-pill-link.active {
+            font-weight: 700;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+        }
+
+        .pipeline-pill-link.active .step-badge-number {
+            background-color: rgba(255, 255, 255, 0.25) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+        }
+
+        .pipeline-pill-link.active .status-count-badge {
+            background-color: #ffffff !important;
+            border-color: #ffffff !important;
+            font-weight: 800;
+        }
+
+        .pipeline-pill-link.active .text-step-icon {
+            color: #ffffff !important;
+        }
+
+        /* Specific Active Colors */
+        .pipeline-pill-link.tab-pending.active {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important;
+            border-color: #d97706 !important;
+            box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+        }
+        .pipeline-pill-link.tab-pending.active .status-count-badge {
+            color: #b45309 !important;
+        }
+
+        .pipeline-pill-link.tab-processing.active {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+            border-color: #1d4ed8 !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        }
+        .pipeline-pill-link.tab-processing.active .status-count-badge {
+            color: #1e40af !important;
+        }
+
+        .pipeline-pill-link.tab-ready.active {
+            background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%) !important;
+            border-color: #0891b2 !important;
+            box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35) !important;
+        }
+        .pipeline-pill-link.tab-ready.active .status-count-badge {
+            color: #0e7490 !important;
+        }
+
+        .pipeline-pill-link.tab-completed.active {
+            background: linear-gradient(135deg, #15803d 0%, #22c55e 100%) !important;
+            border-color: #15803d !important;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35) !important;
+        }
+        .pipeline-pill-link.tab-completed.active .status-count-badge {
+            color: #15803d !important;
+        }
+
+        .pipeline-pill-link.tab-rejected.active {
+            background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%) !important;
+            border-color: #b91c1c !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35) !important;
+        }
+        .pipeline-pill-link.tab-rejected.active .status-count-badge {
+            background-color: #ffffff !important;
+            color: #b91c1c !important;
+            border-color: #ffffff !important;
+        }
+        .pipeline-pill-link.tab-rejected.active .text-step-icon {
+            color: #ffffff !important;
+        }
+
+        /* Ready Tab Waiting Dot with Pulse Animation */
+        .stage-waiting-action {
+            border-color: #f59e0b !important;
+        }
+        .waiting-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--color-amber, #f59e0b);
+            margin-left: 5px;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            animation: dotPulse 1.8s infinite;
+        }
+        @keyframes dotPulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Exception Branch: Rejected (Separated & Tinted Red) */
+        .pipeline-exception-wrapper {
+            display: inline-flex;
+            align-items: center;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .exception-divider {
+            width: 1px;
+            height: 18px;
+            background-color: var(--color-border, #e2e8f0);
+            margin-right: 8px;
+        }
+
+        .pipeline-pill-link.tab-rejected {
+            border-color: #fecaca;
+            background-color: #fff5f5;
+            color: var(--color-red, #d92d3a);
+        }
+
+        .pipeline-pill-link.tab-rejected:hover {
+            border-color: var(--color-red, #d92d3a);
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .pipeline-pill-link.tab-rejected .status-count-badge {
+            background-color: #fee2e2;
+            color: var(--color-red, #d92d3a);
+            border-color: #fca5a5;
+        }
+
+        .pipeline-pill-link.tab-rejected.active {
+            background: var(--color-red, #d92d3a) !important;
+            border-color: var(--color-red, #d92d3a) !important;
+            color: #ffffff !important;
+            box-shadow: 0 3px 10px rgba(217, 45, 58, 0.28) !important;
+        }
+        .pipeline-pill-link.tab-rejected.active .status-count-badge {
+            background-color: #ffffff !important;
+            color: var(--color-red, #d92d3a) !important;
+            border-color: #ffffff !important;
+        }
+        .pipeline-pill-link.tab-rejected.active .text-step-icon {
+            color: #ffffff !important;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           2. COMPACT STAT CARDS (SECOND IN LAYOUT)
+           ═══════════════════════════════════════════════════════════ */
+        .stat-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: var(--spacing-gap, 14px);
+            width: 100%;
+        }
+
+        @media (max-width: 1200px) {
+            .stat-cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .stat-cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .stat-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--color-surface, #ffffff);
+            border: 1px solid var(--color-border, #e6ebf1);
+            border-radius: var(--radius-card, 12px);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.04));
+            transition: all var(--transition-fast, 0.15s ease);
+            min-height: 72px;
+        }
+
+        .clickable-kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-border-hover, #cbd5e1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            background-color: var(--color-bg-subtle, #f8fafc);
+        }
+
+        .stat-card.active-kpi-card {
+            border-color: var(--color-blue, #2563b8) !important;
+            background-color: #f0f7ff !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 184, 0.15) !important;
+        }
+
+        .stat-card-icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md, 8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .stat-card-body {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .stat-card-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-muted, #64748b);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stat-card-count {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--color-text, #0f172a);
+            line-height: 1.15;
+            margin: 2px 0 1px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card-subtext {
+            font-size: 11px;
+            color: var(--color-text-muted, #64748b);
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Dark Mode Overrides for Pipeline & Cards ── */
+        html[data-theme="dark"] .process-pipeline-container,
+        html[data-bs-theme="dark"] .process-pipeline-container {
+            background: rgba(19, 29, 49, 0.85) !important;
+            border-color: #1e293b !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link,
+        html[data-bs-theme="dark"] .pipeline-pill-link {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        html[data-theme="dark"] .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-arrow-connector {
+            color: #64748b !important;
+        }
+        html[data-theme="dark"] .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-arrow-connector::before {
+            opacity: 0.75;
+            background: #475569;
+        }
+
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector {
+            color: #fbbf24 !important;
+        }
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #fbbf24, #38bdf8) !important;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+        }
+
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+        }
+
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector {
+            color: #2dd4bf !important;
+        }
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #2dd4bf, #4ade80) !important;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(45, 212, 191, 0.45);
+        }
+
+        html[data-theme="dark"] .pipeline-arrow-connector:hover,
+        html[data-bs-theme="dark"] .pipeline-arrow-connector:hover,
+        html[data-theme="dark"] .pipeline-step-item:hover + .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-step-item:hover + .pipeline-arrow-connector {
+            color: #38bdf8 !important;
+            transform: translateX(2px);
+        }
+        html[data-theme="dark"] .pipeline-arrow-connector:hover::before,
+        html[data-bs-theme="dark"] .pipeline-arrow-connector:hover::before,
+        html[data-theme="dark"] .pipeline-step-item:hover + .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-step-item:hover + .pipeline-arrow-connector::before {
+            width: 22px;
+            background: #38bdf8 !important;
+            opacity: 1;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.55);
+        }
+        html[data-theme="dark"] .exception-divider,
+        html[data-bs-theme="dark"] .exception-divider {
+            background-color: #334155 !important;
+        }
+        html[data-theme="dark"] .tab-pending .step-badge-pending,
+        html[data-bs-theme="dark"] .tab-pending .step-badge-pending {
+            background-color: rgba(217, 119, 6, 0.25) !important;
+            color: #fde047 !important;
+            border-color: rgba(253, 224, 71, 0.35) !important;
+        }
+        html[data-theme="dark"] .tab-pending .count-badge-pending,
+        html[data-bs-theme="dark"] .tab-pending .count-badge-pending {
+            background-color: rgba(217, 119, 6, 0.2) !important;
+            color: #fde047 !important;
+            border-color: rgba(253, 224, 71, 0.35) !important;
+        }
+        html[data-theme="dark"] .tab-processing .step-badge-processing,
+        html[data-bs-theme="dark"] .tab-processing .step-badge-processing {
+            background-color: rgba(37, 99, 235, 0.25) !important;
+            color: #93c5fd !important;
+            border-color: rgba(96, 165, 250, 0.4) !important;
+        }
+        html[data-theme="dark"] .tab-processing .count-badge-processing,
+        html[data-bs-theme="dark"] .tab-processing .count-badge-processing {
+            background-color: rgba(37, 99, 235, 0.2) !important;
+            color: #93c5fd !important;
+            border-color: rgba(96, 165, 250, 0.4) !important;
+        }
+        html[data-theme="dark"] .tab-ready .step-badge-ready,
+        html[data-bs-theme="dark"] .tab-ready .step-badge-ready {
+            background-color: rgba(6, 182, 212, 0.25) !important;
+            color: #67e8f9 !important;
+            border-color: rgba(103, 232, 249, 0.4) !important;
+        }
+        html[data-theme="dark"] .tab-ready .count-badge-ready,
+        html[data-bs-theme="dark"] .tab-ready .count-badge-ready {
+            background-color: rgba(6, 182, 212, 0.2) !important;
+            color: #67e8f9 !important;
+            border-color: rgba(103, 232, 249, 0.4) !important;
+        }
+        html[data-theme="dark"] .tab-completed .step-badge-completed,
+        html[data-bs-theme="dark"] .tab-completed .step-badge-completed {
+            background-color: rgba(22, 163, 74, 0.25) !important;
+            color: #86efac !important;
+            border-color: rgba(134, 239, 172, 0.4) !important;
+        }
+        html[data-theme="dark"] .tab-completed .count-badge-completed,
+        html[data-bs-theme="dark"] .tab-completed .count-badge-completed {
+            background-color: rgba(22, 163, 74, 0.2) !important;
+            color: #86efac !important;
+            border-color: rgba(134, 239, 172, 0.4) !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-pending.active,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-pending.active {
+            background: linear-gradient(135deg, #b45309 0%, #d97706 100%) !important;
+            border-color: #f59e0b !important;
+            box-shadow: 0 2px 14px rgba(245, 158, 11, 0.45) !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-processing.active,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-processing.active {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 2px 14px rgba(37, 99, 235, 0.45) !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-ready.active,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-ready.active {
+            background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%) !important;
+            border-color: #22d3ee !important;
+            box-shadow: 0 2px 14px rgba(6, 182, 212, 0.45) !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-completed.active,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-completed.active {
+            background: linear-gradient(135deg, #15803d 0%, #16a34a 100%) !important;
+            border-color: #4ade80 !important;
+            box-shadow: 0 2px 14px rgba(34, 197, 94, 0.45) !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-rejected.active,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-rejected.active {
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%) !important;
+            border-color: #f87171 !important;
+            box-shadow: 0 2px 14px rgba(220, 38, 38, 0.45) !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-rejected,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-rejected {
+            background-color: rgba(220, 38, 38, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.35) !important;
+            color: #fca5a5 !important;
+        }
+        html[data-theme="dark"] .pipeline-pill-link.tab-rejected .status-count-badge,
+        html[data-bs-theme="dark"] .pipeline-pill-link.tab-rejected .status-count-badge {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            color: #fca5a5 !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .stat-card,
+        html[data-bs-theme="dark"] .stat-card {
+            background-color: var(--color-surface, #131d31) !important;
+            border-color: var(--color-border, #1e293b) !important;
+        }
+        html[data-theme="dark"] .clickable-kpi-card:hover,
+        html[data-bs-theme="dark"] .clickable-kpi-card:hover {
+            border-color: #3b82f6 !important;
+            background-color: #182238 !important;
+        }
+        html[data-theme="dark"] .stat-card.active-kpi-card,
+        html[data-bs-theme="dark"] .stat-card.active-kpi-card {
+            border-color: #3b82f6 !important;
+            background-color: #1e2b45 !important;
+        }
+        html[data-theme="dark"] .stat-card-label,
+        html[data-bs-theme="dark"] .stat-card-label {
+            color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .stat-card-count,
+        html[data-bs-theme="dark"] .stat-card-count {
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .stat-card-subtext,
+        html[data-bs-theme="dark"] .stat-card-subtext {
+            color: #94a3b8 !important;
+        }
+
         /* High-Visibility Status Pill Tabs */
         .nav-pills-status {
             display: flex;
@@ -538,51 +1235,391 @@
                 padding: 6px 10px;
             }
         }
+            .request-row-clickable {
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+        }
+        .request-row-clickable:hover > td {
+            background-color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] .request-row-clickable:hover > td,
+        html[data-bs-theme="dark"] .request-row-clickable:hover > td {
+            background-color: #19253d !important;
+        }
+            /* ═══════════════════════════════════════════════════════════
+           STATUS BADGES & HERO TRACKING NUMBER STYLING
+           ═══════════════════════════════════════════════════════════ */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3.5px 10px;
+            border-radius: var(--radius-pill, 9999px);
+            min-width: 108px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .status-dot {
+            width: 6.5px;
+            height: 6.5px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .status-badge.status-processing {
+            background-color: #eff6ff !important;
+            color: #1d4ed8 !important;
+            border: 1px solid #bfdbfe !important;
+        }
+        .status-badge.status-processing .status-dot {
+            background-color: #2563eb !important;
+        }
+        .status-badge.status-ready {
+            background-color: #ecfeff !important;
+            color: #0e7490 !important;
+            border: 1px solid #a5f3fc !important;
+        }
+        .status-badge.status-ready .status-dot {
+            background-color: #06b6d4 !important;
+        }
+        .status-badge.status-completed {
+            background-color: #f0fdf4 !important;
+            color: #15803d !important;
+            border: 1px solid #bbf7d0 !important;
+        }
+        .status-badge.status-completed .status-dot {
+            background-color: #16a34a !important;
+        }
+        .status-badge.status-pending,
+        .status-badge.status-pending-review {
+            background-color: #fffbeb !important;
+            color: #b45309 !important;
+            border: 1px solid #fde68a !important;
+        }
+        .status-badge.status-pending .status-dot,
+        .status-badge.status-pending-review .status-dot {
+            background-color: #d97706 !important;
+        }
+        .status-badge.status-under-review {
+            background-color: #faf5ff !important;
+            color: #7e22ce !important;
+            border: 1px solid #e9d5ff !important;
+        }
+        .status-badge.status-under-review .status-dot {
+            background-color: #9333ea !important;
+        }
+        .status-badge.status-rejected {
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+            border: 1px solid #fecaca !important;
+        }
+        .status-badge.status-rejected .status-dot {
+            background-color: #dc2626 !important;
+        }
+
+        /* Hero Tracking Number (Big Highlight) */
+        .hero-tracking-number {
+            font-size: clamp(2rem, 3.8vw, 2.65rem) !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.05em !important;
+            line-height: 1.15 !important;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+            color: var(--color-navy, #14284b) !important;
+        }
+
+        .tracking-hero-card {
+            background: linear-gradient(135deg, rgba(37, 99, 184, 0.06) 0%, rgba(15, 196, 232, 0.08) 100%) !important;
+            border: 1.5px solid rgba(37, 99, 184, 0.22) !important;
+            border-radius: var(--radius-card, 12px) !important;
+        }
+
+        .tracking-kicker {
+            background-color: rgba(37, 99, 184, 0.12) !important;
+            color: #1e40af !important;
+            border: 1px solid rgba(37, 99, 184, 0.28) !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            border-radius: 9999px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        .tracking-kicker i {
+            color: #2563eb !important;
+        }
+
+        /* Dark Mode Overrides for Status Badges & Tracking Hero */
+        html[data-theme="dark"] .hero-tracking-number,
+        html[data-bs-theme="dark"] .hero-tracking-number {
+            color: #60a5fa !important;
+            text-shadow: 0 0 20px rgba(96, 165, 250, 0.25);
+        }
+
+        html[data-theme="dark"] .tracking-hero-card,
+        html[data-bs-theme="dark"] .tracking-hero-card {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+            border-color: rgba(96, 165, 250, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .tracking-kicker,
+        html[data-bs-theme="dark"] .tracking-kicker {
+            background-color: rgba(59, 130, 246, 0.22) !important;
+            color: #93c5fd !important;
+            border-color: rgba(96, 165, 250, 0.45) !important;
+        }
+        html[data-theme="dark"] .tracking-kicker i,
+        html[data-bs-theme="dark"] .tracking-kicker i {
+            color: #60a5fa !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-processing,
+        html[data-bs-theme="dark"] .status-badge.status-processing {
+            background-color: rgba(37, 99, 235, 0.25) !important;
+            color: #93c5fd !important;
+            border-color: rgba(96, 165, 250, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-processing .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-processing .status-dot {
+            background-color: #60a5fa !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-ready,
+        html[data-bs-theme="dark"] .status-badge.status-ready {
+            background-color: rgba(6, 182, 212, 0.25) !important;
+            color: #67e8f9 !important;
+            border-color: rgba(103, 232, 249, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-ready .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-ready .status-dot {
+            background-color: #22d3ee !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-completed,
+        html[data-bs-theme="dark"] .status-badge.status-completed {
+            background-color: rgba(22, 163, 74, 0.25) !important;
+            color: #86efac !important;
+            border-color: rgba(134, 239, 172, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-completed .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-completed .status-dot {
+            background-color: #4ade80 !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-pending,
+        html[data-theme="dark"] .status-badge.status-pending-review,
+        html[data-bs-theme="dark"] .status-badge.status-pending,
+        html[data-bs-theme="dark"] .status-badge.status-pending-review {
+            background-color: rgba(217, 119, 6, 0.25) !important;
+            color: #fde047 !important;
+            border-color: rgba(253, 224, 71, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-pending .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-pending .status-dot {
+            background-color: #facc15 !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-under-review,
+        html[data-bs-theme="dark"] .status-badge.status-under-review {
+            background-color: rgba(147, 51, 234, 0.25) !important;
+            color: #d8b4fe !important;
+            border-color: rgba(216, 180, 254, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-under-review .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-under-review .status-dot {
+            background-color: #c084fc !important;
+        }
+
+        html[data-theme="dark"] .status-badge.status-rejected,
+        html[data-bs-theme="dark"] .status-badge.status-rejected {
+            background-color: rgba(220, 38, 38, 0.25) !important;
+            color: #fca5a5 !important;
+            border-color: rgba(252, 165, 165, 0.45) !important;
+        }
+        html[data-theme="dark"] .status-badge.status-rejected .status-dot,
+        html[data-bs-theme="dark"] .status-badge.status-rejected .status-dot {
+            background-color: #f87171 !important;
+        }
+        html[data-theme="dark"] .btn-light,
+        html[data-bs-theme="dark"] .btn-light {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        html[data-theme="dark"] .btn-light:hover,
+        html[data-bs-theme="dark"] .btn-light:hover {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] .btn-light .text-muted,
+        html[data-bs-theme="dark"] .btn-light .text-muted {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] #searchForm .input-group,
+        html[data-bs-theme="dark"] #searchForm .input-group {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+        }
+        html[data-theme="dark"] #searchForm input,
+        html[data-bs-theme="dark"] #searchForm input {
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] #filterDropdown + .dropdown-menu,
+        html[data-bs-theme="dark"] #filterDropdown + .dropdown-menu {
+            background-color: #131d31 !important;
+            border-color: #334155 !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+        }
+        html[data-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item,
+        html[data-bs-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item {
+            color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item:hover,
+        html[data-bs-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item:hover {
+            background-color: #1e293b !important;
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item.active,
+        html[data-bs-theme="dark"] #filterDropdown + .dropdown-menu .dropdown-item.active {
+            background-color: rgba(37, 99, 235, 0.25) !important;
+            color: #93c5fd !important;
+        }
+        html[data-theme="dark"] .tag-free,
+        html[data-bs-theme="dark"] .tag-free {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #86efac !important;
+            border-color: rgba(74, 222, 128, 0.35) !important;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           ANIMATIONS — REQUESTS PAGE
+           ═══════════════════════════════════════════════════════════ */
+
+        /* Modal stacking safety */
+        .modal {
+            z-index: 1060 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+
+        /* Pipeline bar fade-in */
+        .header-pipeline-bar {
+            animation: agy-fadeIn 0.35s ease-out;
+        }
+
+        /* Stat cards staggered entrance */
+        .stat-cards-grid .stat-card:nth-child(1) { animation: agy-fadeSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) 0.05s; }
+        .stat-cards-grid .stat-card:nth-child(2) { animation: agy-fadeSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) 0.10s; }
+        .stat-cards-grid .stat-card:nth-child(3) { animation: agy-fadeSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) 0.15s; }
+        .stat-cards-grid .stat-card:nth-child(4) { animation: agy-fadeSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) 0.20s; }
+        .stat-cards-grid .stat-card:nth-child(5) { animation: agy-fadeSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) 0.25s; }
+
+        /* Table card fade in */
+        .card.border-0.shadow-sm {
+            animation: agy-fadeIn 0.35s ease-out;
+        }
+
+        /* Table rows cascade fade-in */
+        #requests-tbody tr {
+            animation: agy-fadeIn 0.28s ease both;
+        }
+        #requests-tbody tr:nth-child(1)  { animation-delay: 0.22s; }
+        #requests-tbody tr:nth-child(2)  { animation-delay: 0.26s; }
+        #requests-tbody tr:nth-child(3)  { animation-delay: 0.30s; }
+        #requests-tbody tr:nth-child(4)  { animation-delay: 0.34s; }
+        #requests-tbody tr:nth-child(5)  { animation-delay: 0.38s; }
+        #requests-tbody tr:nth-child(6)  { animation-delay: 0.42s; }
+        #requests-tbody tr:nth-child(7)  { animation-delay: 0.46s; }
+        #requests-tbody tr:nth-child(8)  { animation-delay: 0.50s; }
+        #requests-tbody tr:nth-child(n+9) { animation-delay: 0.54s; }
+
+        /* Mobile cards stagger */
+        #requests-mobile-list .mobile-request-card {
+            animation: agy-fadeSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        #requests-mobile-list .mobile-request-card:nth-child(1) { animation-delay: 0.18s; }
+        #requests-mobile-list .mobile-request-card:nth-child(2) { animation-delay: 0.24s; }
+        #requests-mobile-list .mobile-request-card:nth-child(3) { animation-delay: 0.30s; }
+        #requests-mobile-list .mobile-request-card:nth-child(n+4) { animation-delay: 0.36s; }
+
+        /* Live badge in pipeline header */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #16a34a;
+            background: rgba(22, 163, 74, 0.10);
+            border: 1px solid rgba(22, 163, 74, 0.25);
+            border-radius: 999px;
+            padding: 2px 9px 2px 7px;
+            letter-spacing: 0.04em;
+        }
+        html[data-theme="dark"] .live-badge,
+        html[data-bs-theme="dark"] .live-badge {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+
+        /* Pipeline pill active glow pulse */
+        .pipeline-pill-link.active {
+            animation: agy-activePillGlow 3s ease-in-out infinite !important;
+        }
+        @keyframes agy-activePillGlow {
+            0%, 100% { box-shadow: 0 3px 10px rgba(20, 40, 75, 0.28) !important; }
+            50%       { box-shadow: 0 4px 18px rgba(20, 40, 75, 0.45) !important; }
+        }
+
+        /* KPI count-up number flash */
+        .stat-count-flash {
+            animation: agy-countFlash 0.5s ease;
+        }
+        @keyframes agy-countFlash {
+            0%   { transform: scale(1.18); color: #2563eb; }
+            100% { transform: scale(1); }
+        }
+
+        /* Table row new-data highlight flash */
+        .row-new-flash {
+            animation: agy-rowFlash 1.2s ease;
+        }
+        @keyframes agy-rowFlash {
+            0%   { background-color: rgba(37, 99, 235, 0.12); }
+            100% { background-color: transparent; }
+        }
+
+        /* Overdue card red pulse */
+        .overdue-alert-card {
+            animation: agy-overdueGlow 2.4s ease-in-out infinite !important;
+        }
+        @keyframes agy-overdueGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
+            50%       { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.0); }
+        }
     </style>
 
     <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header border-0 bg-white py-3 px-3 px-md-4 d-flex justify-content-between align-items-center flex-wrap gap-2 gap-md-3 rounded-top-4">
-            <div class="d-flex align-items-center gap-2">
-                <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
-                    <i class="fa-solid fa-folder-open text-primary me-2"></i>{{ str_replace('_', ' ', $currentStatus) }} Requests
-                </h5>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 11.5px;">
-                    {{ $allRequests->total() }} records
-                </span>
-            </div>
-
-            <div class="d-flex align-items-center gap-2 flex-wrap w-100 w-xl-auto">
-                <form action="{{ route('admin.requests') }}" method="GET" class="m-0 flex-grow-1 flex-xl-grow-0 w-100 w-sm-auto" id="searchForm">
-                    @if(request('document_type'))
-                        <input type="hidden" name="document_type" value="{{ request('document_type') }}">
-                    @endif
-                    @if(request('status'))
-                        <input type="hidden" name="status" value="{{ request('status') }}">
-                    @endif
-
-                    <div class="input-group input-group-sm rounded-3 border" style="min-width: 200px; width: 100%; background-color: #f8fafc;">
-                        <button type="submit" class="input-group-text border-0 bg-transparent text-muted"><i class="fa fa-search"></i></button>
-                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}" class="form-control border-0 bg-transparent shadow-none" placeholder="Search by ID, name, or type..." autocomplete="off">
-                    </div>
-                </form>
+        <div class="card-header border-0 bg-white py-3 px-3 px-md-4 rounded-top-4">
+            {{-- Row 1: Title on left, Action tools on right --}}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2.5">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
+                        <i class="fa-solid fa-folder-open text-primary me-2"></i>{{ str_replace('_', ' ', $currentStatus) }} Requests
+                    </h5>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 11.5px;">
+                        {{ $allRequests->total() }} records
+                    </span>
+                </div>
 
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-light border px-3 fw-semibold dropdown-toggle rounded-3" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa fa-filter text-muted me-1"></i> 
-                            {{ $currentDocType == 'All' ? 'Filters' : $currentDocType }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="filterDropdown" style="font-size: 14px; max-height: 360px; overflow-y: auto;">
-                            <li><a class="dropdown-item {{ $currentDocType == 'All' ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : '' }}" href="{{ request()->fullUrlWithQuery(['document_type' => null]) }}">All Documents</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            @if(isset($validTypes) && count($validTypes) > 0)
-                                @foreach($validTypes as $vType)
-                                    <li><a class="dropdown-item {{ $currentDocType == $vType ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : '' }}" href="{{ request()->fullUrlWithQuery(['document_type' => $vType]) }}">{{ $vType }}</a></li>
-                                @endforeach
-                            @endif
-                        </ul>
-                    </div>
-                    <a href="{{ route('admin.document-types.index') }}" class="btn btn-sm btn-light border px-3 fw-semibold text-decoration-none text-dark rounded-3" title="Manage Barangay Documents">
+                    <a href="{{ route('admin.document-types.index') }}" class="btn btn-sm btn-light border px-3 fw-semibold text-decoration-none rounded-3" title="Manage Barangay Documents">
                         <i class="fa-solid fa-folder-open text-muted me-1"></i> Document Management
                     </a>
                     <button class="btn btn-sm btn-light border px-3 fw-semibold rounded-3"><i class="fa-solid fa-download text-muted me-1"></i> Export</button>
@@ -590,6 +1627,145 @@
                         <i class="fa-solid fa-compress me-1" id="densityIcon"></i>
                         <span id="densityText" class="d-none d-sm-inline">Compact</span>
                     </button>
+                </div>
+            </div>
+
+            {{-- Row 2: Searchbar with Filters Dropdown --}}
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-2.5" id="requestsSearchBarRow">
+                <form action="{{ route('admin.requests') }}" method="GET" class="m-0 flex-grow-1" id="searchForm">
+                    @if(request('document_type'))
+                        <input type="hidden" name="document_type" value="{{ request('document_type') }}">
+                    @endif
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+
+                    <div class="input-group input-group-sm rounded-3 border" style="background-color: #f8fafc;">
+                        <button type="submit" class="input-group-text border-0 bg-transparent text-muted"><i class="fa fa-search"></i></button>
+                        <input type="text" id="searchInput" name="search" value="{{ request('search') }}" class="form-control border-0 bg-transparent shadow-none py-1.5" placeholder="Search by ID, name, or type..." autocomplete="off">
+                    </div>
+                </form>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border px-3 fw-semibold dropdown-toggle rounded-3" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-filter text-muted me-1"></i> 
+                        {{ $currentDocType == 'All' ? 'Filters' : $currentDocType }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border" aria-labelledby="filterDropdown" style="font-size: 13.5px; min-width: 280px; max-width: min(92vw, 360px); max-height: 380px; overflow-y: auto; z-index: 1060; border-color: #cbd5e1;">
+                        <li><a class="dropdown-item {{ $currentDocType == 'All' ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : '' }}" href="{{ request()->fullUrlWithQuery(['document_type' => null]) }}">All Documents</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        @if(isset($validTypes) && count($validTypes) > 0)
+                            @foreach($validTypes as $vType)
+                                <li><a class="dropdown-item {{ $currentDocType == $vType ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : '' }}" href="{{ request()->fullUrlWithQuery(['document_type' => $vType]) }}">{{ $vType }}</a></li>
+                            @endforeach
+                        @endif
+                    </ul>
+                </div>
+            </div>
+
+            {{-- Row 3: Process Pipeline Stepper (PLACED UNDER THE SEARCHBAR, SIZE ADJUSTED) --}}
+            <div class="process-pipeline-wrapper w-100">
+                <div class="process-pipeline-container" role="tablist" aria-label="Request Status Stages">
+                    
+                    {{-- Sequential Workflow Steps (1 -> 2 -> 3 -> 4) --}}
+                    <div class="process-pipeline-stages">
+                        
+                        {{-- Step 1: Pending & Review --}}
+                        <div class="pipeline-step-item">
+                            <a class="pipeline-pill-link tab-pending {{ $currentStatus == 'Pending_Review' ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Review']) }}"
+                               role="tab"
+                               aria-selected="{{ $currentStatus == 'Pending_Review' ? 'true' : 'false' }}"
+                               title="Step 1: Review incoming applications">
+                                <span class="step-badge-number step-badge-pending">1</span>
+                                <i class="fa-solid fa-inbox text-step-icon"></i>
+                                <span class="step-title">Pending & Review</span>
+                                <span class="status-count-badge count-badge-pending" id="tab-badge-pending">{{ $tabCounts['Pending_Review'] }}</span>
+                            </a>
+                        </div>
+
+                        {{-- Leading Arrow 1 -> 2 --}}
+                        <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Processing">
+                            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+
+                        {{-- Step 2: Processing --}}
+                        <div class="pipeline-step-item">
+                            <a class="pipeline-pill-link tab-processing {{ $currentStatus == 'Processing' ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Processing']) }}"
+                               role="tab"
+                               aria-selected="{{ $currentStatus == 'Processing' ? 'true' : 'false' }}"
+                               title="Step 2: Processing, drafting and captain signature">
+                                <span class="step-badge-number step-badge-processing">2</span>
+                                <i class="fa-solid fa-gear text-step-icon gear-icon-spin"></i>
+                                <span class="step-title">Processing</span>
+                                <span class="status-count-badge count-badge-processing" id="tab-badge-processing">{{ $tabCounts['Processing'] }}</span>
+                            </a>
+                        </div>
+
+                        {{-- Leading Arrow 2 -> 3 --}}
+                        <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Ready for Pick-up">
+                            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+
+                        {{-- Step 3: Ready for Pick-up --}}
+                        <div class="pipeline-step-item">
+                            <a class="pipeline-pill-link tab-ready {{ $currentStatus == 'Ready' ? 'active' : '' }} {{ $tabCounts['Ready'] > 0 ? 'stage-waiting-action' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Ready']) }}"
+                               role="tab"
+                               aria-selected="{{ $currentStatus == 'Ready' ? 'true' : 'false' }}"
+                               title="Step 3: Document printed and ready at releasing counter">
+                                <span class="step-badge-number step-badge-ready">3</span>
+                                <i class="fa-solid fa-file-signature text-step-icon"></i>
+                                <span class="step-title">Ready for Pick-up</span>
+                                <span class="status-count-badge count-badge-ready" id="tab-badge-ready">{{ $tabCounts['Ready'] }}</span>
+                                @if($tabCounts['Ready'] > 0)
+                                    <span class="waiting-dot ms-1" title="{{ $tabCounts['Ready'] }} resident(s) waiting at counter"></span>
+                                @endif
+                            </a>
+                        </div>
+
+                        {{-- Leading Arrow 3 -> 4 --}}
+                        <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Completed">
+                            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+
+                        {{-- Step 4: Completed --}}
+                        <div class="pipeline-step-item">
+                            <a class="pipeline-pill-link tab-completed {{ $currentStatus == 'Completed' ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Completed']) }}"
+                               role="tab"
+                               aria-selected="{{ $currentStatus == 'Completed' ? 'true' : 'false' }}"
+                               title="Step 4: Claimed by resident and archived">
+                                <span class="step-badge-number step-badge-completed">4</span>
+                                <i class="fa-solid fa-check-double text-step-icon"></i>
+                                <span class="step-title">Completed</span>
+                                <span class="status-count-badge count-badge-completed" id="tab-badge-completed">{{ $tabCounts['Completed'] }}</span>
+                            </a>
+                        </div>
+
+                    </div>
+
+                    {{-- Exception Branch: Rejected (Docked to the Right) --}}
+                    <div class="pipeline-exception-wrapper">
+                        <div class="exception-divider" aria-hidden="true"></div>
+                        <a class="pipeline-pill-link tab-rejected {{ $currentStatus == 'Rejected' ? 'active' : '' }}" 
+                           href="{{ request()->fullUrlWithQuery(['status' => 'Rejected']) }}"
+                           role="tab"
+                           aria-selected="{{ $currentStatus == 'Rejected' ? 'true' : 'false' }}"
+                           title="Disapproved / Incomplete applications">
+                            <i class="fa-solid fa-ban text-step-icon text-danger"></i>
+                            <span class="step-title">Rejected</span>
+                            <span class="status-count-badge badge-rejected" id="tab-badge-rejected">{{ $tabCounts['Rejected'] }}</span>
+                        </a>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -622,7 +1798,7 @@
                         <th class="py-2.5 border-0 col-doctype" style="min-width: 185px;">DOCUMENT TYPE</th>
                         <th class="py-2.5 border-0 text-nowrap col-date" style="width: 120px;">SUBMISSION DATE</th>
                         <th class="py-2.5 border-0 text-center text-nowrap col-status" style="width: 130px;">STATUS</th>
-                        <th class="pe-3 py-2.5 border-0 text-end text-nowrap col-actions" style="width: 310px; min-width: 310px;">ACTIONS</th>
+                        
                     </tr>
                 </thead>
                 <tbody class="border-top-0" id="requests-tbody">
@@ -634,8 +1810,8 @@
                         $isBusinessClearance = str_contains($docTypeLower, 'business');
                     @endphp
 
-                    <tr class="{{ $isUrgent ? 'bg-danger bg-opacity-10' : '' }}" id="req-row-{{ $request->id }}">
-                        <td class="ps-3 text-center col-select" style="width: 40px;">
+                    <tr class="request-row-clickable {{ $isUrgent ? 'bg-danger bg-opacity-10' : '' }}" id="req-row-{{ $request->id }}" data-modal-target="#viewModal{{ $request->id }}" title="Click to view request details" role="button" tabindex="0">
+                        <td class="ps-3 text-center col-select" style="width: 40px;" onclick="event.stopPropagation();">
                             <input class="form-check-input req-checkbox" type="checkbox" value="{{ $request->id }}" data-tracking="{{ $request->tracking_number }}">
                         </td>
                         <td class="fw-bold text-dark text-nowrap col-id" style="width: 140px;">
@@ -694,135 +1870,11 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="pe-3 text-end text-nowrap col-actions" style="width: 310px; min-width: 310px;">
-                            <div class="actions-group">
-
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-action btn-action-view" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#viewModal{{ $request->id }}" 
-                                        title="View Details">
-                                    <i class="fa-solid fa-eye"></i> <span>View</span>
-                                </button>
-
-                                @if($currentStatus == 'Pending_Review')
-                                    <form action="{{ route('admin.requests.accept', $request->id) }}" method="POST" class="m-0 d-inline-flex flex-shrink-0">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-success btn-action btn-action-accept" title="Accept & Move to Processing">
-                                            <i class="fa-solid fa-check"></i> <span>Accept</span>
-                                        </button>
-                                    </form>
-
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-action btn-action-reject"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#viewModal{{ $request->id }}" 
-                                            title="Review & Reject Request">
-                                            <i class="fa-solid fa-xmark"></i> <span>Reject</span>
-                                    </button>
-
-                                    <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" class="m-0 d-inline-flex flex-shrink-0" onsubmit="return confirm('Delete this request?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-light border text-danger btn-action px-2" title="Delete Request">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
-
-                                @elseif($currentStatus == 'Processing')
-                                    @php
-                                        $docsCount = count($request->documents_list);
-                                    @endphp
-
-                                    @if($docsCount > 1)
-                                        <div class="btn-group shadow-sm btn-action-gen">
-                                            <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                               class="btn btn-sm btn-primary rounded-start-3 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 flex-grow-1" 
-                                               onclick="markAsProcessing({{ $request->id }})" 
-                                               title="Generate All Documents (ZIP)">
-                                                <i class="fa-solid fa-file-zipper"></i> <span>Generate (All)</span>
-                                            </a>
-                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split rounded-end-3 px-2" data-bs-toggle="dropdown" aria-expanded="false" title="Generate individual document"></button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="font-size: 13px;">
-                                                @foreach($request->documents_list as $docItem)
-                                                    <li>
-                                                        <a class="dropdown-item py-1.5 d-flex align-items-center gap-2" href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}">
-                                                            <i class="fa-solid fa-file-word text-primary"></i> <span>{{ $docItem['type'] }}</span>
-                                                        </a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @else
-                                        <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                           class="btn btn-sm btn-primary btn-action btn-action-gen" 
-                                           onclick="markAsProcessing({{ $request->id }})" 
-                                           title="Generate Document">
-                                            <i class="fa-solid fa-file-word"></i> <span>Generate Word</span>
-                                        </a>
-                                    @endif
-
-                                    <div id="ready-btn-container-{{ $request->id }}" class="d-inline-flex flex-shrink-0">
-                                        <form action="{{ route('admin.requests.ready', $request->id) }}" method="POST" class="m-0 d-inline-flex flex-shrink-0">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-info text-white btn-action btn-action-ready" title="Mark Ready for Pickup">
-                                                <i class="fa-solid fa-bell"></i> <span>Ready</span>
-                                            </button>
-                                        </form>
-                                    </div>
-
-                                @elseif($currentStatus == 'Ready')
-                                    @if(count($request->documents_list) > 1)
-                                        <div class="btn-group shadow-sm btn-action-gen">
-                                            <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-sm btn-outline-primary rounded-start-3 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 flex-grow-1" title="Re-download All (ZIP)">
-                                                <i class="fa-solid fa-file-zipper"></i> <span>Word Doc</span>
-                                            </a>
-                                            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-end-3 px-2" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="font-size: 13px;">
-                                                @foreach($request->documents_list as $docItem)
-                                                    <li>
-                                                        <a class="dropdown-item py-1.5 d-flex align-items-center gap-2" href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}">
-                                                            <i class="fa-solid fa-file-word text-primary"></i> <span>{{ $docItem['type'] }}</span>
-                                                        </a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @else
-                                        <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-sm btn-outline-primary btn-action btn-action-gen" title="Re-download Document">
-                                            <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                                        </a>
-                                    @endif
-
-                                    <form action="{{ route('admin.requests.complete', $request->id) }}" method="POST" class="m-0 d-inline-flex flex-shrink-0">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-success btn-action btn-action-complete" title="Mark Claimed / Completed">
-                                            <i class="fa-solid fa-check-double"></i> <span>Complete</span>
-                                        </button>
-                                    </form>
-
-                                @elseif($currentStatus == 'Completed')
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-sm btn-outline-primary btn-action btn-action-gen" title="Download Document Archive">
-                                        <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                                    </a>
-
-                                @elseif($currentStatus == 'Rejected')
-                                    <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" class="m-0 d-inline-flex flex-shrink-0" onsubmit="return confirm('Permanently delete this rejected request?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger btn-action btn-action-reject" title="Delete Permanently">
-                                            <i class="fa-solid fa-trash"></i> <span>Delete</span>
-                                        </button>
-                                    </form>
-                                @endif
-
-                            </div>
-                        </td>
+                        
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fa-solid fa-inbox fa-3x mb-3 text-light"></i>
                             <h5 class="fw-bold text-dark">No Requests Found</h5>
                             <div>There are currently no documents in the <b>{{ str_replace('_', ' ', $currentStatus) }}</b> tab.</div>
@@ -842,12 +1894,17 @@
                     $docTypeLower = strtolower($request->document_type ?? '');
                     $isBusinessClearance = str_contains($docTypeLower, 'business');
                 @endphp
-                <div class="mobile-request-card {{ $isUrgent ? 'border-danger border-opacity-50' : '' }}" style="{{ $isUrgent ? 'background-color: #fff5f5;' : '' }}">
+                <div class="mobile-request-card request-row-clickable mb-3 p-3 rounded-3 border bg-white shadow-xs {{ $isUrgent ? 'border-danger border-opacity-50' : '' }}" 
+                     data-modal-target="#viewModal{{ $request->id }}"
+                     role="button"
+                     tabindex="0"
+                     title="Tap to view request details"
+                     style="{{ $isUrgent ? 'background-color: #fff5f5;' : '' }} cursor: pointer; transition: transform var(--transition-fast), box-shadow var(--transition-fast);">
                     {{-- Header: Tracking ID + Status Badge --}}
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <input class="form-check-input req-checkbox mt-0" type="checkbox" value="{{ $request->id }}" data-tracking="{{ $request->tracking_number }}">
-                            <span class="font-monospace fw-bold text-dark" style="font-size: 13.5px;">{{ $request->tracking_number }}</span>
+                            <input class="form-check-input req-checkbox mt-0" type="checkbox" value="{{ $request->id }}" data-tracking="{{ $request->tracking_number }}" onclick="event.stopPropagation();">
+                            <span class="font-monospace fw-bold text-dark font-mono-id" style="font-size: 13.5px;">{{ $request->tracking_number }}</span>
                             @if($isUrgent)
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-0.5 px-1.5" style="font-size: 10px;">
                                     <i class="fa-solid fa-triangle-exclamation"></i> Overdue
@@ -856,17 +1913,17 @@
                         </div>
                         <div id="status-badge-mobile-{{ $request->id }}">
                             @if($request->status == 'Completed')
-                                <span class="status-badge status-completed">Completed</span>
+                                <span class="status-badge status-completed"><span class="status-dot"></span><span>Completed</span></span>
                             @elseif($request->status == 'Ready')
-                                <span class="status-badge status-ready">Ready</span>
+                                <span class="status-badge status-ready"><span class="status-dot"></span><span>Ready</span></span>
                             @elseif($request->status == 'Processing')
-                                <span class="status-badge status-processing">Processing</span>
+                                <span class="status-badge status-processing"><span class="status-dot"></span><span>Processing</span></span>
                             @elseif($request->status == 'Under Review')
-                                <span class="status-badge status-under-review">Under Review</span>
+                                <span class="status-badge status-under-review"><span class="status-dot"></span><span>Under Review</span></span>
                             @elseif($request->status == 'Rejected')
-                                <span class="status-badge status-rejected">Rejected</span>
+                                <span class="status-badge status-rejected"><span class="status-dot"></span><span>Rejected</span></span>
                             @else
-                                <span class="status-badge status-pending">Pending</span>
+                                <span class="status-badge status-pending"><span class="status-dot"></span><span>Pending</span></span>
                             @endif
                         </div>
                     </div>
@@ -890,7 +1947,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="text-muted">Date:</span>
-                            <span class="text-dark">{{ $request->created_at->format('M d, Y') }}</span>
+                            <span class="text-dark font-tabular-date">{{ $request->created_at->format('M d, Y') }}</span>
                         </div>
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 pt-1 border-top border-light-subtle">
                             @if($idType)
@@ -900,7 +1957,7 @@
                             @endif
                             
                             @if(!$isBusinessClearance)
-                                <span class="badge bg-success bg-opacity-10 text-success fw-bold ms-auto" style="font-size: 11px;">FREE</span>
+                                <span class="tag-free ms-auto">FREE</span>
                             @elseif($request->fee !== null && (float)$request->fee > 0)
                                 <span class="badge bg-success bg-opacity-10 text-success fw-bold ms-auto" style="font-size: 11px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
                             @else
@@ -909,127 +1966,13 @@
                         </div>
                     </div>
 
-                    {{-- Mobile Action Buttons Grid --}}
-                    <div class="mobile-actions-grid pt-1">
-                        <button type="button" class="btn btn-outline-secondary btn-action-mobile" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#viewModal{{ $request->id }}" 
-                                title="View Details">
-                            <i class="fa-solid fa-eye"></i> <span>View</span>
-                        </button>
-
-                        @if($currentStatus == 'Pending_Review')
-                            <form action="{{ route('admin.requests.accept', $request->id) }}" method="POST" class="m-0 flex-grow-1">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-success btn-action-mobile w-100" title="Accept & Move to Processing">
-                                    <i class="fa-solid fa-check"></i> <span>Accept</span>
-                                </button>
-                            </form>
-
-                            <button type="button" class="btn btn-outline-danger btn-action-mobile"
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#viewModal{{ $request->id }}"
-                                    title="Review & Reject Request">
-                                <i class="fa-solid fa-xmark"></i> <span>Reject</span>
-                            </button>
-
-                            <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" class="m-0" onsubmit="return confirm('Delete this request?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-light border text-danger btn-action-mobile px-2.5" title="Delete Request">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
-
-                        @elseif($currentStatus == 'Processing')
-                            @php
-                                $docsCount = count($request->documents_list);
-                            @endphp
-
-                            @if($docsCount > 1)
-                                <div class="btn-group shadow-sm flex-grow-1">
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                       class="btn btn-primary rounded-start-3 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 flex-grow-1" 
-                                       onclick="markAsProcessing({{ $request->id }})" 
-                                       title="Generate All Documents (ZIP)">
-                                        <i class="fa-solid fa-file-zipper"></i> <span>Generate (All)</span>
-                                    </a>
-                                    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split rounded-end-3 px-2" data-bs-toggle="dropdown" aria-expanded="false" title="Generate individual document"></button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="font-size: 13px;">
-                                        @foreach($request->documents_list as $docItem)
-                                            <li>
-                                                <a class="dropdown-item py-1.5 d-flex align-items-center gap-2" href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}">
-                                                    <i class="fa-solid fa-file-word text-primary"></i> <span>{{ $docItem['type'] }}</span>
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @else
-                                <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                   class="btn btn-primary btn-action-mobile flex-grow-1" 
-                                   onclick="markAsProcessing({{ $request->id }})" 
-                                   title="Generate Document">
-                                    <i class="fa-solid fa-file-word"></i> <span>Generate Word</span>
-                                </a>
-                            @endif
-
-                            <div id="ready-btn-container-mobile-{{ $request->id }}" class="flex-grow-1">
-                                <form action="{{ route('admin.requests.ready', $request->id) }}" method="POST" class="m-0 w-100">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="btn btn-info text-white btn-action-mobile w-100" title="Mark Ready for Pickup">
-                                        <i class="fa-solid fa-bell"></i> <span>Ready</span>
-                                    </button>
-                                </form>
-                            </div>
-
-                        @elseif($currentStatus == 'Ready')
-                            @if(count($request->documents_list) > 1)
-                                <div class="btn-group shadow-sm flex-grow-1">
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-outline-primary rounded-start-3 px-2 fw-semibold d-inline-flex align-items-center justify-content-center gap-1 flex-grow-1" title="Re-download All (ZIP)">
-                                        <i class="fa-solid fa-file-zipper"></i> <span>Word Doc</span>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-end-3 px-2" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="font-size: 13px;">
-                                        @foreach($request->documents_list as $docItem)
-                                            <li>
-                                                <a class="dropdown-item py-1.5 d-flex align-items-center gap-2" href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}">
-                                                    <i class="fa-solid fa-file-word text-primary"></i> <span>{{ $docItem['type'] }}</span>
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @else
-                                <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-outline-primary btn-action-mobile flex-grow-1" title="Re-download Document">
-                                    <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                                </a>
-                            @endif
-
-                            <form action="{{ route('admin.requests.complete', $request->id) }}" method="POST" class="m-0 flex-grow-1">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-success btn-action-mobile w-100" title="Mark Claimed / Completed">
-                                    <i class="fa-solid fa-check-double"></i> <span>Complete</span>
-                                </button>
-                            </form>
-
-                        @elseif($currentStatus == 'Completed')
-                            <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-outline-primary btn-action-mobile flex-grow-1" title="Download Document Archive">
-                                <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                            </a>
-
-                        @elseif($currentStatus == 'Rejected')
-                            <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" class="m-0 flex-grow-1" onsubmit="return confirm('Permanently delete this rejected request?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-action-mobile w-100" title="Delete Permanently">
-                                    <i class="fa-solid fa-trash"></i> <span>Delete</span>
-                                </button>
-                            </form>
-                        @endif
+                    {{-- Footer: Tap Hint & Time --}}
+                    <div class="d-flex align-items-center justify-content-between pt-2 border-top text-muted" style="font-size: 11.5px;">
+                        <span><i class="fa-regular fa-clock me-1"></i> {{ $request->created_at->format('M d, Y h:i A') }}</span>
+                        <span class="text-primary fw-semibold d-inline-flex align-items-center gap-1">
+                            <span>View Details</span>
+                            <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+                        </span>
                     </div>
                 </div>
             @empty
@@ -1102,186 +2045,140 @@
                     {{-- ======================== --}}
                     {{-- VIEW MODE              --}}
                     {{-- ======================== --}}
-                    <div id="view-mode-{{ $request->id }}" class="p-4">
+                    <div id="view-mode-{{ $request->id }}" class="p-3 p-md-4">
 
-                        {{-- Row 1: Tracking + Status --}}
-                        <div class="row g-0 mb-0">
-                            <div class="col-6 pe-3 pb-3" style="border-bottom: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Tracking Number</p>
-                                <p class="fw-bold text-dark mb-0 font-monospace" style="font-size:15px;">{{ $request->tracking_number }}</p>
-                            </div>
-                            <div class="col-6 ps-3 pb-3" style="border-bottom: 1px solid #f0f0f0; border-left: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Status</p>
-                                <span id="modal-status-{{ $request->id }}" class="fw-bold"
-                                    style="font-size:14px; color:
-                                        @if($request->status == 'Completed') #198754
-                                        @elseif($request->status == 'Ready') #0dcaf0
-                                        @elseif($request->status == 'Rejected') #dc3545
-                                        @elseif($request->status == 'Processing') #0d6efd
-                                        @elseif($request->status == 'Under Review') #6f42c1
-                                        @else #f0ad4e @endif
-                                    ;">{{ $request->status }}</span>
-                            </div>
-                        </div>
+                        @php
+                            $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                            $docTypeLower = strtolower($request->document_type ?? '');
+                            $isBusinessClearance = str_contains($docTypeLower, 'business');
+                            $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
+                            $modalDocsList = $request->documents_list;
+                            $docsCount = count($modalDocsList);
+                        @endphp
 
-                        {{-- Row 2: Name + Age --}}
-                        <div class="row g-0 mb-0">
-                            <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Applicant Name</p>
-                                <p class="fw-bold text-dark mb-0" style="font-size:15px;">{{ strtoupper($request->first_name . ' ' . $request->middle_initial . ' ' . $request->last_name) }}</p>
-                            </div>
-                            <div class="col-6 ps-3 py-3" style="border-bottom: 1px solid #f0f0f0; border-left: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Age</p>
-                                <p class="fw-bold text-dark mb-0" style="font-size:15px;">{{ $request->age ?? '—' }}</p>
-                            </div>
-                        </div>
-
-                        {{-- Row 3: Contact + ID Type --}}
-                        <div class="row g-0 mb-0">
-                            <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Contact Info</p>
-                                <p class="fw-semibold text-dark mb-0" style="font-size:14px;">{{ $request->resident_email ?? $request->contact_number ?? '—' }}</p>
-                            </div>
-                            <div class="col-6 ps-3 py-3" style="border-bottom: 1px solid #f0f0f0; border-left: 1px solid #f0f0f0;">
-                                @php
-                                    $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
-                                @endphp
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">ID Type</p>
-                                <p class="fw-semibold text-dark mb-0" style="font-size:14px;">
-                                    @if($idType)
-                                        <i class="fa-solid fa-id-card text-primary me-1"></i> {{ $idType }}
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Row 4: Fee Amount + Date Submitted --}}
-                        <div class="row g-0 mb-0">
-                            <div class="col-6 pe-3 py-3" style="border-bottom: 1px solid #f0f0f0;">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <p class="text-muted mb-0" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Fee Amount</p>
-                                    @if(!$isBusinessClearance)
-                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">
-                                            <i class="fa-solid fa-circle-check me-1"></i>FREE
+                        {{-- 1. Tracking Number at the Top (Big Highlight & Status) --}}
+                        <div class="tracking-hero-card mb-3 p-3 p-sm-4 rounded-3 border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 shadow-xs">
+                            <div class="min-w-0">
+                                <div class="d-flex align-items-center gap-1.5 mb-2 flex-wrap">
+                                    <span class="badge tracking-kicker px-2.5 py-1 fw-bold rounded-pill">
+                                        <i class="fa-solid fa-receipt me-1"></i> OFFICIAL TRACKING NUMBER
+                                    </span>
+                                    @if($isUrgent)
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-0.5 fw-bold" style="font-size: 10px;">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> OVERDUE
                                         </span>
-                                    @else
-                                        @if($request->fee !== null && (float)$request->fee > 0)
-                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">SET: ₱{{ number_format($request->fee, 2) }}</span>
-                                        @else
-                                            <span class="badge bg-warning bg-opacity-10 text-warning fw-bold" style="font-size:11px;">TO BE SETTLED</span>
-                                        @endif
                                     @endif
                                 </div>
-
-                                @if($isBusinessClearance)
-                                    <form action="{{ route('admin.requests.updateFee', $request->id) }}" method="POST" class="d-flex align-items-center gap-1 mt-1">
-                                        @csrf
-                                        @method('PATCH')
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-light text-muted fw-bold" style="font-size: 13px;">₱</span>
-                                            <input type="number" step="0.01" min="0" name="fee" 
-                                                   class="form-control form-control-sm font-monospace fw-bold" 
-                                                   placeholder="0.00" 
-                                                   value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}"
-                                                   style="font-size:13px;">
-                                            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold" title="Save Fee Amount">
-                                                <i class="fa-solid fa-check me-1"></i> Save
-                                            </button>
-                                        </div>
-                                    </form>
-                                @else
-                                    <div class="bg-light border rounded-3 p-2 text-center text-success fw-bold small mt-1">
-                                        <i class="fa-solid fa-circle-check me-1"></i> Free of Charge
-                                    </div>
-                                @endif
+                                <div class="d-flex align-items-center gap-2.5 flex-wrap">
+                                    <span class="hero-tracking-number font-monospace fw-bold" style="font-size: clamp(2rem, 3.8vw, 2.65rem) !important; font-weight: 800 !important; letter-spacing: 0.05em !important; line-height: 1.15 !important;">
+                                        {{ $request->tracking_number }}
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-light border py-1.5 px-3 text-muted copy-tracking-btn rounded-2 d-inline-flex align-items-center gap-1.5 shadow-xs" 
+                                            onclick="copyTrackingNumber('{{ $request->tracking_number }}', this)" 
+                                            title="Copy tracking number to clipboard"
+                                            style="font-size: 12px; font-weight: 600;">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span class="copy-label">Copy</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-6 ps-3 py-3" style="border-bottom: 1px solid #f0f0f0; border-left: 1px solid #f0f0f0;">
-                                <p class="text-muted mb-1" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">Date Submitted</p>
-                                <p class="fw-semibold text-dark mb-0" style="font-size:14px;">{{ $request->created_at->format('F d, Y — h:i A') }}</p>
+                            <div class="d-flex flex-column align-items-sm-end justify-content-center flex-shrink-0">
+                                <span class="text-muted small mb-1.5 fw-semibold text-uppercase tracking-status-label" style="font-size: 11px; letter-spacing: 0.06em;">Current Status</span>
+                                <div id="modal-status-badge-{{ $request->id }}">
+                                    <span id="modal-status-{{ $request->id }}" class="status-badge status-{{ strtolower(str_replace(' ', '-', $request->status)) }} px-3 py-1.5 fw-bold shadow-xs" style="font-size: 13px;">
+                                        <span class="status-dot"></span>
+                                        <span>{{ $request->status }}</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Row 5: Stated Purpose / Requested Documents --}}
-                        <div class="pt-3">
-                            @php
-                                $modalDocsList = $request->documents_list;
-                                $docsCount = count($modalDocsList);
-                            @endphp
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <p class="text-muted mb-0" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">
-                                    <i class="fa-solid fa-file-lines text-primary me-1"></i> Requested {{ $docsCount > 1 ? 'Documents (' . $docsCount . ')' : 'Document' }}
-                                </p>
-                                @if($docsCount > 1)
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
-                                       title="Download All Documents in a Single ZIP Archive">
-                                        <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
-                                    </a>
-                                @endif
+                        {{-- 2. "The Rest" (Applicant & Submission Details Grid) --}}
+                        <div class="details-grid-card mb-3 border rounded-3 overflow-hidden">
+                            {{-- Row A: Name + Age --}}
+                            <div class="row g-0">
+                                <div class="col-sm-6 p-3 grid-cell grid-cell-border-r grid-cell-border-b">
+                                    <p class="text-muted mb-1 details-cell-label">Applicant Name</p>
+                                    <p class="fw-bold text-dark mb-0 details-cell-value">{{ strtoupper($request->first_name . ' ' . $request->middle_initial . ' ' . $request->last_name) }}</p>
+                                </div>
+                                <div class="col-sm-6 p-3 grid-cell grid-cell-border-b">
+                                    <p class="text-muted mb-1 details-cell-label">Age</p>
+                                    <p class="fw-bold text-dark mb-0 details-cell-value">{{ $request->age ?? '—' }}</p>
+                                </div>
                             </div>
 
-                            @if($docsCount > 1)
-                                <div class="d-flex flex-column gap-2 mb-2">
-                                    @foreach($modalDocsList as $docItem)
-                                        @php
-                                            $itemDocLower = strtolower($docItem['type'] ?? '');
-                                            $isItemBusiness = str_contains($itemDocLower, 'business');
-                                        @endphp
-                                        <div class="bg-light rounded-3 p-3 border d-flex justify-content-between align-items-center gap-3">
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span class="fw-bold text-dark" style="font-size: 14px;">{{ $docItem['type'] }}</span>
-                                                    @if(!$isItemBusiness)
-                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
-                                                    @elseif($docItem['fee'] !== null && (float)$docItem['fee'] > 0)
-                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($docItem['fee'], 2) }}</span>
-                                                    @else
-                                                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
-                                                    @endif
-                                                </div>
-                                                <div class="text-muted small mt-1">
-                                                    <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
-                                                </div>
-                                            </div>
-                                            <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
-                                               class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
-                                               title="Generate Word Document for {{ $docItem['type'] }}">
-                                                <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                                            </a>
-                                        </div>
-                                    @endforeach
+                            {{-- Row B: Contact + ID Type --}}
+                            <div class="row g-0">
+                                <div class="col-sm-6 p-3 grid-cell grid-cell-border-r grid-cell-border-b">
+                                    <p class="text-muted mb-1 details-cell-label">Contact Info</p>
+                                    <p class="fw-semibold text-dark mb-0 details-cell-value" style="font-size:14px; word-break: break-all;">{{ $request->resident_email ?? $request->contact_number ?? '—' }}</p>
                                 </div>
-                            @else
-                                <div class="bg-light rounded-3 p-3 border mb-2 d-flex justify-content-between align-items-center gap-3">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="fw-bold text-dark" style="font-size: 14px;">{{ $request->document_type }}</span>
-                                            @if(!$isBusinessClearance)
-                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
-                                            @elseif($request->fee !== null && (float)$request->fee > 0)
-                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
+                                <div class="col-sm-6 p-3 grid-cell grid-cell-border-b">
+                                    <p class="text-muted mb-1 details-cell-label">ID Type</p>
+                                    <p class="fw-semibold text-dark mb-0 details-cell-value" style="font-size:14px;">
+                                        @if($idType)
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 fw-semibold">
+                                                <i class="fa-solid fa-id-card me-1"></i> {{ $idType }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- Row C: Fee Amount + Date Submitted --}}
+                            <div class="row g-0">
+                                <div class="col-sm-6 p-3 grid-cell grid-cell-border-r">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <p class="text-muted mb-0 details-cell-label">Fee Amount</p>
+                                        @if(!$isBusinessClearance)
+                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">
+                                                <i class="fa-solid fa-circle-check me-1"></i>FREE
+                                            </span>
+                                        @else
+                                            @if($request->fee !== null && (float)$request->fee > 0)
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size:11px;">SET: ₱{{ number_format($request->fee, 2) }}</span>
                                             @else
-                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
+                                                <span class="badge bg-warning bg-opacity-10 text-warning fw-bold" style="font-size:11px;">TO BE SETTLED</span>
                                             @endif
-                                        </div>
-                                        <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
+                                        @endif
                                     </div>
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
-                                       title="Generate Word Document">
-                                        <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
-                                    </a>
+
+                                    @if($isBusinessClearance)
+                                        <form action="{{ route('admin.requests.updateFee', $request->id) }}" method="POST" class="d-flex align-items-center gap-1 mt-1">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light text-muted fw-bold" style="font-size: 13px;">₱</span>
+                                                <input type="number" step="0.01" min="0" name="fee" 
+                                                       class="form-control form-control-sm font-monospace fw-bold" 
+                                                       placeholder="0.00" 
+                                                       value="{{ $request->fee !== null ? number_format($request->fee, 2, '.', '') : '' }}"
+                                                       style="font-size:13px;">
+                                                <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold" title="Save Fee Amount">
+                                                    <i class="fa-solid fa-check me-1"></i> Save
+                                                </button>
+                                            </div>
+                                        </form>
+                                    @else
+                                        <div class="bg-light border rounded-3 p-2 text-center text-success fw-bold small mt-1">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Free of Charge
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
+                                <div class="col-sm-6 p-3 grid-cell">
+                                    <p class="text-muted mb-1 details-cell-label">Date Submitted</p>
+                                    <p class="fw-semibold text-dark mb-0 font-tabular-date details-cell-value" style="font-size:14px;">{{ $request->created_at->format('F d, Y — h:i A') }}</p>
+                                </div>
+                            </div>
                         </div>
 
-                        {{-- Row 6: Uploaded Supporting Documents & Document Type --}}
-                        <div class="pt-3 border-top mt-3">
+                        {{-- 3. Attached Documents and Type (Positioned BEFORE Requested Document) --}}
+                        <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <p class="text-muted mb-0" style="font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">
-                                    <i class="fa-solid fa-paperclip text-primary me-1"></i> Attached Documents &amp; Type
+                                <p class="text-muted mb-0 details-section-title">
+                                    <i class="fa-solid fa-paperclip text-primary me-1.5"></i> Attached Documents &amp; Type
                                     @if(count($request->attachments_list) > 0)
                                         <span class="badge bg-primary bg-opacity-10 text-primary ms-1 rounded-pill" style="font-size:10.5px;">{{ count($request->attachments_list) }}</span>
                                     @endif
@@ -1299,7 +2196,7 @@
                                             $jsDocType = e($att['doc_type'], false);
                                         @endphp
                                         <div class="col-md-6">
-                                            <div class="bg-light rounded-3 border d-flex align-items-center gap-2 h-100" style="padding: 10px 12px;">
+                                            <div class="bg-light rounded-3 border d-flex align-items-center gap-2 h-100 modal-doc-item" style="padding: 10px 12px;">
                                                 {{-- Thumbnail / Icon preview with click to view --}}
                                                 <div class="rounded-3 border bg-white d-flex align-items-center justify-content-center overflow-hidden position-relative shadow-sm" 
                                                      style="width: 52px; height: 52px; flex-shrink: 0; cursor: pointer; transition: transform 0.15s ease;"
@@ -1322,7 +2219,7 @@
                                                             <i class="fa-solid fa-tag me-1"></i>{{ $att['doc_type'] }}
                                                         </span>
                                                     </div>
-                                                    <div class="fw-bold text-dark text-truncate" style="font-size: 12.5px;" title="{{ $att['file_name'] }}">
+                                                    <div class="fw-bold text-dark text-truncate details-cell-value" style="font-size: 12.5px;" title="{{ $att['file_name'] }}">
                                                         {{ $att['file_name'] }}
                                                     </div>
                                                     @if(!empty($att['file_size']))
@@ -1355,6 +2252,76 @@
                             @else
                                 <div class="bg-light rounded-3 p-3 border text-center text-muted" style="font-size: 12.5px;">
                                     <i class="fa-solid fa-file-circle-question text-secondary me-1"></i> No uploaded supporting documents attached to this request.
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- 4. Requested Document (Positioned AFTER Attached Documents) --}}
+                        <div class="pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <p class="text-muted mb-0 details-section-title">
+                                    <i class="fa-solid fa-file-lines text-primary me-1.5"></i> Requested {{ $docsCount > 1 ? 'Documents (' . $docsCount . ')' : 'Document' }}
+                                </p>
+                                @if($docsCount > 1)
+                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
+                                       title="Download All Documents in a Single ZIP Archive">
+                                        <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
+                                    </a>
+                                @endif
+                            </div>
+
+                            @if($docsCount > 1)
+                                <div class="d-flex flex-column gap-2 mb-2">
+                                    @foreach($modalDocsList as $docItem)
+                                        @php
+                                            $itemDocLower = strtolower($docItem['type'] ?? '');
+                                            $isItemBusiness = str_contains($itemDocLower, 'business');
+                                        @endphp
+                                        <div class="bg-light rounded-3 p-3 border d-flex justify-content-between align-items-center gap-3 modal-doc-item">
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="fw-bold text-dark details-cell-value" style="font-size: 14px;">{{ $docItem['type'] }}</span>
+                                                    @if(!$isItemBusiness)
+                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                                    @elseif($docItem['fee'] !== null && (float)$docItem['fee'] > 0)
+                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($docItem['fee'], 2) }}</span>
+                                                    @else
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
+                                                </div>
+                                            </div>
+                                            <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
+                                               class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                               title="Generate Word Document for {{ $docItem['type'] }}">
+                                                <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="bg-light rounded-3 p-3 border mb-2 d-flex justify-content-between align-items-center gap-3 modal-doc-item">
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="fw-bold text-dark details-cell-value" style="font-size: 14px;">{{ $request->document_type }}</span>
+                                            @if(!$isBusinessClearance)
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                            @elseif($request->fee !== null && (float)$request->fee > 0)
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
+                                            @else
+                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
+                                            @endif
+                                        </div>
+                                        <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
+                                    </div>
+                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                       title="Generate Word Document">
+                                        <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
+                                    </a>
                                 </div>
                             @endif
                         </div>
@@ -1518,7 +2485,7 @@
 
                     {{-- Right: Close + Save Changes + Workflow Action Buttons --}}
                     <div class="d-flex gap-2 align-items-center">
-                        <button type="button" class="btn btn-sm btn-light border rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm" data-bs-dismiss="modal">Close</button>
+                        
 
                         @if($editable)
                             <button type="submit" form="edit-form-{{ $request->id }}"
@@ -1684,6 +2651,38 @@
         }
     }
     window.toggleEditMode = toggleEditMode;
+        // Copy tracking number helper
+    window.copyTrackingNumber = function(text, btnEl) {
+        function showFeedback() {
+            if (!btnEl) return;
+            const originalHtml = btnEl.innerHTML;
+            btnEl.innerHTML = '<i class="fa-solid fa-check text-success"></i> <span class="text-success fw-bold">Copied!</span>';
+            setTimeout(() => {
+                btnEl.innerHTML = originalHtml;
+            }, 1800);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(showFeedback).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+
+        function fallbackCopy(val) {
+            const temp = document.createElement('input');
+            temp.value = val;
+            document.body.appendChild(temp);
+            temp.select();
+            try {
+                document.execCommand('copy');
+                showFeedback();
+            } catch (err) {}
+            document.body.removeChild(temp);
+        }
+    };
+
     window.syncDocsJson = function(id) { return true; };
 
     // Automatically reset modal to view mode when closed
@@ -1807,7 +2806,25 @@
             }, 300);
         });
 
-        // 2. Real-Time Auto-Refresh Polling (30 Seconds, paused when tab is inactive)
+        // 2. Real-Time Auto-Refresh Polling (10 Seconds, paused when tab is inactive)
+        let _prevTabCounts = null;
+        let _liveIndicator = document.getElementById('live-status-indicator');
+
+        function _parseTabCounts(doc) {
+            const ids = ['tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+            const counts = {};
+            ids.forEach(id => {
+                const el = doc.getElementById(id);
+                counts[id] = el ? el.textContent.trim() : '0';
+            });
+            return counts;
+        }
+
+        function _countsChanged(a, b) {
+            if (!a) return false;
+            return JSON.stringify(a) !== JSON.stringify(b);
+        }
+
         setInterval(function() {
             if (document.hidden) return;
 
@@ -1861,12 +2878,173 @@
                 let oldEl = document.getElementById(id);
                 if (newEl && oldEl) oldEl.innerHTML = newEl.innerHTML;
             });
+
+            // Detect count changes → show toast
+            const newCounts = _parseTabCounts(doc);
+            if (_countsChanged(_prevTabCounts, newCounts)) {
+                if (_prevTabCounts) {
+                    const statusNames = {
+                        'tab-badge-pending':    'Pending & Review',
+                        'tab-badge-processing': 'Processing',
+                        'tab-badge-ready':      'Ready for Pickup',
+                        'tab-badge-completed':  'Completed',
+                        'tab-badge-rejected':   'Rejected',
+                    };
+                    Object.keys(newCounts).forEach(key => {
+                        const prev = parseInt(_prevTabCounts[key]) || 0;
+                        const curr = parseInt(newCounts[key]) || 0;
+                        if (curr > prev && typeof window.agToast === 'function') {
+                            window.agToast(
+                                'Request Count Updated',
+                                `${statusNames[key]}: ${curr} request${curr !== 1 ? 's' : ''}`,
+                                key === 'tab-badge-rejected' ? 'warning' : 'info',
+                                5000
+                            );
+                        }
+                    });
+                }
+                _prevTabCounts = newCounts;
+            } else if (!_prevTabCounts) {
+                _prevTabCounts = newCounts;
+            }
+
+            // Update timestamp
+            const lbl = document.getElementById('last-refreshed-label');
+            if (lbl) {
+                const now = new Date();
+                lbl.textContent = `Auto-refreshed ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+            }
         })
         .catch(error => console.error("Auto-refresh error:", error));
 
-        }, 30000); 
+        }, 10000); 
 
-        // Table Density / Zoom Adjustment Mode
+        // 3. Real-Time WebSocket Event Listener
+        document.addEventListener('admin:realtime-event', function(e) {
+            const payload = e.detail;
+            console.log('⚡ Admin requests received realtime event:', payload);
+            if (typeof window.loadPageUrl === 'function') {
+                window.loadPageUrl(window.location.href, false, true);
+            }
+        });
+
+        // 4. AJAX Tab / Pipeline Switching Animation
+        function loadPageUrl(url, pushState = true, isRealtime = false) {
+            const tableCard = document.querySelector('.card.border-0.shadow-sm');
+            if (tableCard && !isRealtime) {
+                tableCard.style.opacity = '0.55';
+                tableCard.style.transition = 'opacity 0.15s ease';
+            }
+
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Update pipeline tabs
+                    const newPipeline = doc.querySelector('.process-pipeline-container');
+                    const currPipeline = document.querySelector('.process-pipeline-container');
+                    if (newPipeline && currPipeline) {
+                        currPipeline.innerHTML = newPipeline.innerHTML;
+                    }
+
+                    // 2. Update table body & animate rows
+                    const newTbody = doc.getElementById('requests-tbody');
+                    const currTbody = document.getElementById('requests-tbody');
+                    if (newTbody && currTbody) {
+                        currTbody.innerHTML = newTbody.innerHTML;
+                    }
+
+                    // 3. Update mobile list
+                    const newMobile = doc.getElementById('requests-mobile-list');
+                    const currMobile = document.getElementById('requests-mobile-list');
+                    if (newMobile && currMobile) {
+                        currMobile.innerHTML = newMobile.innerHTML;
+                    }
+
+                    // 4. Update modals container
+                    const newModals = doc.getElementById('modals-container');
+                    const currModals = document.getElementById('modals-container');
+                    if (newModals && currModals) {
+                        currModals.innerHTML = newModals.innerHTML;
+                    }
+
+                    // 5. Update pagination
+                    const newPag = doc.getElementById('pagination-container');
+                    const currPag = document.getElementById('pagination-container');
+                    if (newPag && currPag) {
+                        currPag.innerHTML = newPag.innerHTML;
+                    } else if (newPag && !currPag) {
+                        const m = document.getElementById('requests-mobile-list');
+                        if (m) m.after(newPag);
+                    } else if (!newPag && currPag) {
+                        currPag.remove();
+                    }
+
+                    // 6. Update card header title & counts
+                    const newCardHeader = doc.querySelector('.card-header');
+                    const currCardHeader = document.querySelector('.card-header');
+                    if (newCardHeader && currCardHeader) {
+                        const newTitle = newCardHeader.querySelector('h5');
+                        const currTitle = currCardHeader.querySelector('h5');
+                        if (newTitle && currTitle) currTitle.innerHTML = newTitle.innerHTML;
+                        const newBadge = newCardHeader.querySelector('.badge');
+                        const currBadge = currCardHeader.querySelector('.badge');
+                        if (newBadge && currBadge) currBadge.innerHTML = newBadge.innerHTML;
+                    }
+
+                    // 7. Update KPIs with count animation
+                    const elementIds = [
+                        'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
+                        'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
+                    ];
+                    elementIds.forEach(id => {
+                        const newEl = doc.getElementById(id);
+                        const oldEl = document.getElementById(id);
+                        if (newEl && oldEl && newEl.textContent !== oldEl.textContent) {
+                            oldEl.innerHTML = newEl.innerHTML;
+                            oldEl.classList.add('stat-count-flash');
+                            setTimeout(() => oldEl.classList.remove('stat-count-flash'), 600);
+                        }
+                    });
+
+                    // 8. Re-initialize interactive row & bulk handlers
+                    if (typeof window.initRowClickHandlers === 'function') window.initRowClickHandlers();
+                    if (typeof window.initCheckboxHandlers === 'function') window.initCheckboxHandlers();
+
+                    if (pushState) {
+                        window.history.pushState({ url }, '', url);
+                    }
+
+                    if (tableCard) {
+                        tableCard.style.opacity = '1';
+                    }
+                })
+                .catch(err => {
+                    console.error('AJAX page load error:', err);
+                    if (tableCard) tableCard.style.opacity = '1';
+                });
+        }
+        window.loadPageUrl = loadPageUrl;
+
+        // Delegate pipeline click events for seamless panel switching
+        document.addEventListener('click', function(e) {
+            const pillLink = e.target.closest('.pipeline-pill-link');
+            if (pillLink && pillLink.getAttribute('href') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                const url = pillLink.getAttribute('href');
+                document.querySelectorAll('.pipeline-pill-link').forEach(p => p.classList.remove('active'));
+                pillLink.classList.add('active');
+                loadPageUrl(url, true);
+            }
+        });
+
+        window.addEventListener('popstate', function() {
+            loadPageUrl(window.location.href, false);
+        });
+
+        // 5. Table Density / Zoom Adjustment Mode
         const btnToggleDensity = document.getElementById('btnToggleDensity');
         const reqTable = document.querySelector('.table-requests');
         const densityIcon = document.getElementById('densityIcon');
@@ -1936,7 +3114,37 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+/* ─── Interactive Row Click & Bulk Handlers ─── */
+function initRowClickHandlers() {
+    document.querySelectorAll(".request-row-clickable").forEach(row => {
+        row.onclick = null;
+        row.addEventListener("click", function(e) {
+            // Prevent opening modal when clicking checkboxes, links, forms, or buttons
+            if (e.target.closest(".req-checkbox") || e.target.closest(".col-select") || e.target.closest("input") || e.target.closest("button") || e.target.closest("a") || e.target.closest("form")) {
+                return;
+            }
+            const targetId = this.getAttribute("data-modal-target");
+            if (targetId) {
+                const modalEl = document.querySelector(targetId);
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInstance.show();
+                }
+            }
+        });
+        row.addEventListener("keydown", function(e) {
+            if (e.key === "Enter" || e.key === " ") {
+                if (e.target === this) {
+                    e.preventDefault();
+                    this.click();
+                }
+            }
+        });
+    });
+}
+window.initRowClickHandlers = initRowClickHandlers;
+
+function initCheckboxHandlers() {
     const selectAllCheckbox = document.getElementById('selectAllRequests');
     const reqCheckboxes = document.querySelectorAll('.req-checkbox');
     const bulkActionsBar = document.getElementById('bulkActionsBar');
@@ -1945,7 +3153,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const bulkDeleteModalEl = document.getElementById('requestsBulkDeleteModal');
-    const bulkDeleteModal = bulkDeleteModalEl ? new bootstrap.Modal(bulkDeleteModalEl) : null;
+    const bulkDeleteModal = bulkDeleteModalEl ? bootstrap.Modal.getOrCreateInstance(bulkDeleteModalEl) : null;
     const bulkHiddenIds = document.getElementById('bulk_hidden_ids');
     const bulkModalCount = document.getElementById('bulk_modal_count');
     const bulkSelectedNamesList = document.getElementById('bulk_selected_names_list');
@@ -1955,11 +3163,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const count = checkedBoxes.length;
 
         if (count > 0) {
-            bulkActionsBar.classList.remove('d-none');
-            selectedCountBadge.textContent = `${count} Selected`;
-            bulkDeleteCount.textContent = count;
+            bulkActionsBar?.classList.remove('d-none');
+            if (selectedCountBadge) selectedCountBadge.textContent = `${count} Selected`;
+            if (bulkDeleteCount) bulkDeleteCount.textContent = count;
         } else {
-            bulkActionsBar.classList.add('d-none');
+            bulkActionsBar?.classList.add('d-none');
         }
 
         // Highlight table rows and mobile cards
@@ -1991,6 +3199,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (selectAllCheckbox) {
+        selectAllCheckbox.onchange = null;
         selectAllCheckbox.addEventListener('change', function () {
             reqCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
             updateBulkBar();
@@ -1998,10 +3207,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     reqCheckboxes.forEach(cb => {
+        cb.onchange = null;
         cb.addEventListener('change', updateBulkBar);
     });
 
     if (deselectAllBtn) {
+        deselectAllBtn.onclick = null;
         deselectAllBtn.addEventListener('click', function () {
             reqCheckboxes.forEach(cb => cb.checked = false);
             updateBulkBar();
@@ -2009,13 +3220,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (bulkDeleteBtn && bulkDeleteModal) {
+        bulkDeleteBtn.onclick = null;
         bulkDeleteBtn.addEventListener('click', function () {
             const checkedBoxes = Array.from(document.querySelectorAll('.req-checkbox:checked'));
             if (checkedBoxes.length === 0) return;
 
-            bulkHiddenIds.innerHTML = '';
-            bulkSelectedNamesList.innerHTML = '';
-            bulkModalCount.textContent = `${checkedBoxes.length}`;
+            if (bulkHiddenIds) bulkHiddenIds.innerHTML = '';
+            if (bulkSelectedNamesList) bulkSelectedNamesList.innerHTML = '';
+            if (bulkModalCount) bulkModalCount.textContent = `${checkedBoxes.length}`;
 
             const seenIds = new Set();
             checkedBoxes.forEach(cb => {
@@ -2026,16 +3238,50 @@ document.addEventListener('DOMContentLoaded', function () {
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = 'ids[]';
                 hiddenInput.value = cb.value;
-                bulkHiddenIds.appendChild(hiddenInput);
+                bulkHiddenIds?.appendChild(hiddenInput);
 
                 const li = document.createElement('li');
                 li.textContent = `Tracking #${cb.getAttribute('data-tracking') || cb.value}`;
-                bulkSelectedNamesList.appendChild(li);
+                bulkSelectedNamesList?.appendChild(li);
             });
 
             bulkDeleteModal.show();
         });
     }
+}
+window.initCheckboxHandlers = initCheckboxHandlers;
+
+document.addEventListener('DOMContentLoaded', function () {
+    initRowClickHandlers();
+    initCheckboxHandlers();
+
+    /* ─── Count-Up Animation for KPI Numbers on page load ─── */
+    function animateCountUp(el, target, duration) {
+        if (!el) return;
+        const start = 0;
+        const range = target - start;
+        const startTime = performance.now();
+        function step(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(start + range * ease);
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    const kpiIds = ['kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue'];
+    kpiIds.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) {
+            const target = parseInt(el.textContent.replace(/\D/g, ''));
+            if (!isNaN(target) && target > 0) {
+                el.textContent = '0';
+                setTimeout(() => animateCountUp(el, target, 700), 120 + i * 70);
+            }
+        }
+    });
 });
 </script>
 @endsection

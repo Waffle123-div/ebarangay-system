@@ -45,7 +45,7 @@ class MultiDocumentRequestTest extends TestCase
             'purpose' => 'BANK ACCOUNT OPENING',
         ]);
 
-        $response->assertRedirect(route('resident.dashboard'));
+        $response->assertRedirect(route('resident.request.track'));
         $response->assertSessionHas('success');
 
         $created = DocumentRequest::where('resident_email', $resident->email)->latest()->first();
@@ -265,7 +265,7 @@ class MultiDocumentRequestTest extends TestCase
             'purpose' => 'BANK REQUIREMENTS',
         ]);
 
-        $response->assertRedirect(route('resident.dashboard'));
+        $response->assertRedirect(route('resident.request.track'));
         $response->assertSessionHas('success');
 
         $req = DocumentRequest::where('resident_email', $resident->email)->latest()->first();
@@ -316,7 +316,7 @@ class MultiDocumentRequestTest extends TestCase
             ]),
         ]);
 
-        $response->assertRedirect(route('resident.dashboard'));
+        $response->assertRedirect(route('resident.request.track'));
         $response->assertSessionHas('success');
 
         $req = DocumentRequest::where('resident_email', $resident->email)->latest()->first();
