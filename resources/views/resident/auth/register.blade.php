@@ -597,11 +597,11 @@
                                         <input type="hidden" name="zip_code" value="6005">
                                     </div>
 
-                                </div>
+                                    <div class="d-flex gap-2 mt-4 pt-1 pb-2" id="step1Actions">
+                                        <a href="{{ route('resident.login') }}" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep1"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
+                                        <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep1" onclick="goToStep(2)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
+                                    </div>
 
-                                <div class="d-flex gap-2 mt-3" id="step1Actions">
-                                    <a href="{{ route('resident.login') }}" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep1"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep1" onclick="goToStep(2)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
                                 </div>
                             </div>
 
@@ -693,11 +693,11 @@
                                         </div>
                                     @endif
 
-                                </div>
+                                    <div class="d-flex gap-2 mt-4 pt-1 pb-2" id="step2Actions">
+                                        <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep2" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
+                                        <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep2" onclick="goToStep(3)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
+                                    </div>
 
-                                <div class="d-flex gap-2 mt-4" id="step2Actions">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep2" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep2" onclick="goToStep(3)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
                                 </div>
                             </div>
 
@@ -854,15 +854,16 @@
                                             After submitting, your account will be reviewed by the barangay admin. Please wait for approval before you can fully access the system.
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="d-flex gap-2 mt-3">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="stopFaceCamera(); goToStep(2)">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> Back
-                                    </button>
-                                    <button type="submit" id="btnSubmitRegister" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold">
-                                        <i class="fa-solid fa-user-plus me-1"></i> Sign Up
-                                    </button>
+                                    <div class="d-flex gap-2 mt-4 pt-1 pb-2" id="step3Actions">
+                                        <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="stopFaceCamera(); goToStep(2)">
+                                            <i class="fa-solid fa-arrow-left me-1"></i> Back
+                                        </button>
+                                        <button type="submit" id="btnSubmitRegister" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-user-plus me-1"></i> Sign Up
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -1215,7 +1216,8 @@
             currentStep = step;
             updateNextButtonsVisibility();
 
-            // Scroll right panel back to top cleanly
+            // Scroll step scroll containers and right panel back to top cleanly
+            document.querySelectorAll('.step-scroll').forEach(s => s.scrollTop = 0);
             document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
