@@ -21,7 +21,12 @@ use App\Http\Controllers\ChatbotController;
 // ==========================================
 // LANDING PAGE (Root Route)
 // ==========================================
-Route::get('/', function () {
+Route::get('/', function (Request $request) {
+    if (Auth::check()) {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
     return view('welcome');
 })->name('welcome');
 
