@@ -101,6 +101,102 @@
         /* Invalid feedback for custom validation */
         .field-error { border-color: #dc3545 !important; }
 
+        /* Emphasized Next Button System */
+        .next-step-btn {
+            background: linear-gradient(135deg, #0d6efd 0%, #0052cc 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.4), 0 0 0 2px rgba(13, 110, 253, 0.15) !important;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .next-step-btn.is-revealed {
+            display: inline-flex !important;
+            animation: nextBtnPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                       nextBtnPulseEmphasis 2.5s ease-in-out infinite 0.4s;
+        }
+
+        .next-step-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -70%;
+            width: 45%;
+            height: 200%;
+            background: linear-gradient(
+                60deg,
+                rgba(255, 255, 255, 0) 15%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0) 85%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
+        }
+
+        .next-step-btn.is-revealed::after {
+            animation: nextBtnShineSweep 3s ease-in-out infinite 0.6s;
+        }
+
+        @keyframes nextBtnPopIn {
+            0% {
+                opacity: 0;
+                transform: translateY(12px) scale(0.92);
+            }
+            70% {
+                transform: translateY(-2px) scale(1.03);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes nextBtnPulseEmphasis {
+            0%, 100% {
+                box-shadow: 0 4px 14px rgba(13, 110, 253, 0.4), 0 0 0 0 rgba(13, 110, 253, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 22px rgba(13, 110, 253, 0.65), 0 0 0 6px rgba(13, 110, 253, 0.15);
+            }
+        }
+
+        @keyframes nextBtnShineSweep {
+            0% {
+                left: -70%;
+            }
+            30% {
+                left: 140%;
+            }
+            100% {
+                left: 140%;
+            }
+        }
+
+        .next-step-btn:hover {
+            background: linear-gradient(135deg, #0b5ed7 0%, #003fa8 100%) !important;
+            transform: translateY(-2px) scale(1.01) !important;
+            box-shadow: 0 8px 22px rgba(13, 110, 253, 0.6), 0 0 0 3px rgba(13, 110, 253, 0.25) !important;
+        }
+
+        .next-step-btn:active {
+            transform: translateY(0) scale(0.98) !important;
+        }
+
+        .next-step-btn .next-btn-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .next-step-btn:hover .next-btn-icon {
+            transform: translateX(4px);
+        }
+
         /* Auto-uppercase for name and address inputs */
         .input-uppercase { text-transform: uppercase; }
         .input-uppercase::placeholder { text-transform: none; }
@@ -503,9 +599,9 @@
 
                                 </div>
 
-                                <div class="d-flex gap-2 mt-3">
-                                    <a href="{{ route('resident.login') }}" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(2)">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                                <div class="d-flex gap-2 mt-3" id="step1Actions">
+                                    <a href="{{ route('resident.login') }}" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep1"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
+                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep1" onclick="goToStep(2)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
                                 </div>
                             </div>
 
@@ -599,9 +695,9 @@
 
                                 </div>
 
-                                <div class="d-flex gap-2 mt-4">
-                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-semibold" onclick="goToStep(3)">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                                <div class="d-flex gap-2 mt-4" id="step2Actions">
+                                    <button type="button" class="btn btn-light text-muted w-50 rounded-3 py-2 fw-semibold" id="btnBackStep2" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
+                                    <button type="button" class="btn btn-primary w-50 rounded-3 py-2 fw-bold next-step-btn" id="btnNextStep2" onclick="goToStep(3)" style="display: none;">Next <i class="fa-solid fa-arrow-right ms-1 next-btn-icon"></i></button>
                                 </div>
                             </div>
 
@@ -993,6 +1089,92 @@
             return email || cleanPhone || '';
         }
 
+        function isStep1Complete() {
+            const lastName = document.querySelector('input[name="last_name"]')?.value.trim() || '';
+            const firstName = document.querySelector('input[name="first_name"]')?.value.trim() || '';
+            const birthdate = document.querySelector('input[name="birthdate"]')?.value.trim() || '';
+            const ageVal = document.querySelector('input[name="age"]')?.value.trim() || '';
+            const birthplace = document.querySelector('input[name="birthplace"]')?.value.trim() || '';
+            const gender = document.querySelector('select[name="gender"]')?.value.trim() || '';
+            const civilStatus = document.querySelector('select[name="civil_status"]')?.value.trim() || '';
+            const nationality = document.querySelector('input[name="nationality"]')?.value.trim() || '';
+            const occupation = document.querySelector('select[name="occupation"]')?.value.trim() || '';
+            const purok = document.querySelector('input[name="purok"]')?.value.trim() || '';
+
+            const ageNum = parseInt(ageVal, 10);
+            const isAgeValid = !isNaN(ageNum) && ageNum >= 0 && ageNum <= 150;
+
+            return Boolean(
+                lastName &&
+                firstName &&
+                birthdate &&
+                isAgeValid &&
+                birthplace &&
+                gender &&
+                civilStatus &&
+                nationality &&
+                occupation &&
+                purok
+            );
+        }
+
+        function isStep2Complete() {
+            @if($viaGoogle)
+                return true;
+            @else
+                const phone = document.querySelector('input[name="phone_number"]')?.value.trim() || '';
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                const email = document.querySelector('input[name="email"]')?.value.trim() || '';
+
+                const hasValidPhone = cleanPhone.length >= 10 && cleanPhone.length <= 11;
+                const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                if (!hasValidPhone && !hasValidEmail) {
+                    return false;
+                }
+
+                const pwd = document.getElementById('regPassword')?.value || '';
+                const confirm = document.getElementById('regPasswordConfirm')?.value || '';
+
+                return Boolean(pwd.length >= 8 && confirm.length >= 8 && pwd === confirm);
+            @endif
+        }
+
+        function updateNextButtonsVisibility() {
+            // Step 1 Next Button
+            const btnNext1 = document.getElementById('btnNextStep1');
+            if (btnNext1) {
+                const isReady = isStep1Complete();
+                if (isReady) {
+                    if (btnNext1.style.display === 'none' || !btnNext1.classList.contains('is-revealed')) {
+                        btnNext1.style.display = 'inline-flex';
+                        requestAnimationFrame(() => {
+                            btnNext1.classList.add('is-revealed');
+                        });
+                    }
+                } else {
+                    btnNext1.classList.remove('is-revealed');
+                    btnNext1.style.display = 'none';
+                }
+            }
+
+            // Step 2 Next Button
+            const btnNext2 = document.getElementById('btnNextStep2');
+            if (btnNext2) {
+                const isReady = isStep2Complete();
+                if (isReady) {
+                    if (btnNext2.style.display === 'none' || !btnNext2.classList.contains('is-revealed')) {
+                        btnNext2.style.display = 'inline-flex';
+                        requestAnimationFrame(() => {
+                            btnNext2.classList.add('is-revealed');
+                        });
+                    }
+                } else {
+                    btnNext2.classList.remove('is-revealed');
+                    btnNext2.style.display = 'none';
+                }
+            }
+        }
+
         function goToStep(step) {
             // --- Validate current step before moving forward ---
             if (step > currentStep) {
@@ -1031,6 +1213,7 @@
             document.getElementById('stepSubtitle').textContent = stepTitles[step].subtitle;
 
             currentStep = step;
+            updateNextButtonsVisibility();
 
             // Scroll right panel back to top cleanly
             document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1689,9 +1872,15 @@
         });
 
         // Auto-calculate age from birthdate
-        document.getElementById('regBirthdate')?.addEventListener('change', function() {
-            if (!this.value) return;
-            const dob = new Date(this.value);
+        function updateAgeFromBirthdate() {
+            const birthdateInput = document.getElementById('regBirthdate');
+            const ageInput = document.getElementById('regAge');
+            if (!birthdateInput || !birthdateInput.value) {
+                if (ageInput) ageInput.value = '';
+                updateNextButtonsVisibility();
+                return;
+            }
+            const dob = new Date(birthdateInput.value);
             if (!isNaN(dob.getTime())) {
                 const today = new Date();
                 let age = today.getFullYear() - dob.getFullYear();
@@ -1700,14 +1889,21 @@
                     age--;
                 }
                 if (age >= 0 && age <= 150) {
-                    const ageInput = document.getElementById('regAge');
                     if (ageInput) {
                         ageInput.value = age;
                         ageInput.classList.remove('field-error');
                     }
+                } else {
+                    if (ageInput) ageInput.value = '';
                 }
+            } else {
+                if (ageInput) ageInput.value = '';
             }
-        });
+            updateNextButtonsVisibility();
+        }
+
+        document.getElementById('regBirthdate')?.addEventListener('change', updateAgeFromBirthdate);
+        document.getElementById('regBirthdate')?.addEventListener('input', updateAgeFromBirthdate);
 
         // ============================================
         // LIVE FACE VERIFICATION / WEBCAM MODAL SYSTEM
@@ -1892,6 +2088,26 @@
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Submitting...';
             }
         });
+
+        // Dynamic event listeners for input fields to show/hide Next buttons
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.closest('#panel-step-1, #panel-step-2')) {
+                updateNextButtonsVisibility();
+            }
+        });
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.closest('#panel-step-1, #panel-step-2')) {
+                updateNextButtonsVisibility();
+            }
+        });
+
+        // Initial evaluation on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateNextButtonsVisibility);
+        } else {
+            updateNextButtonsVisibility();
+        }
+        window.addEventListener('load', updateNextButtonsVisibility);
     </script>
 </body>
 </html>
