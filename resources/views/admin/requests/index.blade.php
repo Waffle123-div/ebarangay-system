@@ -2767,15 +2767,21 @@
                         
                         let newTbody = doc.getElementById('requests-tbody');
                         let currentTbody = document.getElementById('requests-tbody');
-                        if (newTbody && currentTbody) currentTbody.innerHTML = newTbody.innerHTML;
+                        if (newTbody && currentTbody && newTbody.innerHTML.trim() !== currentTbody.innerHTML.trim()) {
+                            currentTbody.innerHTML = newTbody.innerHTML;
+                        }
 
                         let newMobile = doc.getElementById('requests-mobile-list');
                         let currentMobile = document.getElementById('requests-mobile-list');
-                        if (newMobile && currentMobile) currentMobile.innerHTML = newMobile.innerHTML;
+                        if (newMobile && currentMobile && newMobile.innerHTML.trim() !== currentMobile.innerHTML.trim()) {
+                            currentMobile.innerHTML = newMobile.innerHTML;
+                        }
 
                         let newModals = doc.getElementById('modals-container');
                         let currentModals = document.getElementById('modals-container');
-                        if (newModals && currentModals) currentModals.innerHTML = newModals.innerHTML;
+                        if (newModals && currentModals && newModals.innerHTML.trim() !== currentModals.innerHTML.trim()) {
+                            currentModals.innerHTML = newModals.innerHTML;
+                        }
 
                         let newPag = doc.getElementById('pagination-container');
                         let currentPag = document.getElementById('pagination-container');
@@ -2787,6 +2793,9 @@
                         } else if (!newPag && currentPag) {
                             currentPag.remove();
                         }
+
+                        if (typeof window.updateBulkBar === 'function') window.updateBulkBar();
+                        if (typeof window.initRowClickHandlers === 'function') window.initRowClickHandlers();
                     })
                     .catch(error => console.error("Live search error:", error));
             }, 300);
@@ -2833,19 +2842,25 @@
 
                     let newTbody = doc.getElementById('requests-tbody');
                     let currentTbody = document.getElementById('requests-tbody');
-                    if (newTbody && currentTbody) currentTbody.innerHTML = newTbody.innerHTML;
+                    if (newTbody && currentTbody && newTbody.innerHTML.trim() !== currentTbody.innerHTML.trim()) {
+                        currentTbody.innerHTML = newTbody.innerHTML;
+                    }
 
                     let newMobile = doc.getElementById('requests-mobile-list');
                     let currentMobile = document.getElementById('requests-mobile-list');
-                    if (newMobile && currentMobile) currentMobile.innerHTML = newMobile.innerHTML;
+                    if (newMobile && currentMobile && newMobile.innerHTML.trim() !== currentMobile.innerHTML.trim()) {
+                        currentMobile.innerHTML = newMobile.innerHTML;
+                    }
 
                     let newModals = doc.getElementById('modals-container');
                     let currentModals = document.getElementById('modals-container');
-                    if (newModals && currentModals) currentModals.innerHTML = newModals.innerHTML;
+                    if (newModals && currentModals && newModals.innerHTML.trim() !== currentModals.innerHTML.trim()) {
+                        currentModals.innerHTML = newModals.innerHTML;
+                    }
 
                     let newPag = doc.getElementById('pagination-container');
                     let currentPag = document.getElementById('pagination-container');
-                    if (newPag && currentPag) {
+                    if (newPag && currentPag && newPag.innerHTML.trim() !== currentPag.innerHTML.trim()) {
                         currentPag.innerHTML = newPag.innerHTML;
                     } else if (newPag && !currentPag) {
                         let mobileEl = document.getElementById('requests-mobile-list');
@@ -2853,6 +2868,9 @@
                     } else if (!newPag && currentPag) {
                         currentPag.remove();
                     }
+
+                    if (typeof window.updateBulkBar === 'function') window.updateBulkBar();
+                    if (typeof window.initRowClickHandlers === 'function') window.initRowClickHandlers();
 
             const elementIdsToUpdate = [
                 'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
@@ -3100,140 +3118,154 @@
 </div>
 
 <script>
-/* ─── Interactive Row Click & Bulk Handlers ─── */
+/* ─── Delegated Interactive Row Click Handler (Always active across AJAX, Live Search, & Auto-Refresh) ─── */
+document.addEventListener("click", function(e) {
+    const row = e.target.closest(".request-row-clickable");
+    if (!row) return;
+
+    // Prevent opening modal when clicking checkboxes, links, forms, buttons, or inputs
+    if (e.target.closest(".req-checkbox") || 
+        e.target.closest(".col-select") || 
+        e.target.closest("input") || 
+        e.target.closest("button") || 
+        e.target.closest("a") || 
+        e.target.closest("form") ||
+        e.target.closest(".dropdown-menu")) {
+        return;
+    }
+
+    const targetId = row.getAttribute("data-modal-target");
+    if (targetId) {
+        const modalEl = document.querySelector(targetId);
+        if (modalEl) {
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modalInstance.show();
+        }
+    }
+});
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.key === " ") {
+        const row = e.target.closest(".request-row-clickable");
+        if (row && (e.target === row || row.contains(e.target)) && !e.target.closest("input, button, a, form, select, textarea")) {
+            e.preventDefault();
+            row.click();
+        }
+    }
+});
+
 function initRowClickHandlers() {
-    document.querySelectorAll(".request-row-clickable").forEach(row => {
-        row.onclick = null;
-        row.addEventListener("click", function(e) {
-            // Prevent opening modal when clicking checkboxes, links, forms, or buttons
-            if (e.target.closest(".req-checkbox") || e.target.closest(".col-select") || e.target.closest("input") || e.target.closest("button") || e.target.closest("a") || e.target.closest("form")) {
-                return;
-            }
-            const targetId = this.getAttribute("data-modal-target");
-            if (targetId) {
-                const modalEl = document.querySelector(targetId);
-                if (modalEl) {
-                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    modalInstance.show();
-                }
-            }
-        });
-        row.addEventListener("keydown", function(e) {
-            if (e.key === "Enter" || e.key === " ") {
-                if (e.target === this) {
-                    e.preventDefault();
-                    this.click();
-                }
-            }
-        });
-    });
+    // Retained for backward-compatibility; delegated document listener handles all rows automatically
 }
 window.initRowClickHandlers = initRowClickHandlers;
 
-function initCheckboxHandlers() {
-    const selectAllCheckbox = document.getElementById('selectAllRequests');
-    const reqCheckboxes = document.querySelectorAll('.req-checkbox');
+/* ─── Bulk Checkbox Selection & Bar Update ─── */
+function updateBulkBar() {
     const bulkActionsBar = document.getElementById('bulkActionsBar');
     const selectedCountBadge = document.getElementById('selectedCountBadge');
     const bulkDeleteCount = document.getElementById('bulkDeleteCount');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const selectAllCheckbox = document.getElementById('selectAllRequests');
+
+    const checkedBoxes = Array.from(document.querySelectorAll('.req-checkbox:checked'));
+    const count = checkedBoxes.length;
+
+    if (count > 0) {
+        bulkActionsBar?.classList.remove('d-none');
+        if (selectedCountBadge) selectedCountBadge.textContent = `${count} Selected`;
+        if (bulkDeleteCount) bulkDeleteCount.textContent = count;
+    } else {
+        bulkActionsBar?.classList.add('d-none');
+    }
+
+    // Highlight table rows and mobile cards
+    document.querySelectorAll('.req-checkbox').forEach(cb => {
+        const row = cb.closest('tr');
+        if (row) {
+            if (cb.checked) {
+                row.classList.add('table-primary');
+            } else {
+                row.classList.remove('table-primary');
+            }
+        }
+        const card = cb.closest('.mobile-request-card');
+        if (card) {
+            if (cb.checked) {
+                card.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+            } else {
+                card.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+            }
+        }
+    });
+
+    if (selectAllCheckbox) {
+        const allTableBoxes = document.querySelectorAll('#requestsMasterTable .req-checkbox');
+        const checkedTableBoxes = document.querySelectorAll('#requestsMasterTable .req-checkbox:checked');
+        selectAllCheckbox.checked = (allTableBoxes.length > 0 && checkedTableBoxes.length === allTableBoxes.length);
+        selectAllCheckbox.indeterminate = (checkedTableBoxes.length > 0 && checkedTableBoxes.length < allTableBoxes.length);
+    }
+}
+window.updateBulkBar = updateBulkBar;
+
+// Delegated checkbox change events
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.classList.contains('req-checkbox')) {
+        updateBulkBar();
+    } else if (e.target && e.target.id === 'selectAllRequests') {
+        const checked = e.target.checked;
+        document.querySelectorAll('.req-checkbox').forEach(cb => cb.checked = checked);
+        updateBulkBar();
+    }
+});
+
+// Delegated click for deselect all button
+document.addEventListener('click', function (e) {
+    if (e.target && (e.target.id === 'deselectAllBtn' || e.target.closest('#deselectAllBtn'))) {
+        document.querySelectorAll('.req-checkbox').forEach(cb => cb.checked = false);
+        const selectAll = document.getElementById('selectAllRequests');
+        if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+        updateBulkBar();
+    }
+});
+
+// Delegated click for bulk delete button
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('#bulkDeleteBtn');
+    if (!btn) return;
+
     const bulkDeleteModalEl = document.getElementById('requestsBulkDeleteModal');
     const bulkDeleteModal = bulkDeleteModalEl ? bootstrap.Modal.getOrCreateInstance(bulkDeleteModalEl) : null;
     const bulkHiddenIds = document.getElementById('bulk_hidden_ids');
     const bulkModalCount = document.getElementById('bulk_modal_count');
     const bulkSelectedNamesList = document.getElementById('bulk_selected_names_list');
 
-    function updateBulkBar() {
-        const checkedBoxes = Array.from(document.querySelectorAll('.req-checkbox:checked'));
-        const count = checkedBoxes.length;
+    const checkedBoxes = Array.from(document.querySelectorAll('.req-checkbox:checked'));
+    if (checkedBoxes.length === 0 || !bulkDeleteModal) return;
 
-        if (count > 0) {
-            bulkActionsBar?.classList.remove('d-none');
-            if (selectedCountBadge) selectedCountBadge.textContent = `${count} Selected`;
-            if (bulkDeleteCount) bulkDeleteCount.textContent = count;
-        } else {
-            bulkActionsBar?.classList.add('d-none');
-        }
+    if (bulkHiddenIds) bulkHiddenIds.innerHTML = '';
+    if (bulkSelectedNamesList) bulkSelectedNamesList.innerHTML = '';
+    if (bulkModalCount) bulkModalCount.textContent = `${checkedBoxes.length}`;
 
-        // Highlight table rows and mobile cards
-        document.querySelectorAll('.req-checkbox').forEach(cb => {
-            const row = cb.closest('tr');
-            if (row) {
-                if (cb.checked) {
-                    row.classList.add('table-primary');
-                } else {
-                    row.classList.remove('table-primary');
-                }
-            }
-            const card = cb.closest('.mobile-request-card');
-            if (card) {
-                if (cb.checked) {
-                    card.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
-                } else {
-                    card.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
-                }
-            }
-        });
+    const seenIds = new Set();
+    checkedBoxes.forEach(cb => {
+        if (seenIds.has(cb.value)) return;
+        seenIds.add(cb.value);
 
-        if (selectAllCheckbox) {
-            const allTableBoxes = document.querySelectorAll('#requestsMasterTable .req-checkbox');
-            const checkedTableBoxes = document.querySelectorAll('#requestsMasterTable .req-checkbox:checked');
-            selectAllCheckbox.checked = (allTableBoxes.length > 0 && checkedTableBoxes.length === allTableBoxes.length);
-            selectAllCheckbox.indeterminate = (checkedTableBoxes.length > 0 && checkedTableBoxes.length < allTableBoxes.length);
-        }
-    }
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'ids[]';
+        hiddenInput.value = cb.value;
+        bulkHiddenIds?.appendChild(hiddenInput);
 
-    if (selectAllCheckbox) {
-        selectAllCheckbox.onchange = null;
-        selectAllCheckbox.addEventListener('change', function () {
-            reqCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
-            updateBulkBar();
-        });
-    }
-
-    reqCheckboxes.forEach(cb => {
-        cb.onchange = null;
-        cb.addEventListener('change', updateBulkBar);
+        const li = document.createElement('li');
+        li.textContent = `Tracking #${cb.getAttribute('data-tracking') || cb.value}`;
+        bulkSelectedNamesList?.appendChild(li);
     });
 
-    if (deselectAllBtn) {
-        deselectAllBtn.onclick = null;
-        deselectAllBtn.addEventListener('click', function () {
-            reqCheckboxes.forEach(cb => cb.checked = false);
-            updateBulkBar();
-        });
-    }
+    bulkDeleteModal.show();
+});
 
-    if (bulkDeleteBtn && bulkDeleteModal) {
-        bulkDeleteBtn.onclick = null;
-        bulkDeleteBtn.addEventListener('click', function () {
-            const checkedBoxes = Array.from(document.querySelectorAll('.req-checkbox:checked'));
-            if (checkedBoxes.length === 0) return;
-
-            if (bulkHiddenIds) bulkHiddenIds.innerHTML = '';
-            if (bulkSelectedNamesList) bulkSelectedNamesList.innerHTML = '';
-            if (bulkModalCount) bulkModalCount.textContent = `${checkedBoxes.length}`;
-
-            const seenIds = new Set();
-            checkedBoxes.forEach(cb => {
-                if (seenIds.has(cb.value)) return;
-                seenIds.add(cb.value);
-
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'ids[]';
-                hiddenInput.value = cb.value;
-                bulkHiddenIds?.appendChild(hiddenInput);
-
-                const li = document.createElement('li');
-                li.textContent = `Tracking #${cb.getAttribute('data-tracking') || cb.value}`;
-                bulkSelectedNamesList?.appendChild(li);
-            });
-
-            bulkDeleteModal.show();
-        });
-    }
+function initCheckboxHandlers() {
+    updateBulkBar();
 }
 window.initCheckboxHandlers = initCheckboxHandlers;
 
