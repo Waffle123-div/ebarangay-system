@@ -19,25 +19,16 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ChatbotController;
 
 // ==========================================
-// THE TRAFFIC COP (Root Route)
+// LANDING PAGE (Root Route)
 // ==========================================
 Route::get('/', function () {
-    // 1. If they are already logged in, send them to their correct dashboard!
-    if (Auth::check()) {
-        if (trim(strtolower(Auth::user()->role)) === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('resident.dashboard');
-    }
-    
-    // 2. If they are NOT logged in, show the Guest Landing Page!
-    return view('welcome');
-});
-
-// Welcome page accessible while logged in (for Home sidebar link)
-Route::get('/home', function () {
     return view('welcome');
 })->name('welcome');
+
+// Welcome page alias (for Home sidebar link or /home)
+Route::get('/home', function () {
+    return view('welcome');
+});
 
 // ==========================================
 // GOOGLE AUTHENTICATION ROUTES
