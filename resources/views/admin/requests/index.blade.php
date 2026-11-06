@@ -41,18 +41,18 @@
             </div>
         </a>
 
-        {{-- Card 2: Pending Reviews --}}
-        <a href="{{ route('admin.requests', ['status' => 'Pending_Review']) }}" 
-           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ $currentStatus == 'Pending_Review' ? 'active-kpi-card' : '' }}"
-           title="Jump to Pending & Review stage">
+        {{-- Card 2: Pending & Processing --}}
+        <a href="{{ route('admin.requests', ['status' => 'Pending_Processing']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'active-kpi-card' : '' }}"
+           title="Jump to Pending & Processing stage">
             <div class="stat-card-icon-box" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
                 <i class="fa-solid fa-clock"></i>
             </div>
             <div class="stat-card-body">
-                <div class="stat-card-label">Pending Reviews</div>
-                <h3 class="stat-card-count" id="kpi-pending">{{ $pendingReviews }}</h3>
+                <div class="stat-card-label">Pending &amp; Processing</div>
+                <h3 class="stat-card-count" id="kpi-pending">{{ $tabCounts['Pending_Processing'] ?? $pendingReviews }}</h3>
                 <div class="stat-card-subtext">
-                    @if($pendingReviews == 0)
+                    @if(($tabCounts['Pending_Processing'] ?? $pendingReviews) == 0)
                         <span class="text-success fw-semibold">✓ All caught up</span>
                     @else
                         <span class="text-warning fw-semibold">Requires attention</span>
@@ -257,18 +257,9 @@
             color: #d97706;
         }
         .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #d97706, #2563eb);
+            background: linear-gradient(90deg, #d97706, #0284c7);
             opacity: 0.95;
             box-shadow: 0 0 6px rgba(217, 119, 6, 0.35);
-        }
-
-        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
-            color: #2563eb;
-        }
-        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #2563eb, #0284c7);
-            opacity: 0.95;
-            box-shadow: 0 0 6px rgba(37, 99, 235, 0.35);
         }
 
         .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector {
@@ -653,20 +644,9 @@
         }
         html[data-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before,
         html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #fbbf24, #38bdf8) !important;
+            background: linear-gradient(90deg, #fbbf24, #2dd4bf) !important;
             opacity: 1;
             box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
-        }
-
-        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector,
-        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
-            color: #38bdf8 !important;
-        }
-        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before,
-        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important;
-            opacity: 1;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
         }
 
         html[data-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector,
@@ -1596,8 +1576,15 @@
             {{-- Row 1: Title on left, Action tools on right --}}
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2.5">
                 <div class="d-flex align-items-center gap-2">
+                    @php
+                        $displayStatus = match($currentStatus) {
+                            'Pending_Processing', 'Pending_Review', 'Processing' => 'Pending & Processing',
+                            'Ready' => 'Ready for Pickup',
+                            default => str_replace('_', ' ', $currentStatus)
+                        };
+                    @endphp
                     <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">
-                        <i class="fa-solid fa-folder-open text-primary me-2"></i>{{ str_replace('_', ' ', $currentStatus) }} Requests
+                        <i class="fa-solid fa-folder-open text-primary me-2"></i>{{ $displayStatus }} Requests
                     </h5>
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 11.5px;">
                         {{ $allRequests->total() }} records
@@ -1653,83 +1640,62 @@
             <div class="process-pipeline-wrapper w-100">
                 <div class="process-pipeline-container" role="tablist" aria-label="Request Status Stages">
                     
-                    {{-- Sequential Workflow Steps (1 -> 2 -> 3 -> 4) --}}
+                    {{-- Sequential Workflow Steps (1 -> 2 -> 3) --}}
                     <div class="process-pipeline-stages">
                         
-                        {{-- Step 1: Pending & Review --}}
+                        {{-- Step 1: Pending & Processing (Combined) --}}
                         <div class="pipeline-step-item">
-                            <a class="pipeline-pill-link tab-pending {{ $currentStatus == 'Pending_Review' ? 'active' : '' }}" 
-                               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Review']) }}"
+                            <a class="pipeline-pill-link tab-pending {{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Processing']) }}"
                                role="tab"
-                               aria-selected="{{ $currentStatus == 'Pending_Review' ? 'true' : 'false' }}"
-                               title="Step 1: Review incoming applications">
+                               aria-selected="{{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'true' : 'false' }}"
+                               title="Step 1: Review incoming and in-progress applications">
                                 <span class="step-badge-number step-badge-pending">1</span>
                                 <i class="fa-solid fa-inbox text-step-icon"></i>
-                                <span class="step-title">Pending & Review</span>
-                                <span class="status-count-badge count-badge-pending" id="tab-badge-pending">{{ $tabCounts['Pending_Review'] }}</span>
+                                <span class="step-title">Pending &amp; Processing</span>
+                                <span class="status-count-badge count-badge-pending" id="tab-badge-pending">{{ $tabCounts['Pending_Processing'] ?? $tabCounts['Pending_Review'] }}</span>
                             </a>
                         </div>
 
                         {{-- Leading Arrow 1 -> 2 --}}
-                        <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Processing">
-                            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-
-                        {{-- Step 2: Processing --}}
-                        <div class="pipeline-step-item">
-                            <a class="pipeline-pill-link tab-processing {{ $currentStatus == 'Processing' ? 'active' : '' }}" 
-                               href="{{ request()->fullUrlWithQuery(['status' => 'Processing']) }}"
-                               role="tab"
-                               aria-selected="{{ $currentStatus == 'Processing' ? 'true' : 'false' }}"
-                               title="Step 2: Processing, drafting and captain signature">
-                                <span class="step-badge-number step-badge-processing">2</span>
-                                <i class="fa-solid fa-gear text-step-icon gear-icon-spin"></i>
-                                <span class="step-title">Processing</span>
-                                <span class="status-count-badge count-badge-processing" id="tab-badge-processing">{{ $tabCounts['Processing'] }}</span>
-                            </a>
-                        </div>
-
-                        {{-- Leading Arrow 2 -> 3 --}}
                         <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Ready for Pick-up">
                             <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
 
-                        {{-- Step 3: Ready for Pick-up --}}
+                        {{-- Step 2: Ready for Pick-up --}}
                         <div class="pipeline-step-item">
-                            <a class="pipeline-pill-link tab-ready {{ $currentStatus == 'Ready' ? 'active' : '' }} {{ $tabCounts['Ready'] > 0 ? 'stage-waiting-action' : '' }}" 
+                            <a class="pipeline-pill-link tab-ready {{ $currentStatus == 'Ready' ? 'active' : '' }} {{ ($tabCounts['Ready'] ?? 0) > 0 ? 'stage-waiting-action' : '' }}" 
                                href="{{ request()->fullUrlWithQuery(['status' => 'Ready']) }}"
                                role="tab"
                                aria-selected="{{ $currentStatus == 'Ready' ? 'true' : 'false' }}"
-                               title="Step 3: Document printed and ready at releasing counter">
-                                <span class="step-badge-number step-badge-ready">3</span>
+                               title="Step 2: Document printed and ready at releasing counter">
+                                <span class="step-badge-number step-badge-ready">2</span>
                                 <i class="fa-solid fa-file-signature text-step-icon"></i>
                                 <span class="step-title">Ready for Pick-up</span>
                                 <span class="status-count-badge count-badge-ready" id="tab-badge-ready">{{ $tabCounts['Ready'] }}</span>
-                                @if($tabCounts['Ready'] > 0)
+                                @if(($tabCounts['Ready'] ?? 0) > 0)
                                     <span class="waiting-dot ms-1" title="{{ $tabCounts['Ready'] }} resident(s) waiting at counter"></span>
                                 @endif
                             </a>
                         </div>
 
-                        {{-- Leading Arrow 3 -> 4 --}}
+                        {{-- Leading Arrow 2 -> 3 --}}
                         <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Completed">
                             <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
 
-                        {{-- Step 4: Completed --}}
+                        {{-- Step 3: Completed --}}
                         <div class="pipeline-step-item">
                             <a class="pipeline-pill-link tab-completed {{ $currentStatus == 'Completed' ? 'active' : '' }}" 
                                href="{{ request()->fullUrlWithQuery(['status' => 'Completed']) }}"
                                role="tab"
                                aria-selected="{{ $currentStatus == 'Completed' ? 'true' : 'false' }}"
-                               title="Step 4: Claimed by resident and archived">
-                                <span class="step-badge-number step-badge-completed">4</span>
+                               title="Step 3: Claimed by resident and archived">
+                                <span class="step-badge-number step-badge-completed">3</span>
                                 <i class="fa-solid fa-check-double text-step-icon"></i>
                                 <span class="step-title">Completed</span>
                                 <span class="status-count-badge count-badge-completed" id="tab-badge-completed">{{ $tabCounts['Completed'] }}</span>
@@ -1791,7 +1757,7 @@
                     @forelse($allRequests as $request)
 
                     @php
-                        $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                        $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                         $docTypeLower = strtolower($request->document_type ?? '');
                         $isBusinessClearance = str_contains($docTypeLower, 'business');
                     @endphp
@@ -1863,7 +1829,7 @@
                         <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fa-solid fa-inbox fa-3x mb-3 text-light"></i>
                             <h5 class="fw-bold text-dark">No Requests Found</h5>
-                            <div>There are currently no documents in the <b>{{ str_replace('_', ' ', $currentStatus) }}</b> tab.</div>
+                            <div>There are currently no documents in the <b>{{ $displayStatus }}</b> tab.</div>
                         </td>
                     </tr>
                     @endforelse
@@ -1875,7 +1841,7 @@
         <div class="d-md-none p-3" id="requests-mobile-list">
             @forelse($allRequests as $request)
                 @php
-                    $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                    $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                     $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
                     $docTypeLower = strtolower($request->document_type ?? '');
                     $isBusinessClearance = str_contains($docTypeLower, 'business');
@@ -1965,7 +1931,7 @@
                 <div class="text-center py-5 text-muted">
                     <i class="fa-solid fa-inbox fa-3x mb-3 text-light"></i>
                     <h5 class="fw-bold text-dark">No Requests Found</h5>
-                    <div class="small">There are currently no documents in the <b>{{ str_replace('_', ' ', $currentStatus) }}</b> tab.</div>
+                    <div class="small">There are currently no documents in the <b>{{ $displayStatus }}</b> tab.</div>
                 </div>
             @endforelse
         </div>
@@ -2034,7 +2000,7 @@
                     <div id="view-mode-{{ $request->id }}" class="p-3 p-md-4">
 
                         @php
-                            $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                            $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                             $docTypeLower = strtolower($request->document_type ?? '');
                             $isBusinessClearance = str_contains($docTypeLower, 'business');
                             $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
@@ -2249,13 +2215,13 @@
                                     <i class="fa-solid fa-file-lines text-primary me-1.5"></i> Requested {{ $docsCount > 1 ? 'Documents (' . $docsCount . ')' : 'Document' }}
                                 </p>
                                 @if($docsCount > 1)
-                                    @if(in_array($request->status, ['Ready', 'Completed']))
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
-                                       title="Download All Documents in a Single ZIP Archive">
-                                        <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
-                                    </a>
-                                    @endif
+                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                        <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                           class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
+                                           title="Download All Documents in a Single ZIP Archive">
+                                            <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
 
@@ -2282,13 +2248,13 @@
                                                     <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
                                                 </div>
                                             </div>
-                                            @if(in_array($request->status, ['Ready', 'Completed']))
-                                            <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
-                                               class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
-                                               title="Generate Word Document for {{ $docItem['type'] }}">
-                                                <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
-                                            </a>
-                                            @endif
+                                            <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                                <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
+                                                   class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                                   title="Generate Word Document for {{ $docItem['type'] }}">
+                                                    <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
+                                                </a>
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -2307,13 +2273,13 @@
                                         </div>
                                         <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
                                     </div>
-                                    @if(in_array($request->status, ['Ready', 'Completed']))
-                                    <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                       class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
-                                       title="Generate Word Document">
-                                        <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
-                                    </a>
-                                    @endif
+                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                        <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                           class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                           title="Generate Word Document">
+                                            <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
+                                        </a>
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -2499,29 +2465,39 @@
                                 <button type="button"
                                         class="btn btn-sm btn-success rounded-3 px-3 py-1.5 fw-semibold shadow-sm btn-accept-request"
                                         data-accept-url="{{ route('admin.requests.accept', $request->id) }}"
+                                        data-ready-url="{{ route('admin.requests.ready', $request->id) }}"
+                                        data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
                                         data-csrf="{{ csrf_token() }}"
-                                        data-request-id="{{ $request->id }}"
-                                        data-ready-url="{{ route('admin.requests.ready', $request->id) }}">
+                                        data-request-id="{{ $request->id }}">
                                     <i class="fa-solid fa-check me-1"></i> Accept Request
                                 </button>
                             </div>
                             @elseif($request->status == 'Processing')
                             <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
-                                <form action="{{ route('admin.requests.ready', $request->id) }}" method="POST" class="m-0">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-info text-white rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm">
-                                        <i class="fa-solid fa-bell me-1"></i> Ready for Pickup
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-info text-white rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-ready-request"
+                                        data-ready-url="{{ route('admin.requests.ready', $request->id) }}"
+                                        data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
+                                        data-csrf="{{ csrf_token() }}"
+                                        data-request-id="{{ $request->id }}">
+                                    <i class="fa-solid fa-bell me-1"></i> Ready for Pickup
+                                </button>
                             </div>
                             @elseif($request->status == 'Ready')
                             <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
-                                <form action="{{ route('admin.requests.complete', $request->id) }}" method="POST" class="m-0">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm">
-                                        <i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-complete-request"
+                                        data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
+                                        data-csrf="{{ csrf_token() }}"
+                                        data-request-id="{{ $request->id }}">
+                                    <i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed
+                                </button>
+                            </div>
+                            @elseif($request->status == 'Completed')
+                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
+                                <span class="badge bg-success bg-opacity-10 text-success py-2 px-3 fw-bold rounded-pill">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Completed
+                                </span>
                             </div>
                             @else
                             <div id="accept-reject-{{ $request->id }}"></div>
@@ -2680,17 +2656,36 @@
 
     window.syncDocsJson = function(id) { return true; };
 
-    // ── AJAX Accept Request: auto-flow to "Ready for Pickup" step ──
+    // ── Global Flag for Seamless Modal Workflow ──
+    window._modalStatusChanged = false;
+
+    function silentUpdateCounts() {
+        fetch(window.location.href)
+            .then(r => r.text())
+            .then(html => {
+                const doc2 = new DOMParser().parseFromString(html, 'text/html');
+                const ids = ['kpi-total','kpi-pending','kpi-approved','kpi-overdue','kpi-avg',
+                             'tab-badge-pending','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+                ids.forEach(id => {
+                    const nEl = doc2.getElementById(id);
+                    const oEl = document.getElementById(id);
+                    if (nEl && oEl) oEl.innerHTML = nEl.innerHTML;
+                });
+            })
+            .catch(() => {});
+    }
+
+    // ── 1. AJAX Accept Request: Pending -> Processing (modal stays open) ──
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-accept-request');
         if (!btn) return;
 
-        const acceptUrl  = btn.dataset.acceptUrl;
-        const csrfToken  = btn.dataset.csrf;
-        const requestId  = btn.dataset.requestId;
-        const readyUrl   = btn.dataset.readyUrl;
+        const acceptUrl   = btn.dataset.acceptUrl;
+        const readyUrl    = btn.dataset.readyUrl;
+        const completeUrl = btn.dataset.completeUrl;
+        const csrfToken   = btn.dataset.csrf;
+        const requestId   = btn.dataset.requestId;
 
-        // Disable button to prevent double-click
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Accepting…';
 
@@ -2705,11 +2700,12 @@
             redirect: 'follow',
         })
         .then(response => {
-            // Laravel redirects after PATCH — a 200 on the redirect target is success
             if (!response.ok) throw new Error('Server returned ' + response.status);
             return response;
         })
         .then(() => {
+            window._modalStatusChanged = true;
+
             // 1. Update status badge inside the modal
             const modalStatusBadge = document.getElementById('modal-status-badge-' + requestId);
             if (modalStatusBadge) {
@@ -2718,63 +2714,204 @@
                     '<span class="status-dot"></span><span>Processing</span></span>';
             }
 
-            // Also update the row status badge in the table
+            // 2. Also update row badge in the background table
             const rowBadge = document.getElementById('status-badge-' + requestId);
             if (rowBadge) {
-                rowBadge.innerHTML = '<span class="status-badge status-processing">Processing</span>';
+                rowBadge.innerHTML = '<span class="status-badge status-processing" style="width: 112px; font-size: 11.5px; padding: 4px 6px; display: inline-flex; align-items: center; justify-content: center;">Processing</span>';
             }
             const rowBadgeMobile = document.getElementById('status-badge-mobile-' + requestId);
             if (rowBadgeMobile) {
-                rowBadgeMobile.innerHTML = '<span class="status-badge status-processing">Processing</span>';
+                rowBadgeMobile.innerHTML = '<span class="status-badge status-processing"><span class="status-dot"></span><span>Processing</span></span>';
             }
 
-            // 2. Swap footer buttons → show "Ready for Pickup"
+            // 3. Swap footer buttons → show AJAX "Ready for Pickup" button
             const footerDiv = document.getElementById('accept-reject-' + requestId);
             if (footerDiv) {
                 footerDiv.innerHTML =
-                    '<form action="' + readyUrl + '" method="POST" class="m-0">' +
-                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
-                    '<input type="hidden" name="_method" value="PATCH">' +
-                    '<button type="submit" class="btn btn-sm btn-info text-white rounded-3 px-3 py-1.5 fw-semibold shadow-sm">' +
+                    '<button type="button" class="btn btn-sm btn-info text-white rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-ready-request" ' +
+                    'data-ready-url="' + readyUrl + '" ' +
+                    'data-complete-url="' + completeUrl + '" ' +
+                    'data-csrf="' + csrfToken + '" ' +
+                    'data-request-id="' + requestId + '">' +
                     '<i class="fa-solid fa-bell me-1"></i> Ready for Pickup' +
-                    '</button></form>';
+                    '</button>';
             }
 
-            // 3. Flash a success toast if available
             if (typeof window.agToast === 'function') {
-                window.agToast('Request Accepted', 'Request is now Processing. Mark it Ready for Pickup when done.', 'success', 5000);
+                window.agToast('Request Accepted', 'Request moved to Processing. When ready, click "Ready for Pickup".', 'success', 4000);
             }
 
-            // 4. Silently refresh KPI counts in the background (no visual jump)
-            fetch(window.location.href)
-                .then(r => r.text())
-                .then(html => {
-                    const doc2 = new DOMParser().parseFromString(html, 'text/html');
-                    const ids = ['kpi-total','kpi-pending','kpi-approved','kpi-overdue',
-                                 'tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
-                    ids.forEach(id => {
-                        const nEl = doc2.getElementById(id);
-                        const oEl = document.getElementById(id);
-                        if (nEl && oEl) oEl.innerHTML = nEl.innerHTML;
-                    });
-                })
-                .catch(() => {}); // silent
+            silentUpdateCounts();
         })
         .catch(err => {
             console.error('Accept AJAX error:', err);
-            // Restore button on failure
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Accept Request';
             alert('Could not accept the request. Please try again.');
         });
     });
 
-    // Automatically reset modal to view mode when closed
+    // ── 2. AJAX Ready for Pickup: Processing -> Ready (modal stays open, Generate Word appears!) ──
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-ready-request');
+        if (!btn) return;
+
+        const readyUrl    = btn.dataset.readyUrl;
+        const completeUrl = btn.dataset.completeUrl;
+        const csrfToken   = btn.dataset.csrf;
+        const requestId   = btn.dataset.requestId;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Updating…';
+
+        fetch(readyUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: '_method=PATCH&_token=' + encodeURIComponent(csrfToken),
+            redirect: 'follow',
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            return response;
+        })
+        .then(() => {
+            window._modalStatusChanged = true;
+
+            // 1. Update status badge inside the modal
+            const modalStatusBadge = document.getElementById('modal-status-badge-' + requestId);
+            if (modalStatusBadge) {
+                modalStatusBadge.innerHTML =
+                    '<span class="status-badge status-ready px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
+                    '<span class="status-dot"></span><span>Ready for Pickup</span></span>';
+            }
+
+            // 2. Also update row badge in the background table
+            const rowBadge = document.getElementById('status-badge-' + requestId);
+            if (rowBadge) {
+                rowBadge.innerHTML = '<span class="status-badge status-ready" style="width: 112px; font-size: 11.5px; padding: 4px 6px; display: inline-flex; align-items: center; justify-content: center;">Ready for Pickup</span>';
+            }
+            const rowBadgeMobile = document.getElementById('status-badge-mobile-' + requestId);
+            if (rowBadgeMobile) {
+                rowBadgeMobile.innerHTML = '<span class="status-badge status-ready"><span class="status-dot"></span><span>Ready</span></span>';
+            }
+
+            // 3. REVEAL the "Generate Word Doc" button in the modal!
+            document.querySelectorAll('.modal-generate-doc-btn-' + requestId).forEach(el => {
+                el.classList.remove('d-none');
+                el.style.animation = 'agy-fadeIn 0.4s ease';
+            });
+
+            // 4. Swap footer buttons → show AJAX "Mark Claimed / Completed" button
+            const footerDiv = document.getElementById('accept-reject-' + requestId);
+            if (footerDiv) {
+                footerDiv.innerHTML =
+                    '<button type="button" class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-complete-request" ' +
+                    'data-complete-url="' + completeUrl + '" ' +
+                    'data-csrf="' + csrfToken + '" ' +
+                    'data-request-id="' + requestId + '">' +
+                    '<i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed' +
+                    '</button>';
+            }
+
+            if (typeof window.agToast === 'function') {
+                window.agToast('Ready for Pickup', 'Document marked Ready. Generate Word Doc is now available!', 'info', 4000);
+            }
+
+            silentUpdateCounts();
+        })
+        .catch(err => {
+            console.error('Ready AJAX error:', err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-bell me-1"></i> Ready for Pickup';
+            alert('Could not update request to Ready. Please try again.');
+        });
+    });
+
+    // ── 3. AJAX Complete Request: Ready -> Completed (modal stays open) ──
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-complete-request');
+        if (!btn) return;
+
+        const completeUrl = btn.dataset.completeUrl;
+        const csrfToken   = btn.dataset.csrf;
+        const requestId   = btn.dataset.requestId;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Completing…';
+
+        fetch(completeUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: '_method=PATCH&_token=' + encodeURIComponent(csrfToken),
+            redirect: 'follow',
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            return response;
+        })
+        .then(() => {
+            window._modalStatusChanged = true;
+
+            // 1. Update status badge inside the modal
+            const modalStatusBadge = document.getElementById('modal-status-badge-' + requestId);
+            if (modalStatusBadge) {
+                modalStatusBadge.innerHTML =
+                    '<span class="status-badge status-completed px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
+                    '<span class="status-dot"></span><span>Completed</span></span>';
+            }
+
+            // 2. Also update row badge in the background table
+            const rowBadge = document.getElementById('status-badge-' + requestId);
+            if (rowBadge) {
+                rowBadge.innerHTML = '<span class="status-badge status-completed" style="width: 112px; font-size: 11.5px; padding: 4px 6px; display: inline-flex; align-items: center; justify-content: center;">Completed</span>';
+            }
+            const rowBadgeMobile = document.getElementById('status-badge-mobile-' + requestId);
+            if (rowBadgeMobile) {
+                rowBadgeMobile.innerHTML = '<span class="status-badge status-completed"><span class="status-dot"></span><span>Completed</span></span>';
+            }
+
+            // 3. Swap footer buttons → show Completed badge
+            const footerDiv = document.getElementById('accept-reject-' + requestId);
+            if (footerDiv) {
+                footerDiv.innerHTML =
+                    '<span class="badge bg-success bg-opacity-10 text-success py-2 px-3 fw-bold rounded-pill">' +
+                    '<i class="fa-solid fa-circle-check me-1"></i> Completed</span>';
+            }
+
+            if (typeof window.agToast === 'function') {
+                window.agToast('Request Completed', 'Document marked as Completed and claimed.', 'success', 4000);
+            }
+
+            silentUpdateCounts();
+        })
+        .catch(err => {
+            console.error('Complete AJAX error:', err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed';
+            alert('Could not complete the request. Please try again.');
+        });
+    });
+
+    // Automatically reset modal to view mode when closed & refresh table if status changed
     document.addEventListener('hidden.bs.modal', function(e) {
         if (e.target && e.target.id && e.target.id.startsWith('viewModal')) {
             const id = e.target.id.replace('viewModal', '');
             if (typeof window.toggleEditMode === 'function') {
                 window.toggleEditMode(id, false);
+            }
+            if (window._modalStatusChanged) {
+                window._modalStatusChanged = false;
+                if (typeof window.loadPageUrl === 'function') {
+                    window.loadPageUrl(window.location.href, false);
+                }
             }
         }
     });
@@ -2904,7 +3041,7 @@
         let _liveIndicator = document.getElementById('live-status-indicator');
 
         function _parseTabCounts(doc) {
-            const ids = ['tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+            const ids = ['tab-badge-pending','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
             const counts = {};
             ids.forEach(id => {
                 const el = doc.getElementById(id);
@@ -2972,7 +3109,7 @@
 
             const elementIdsToUpdate = [
                 'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
-                'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
+                'tab-badge-pending', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
             ];
 
             elementIdsToUpdate.forEach(id => {
@@ -2986,8 +3123,7 @@
             if (_countsChanged(_prevTabCounts, newCounts)) {
                 if (_prevTabCounts) {
                     const statusNames = {
-                        'tab-badge-pending':    'Pending & Review',
-                        'tab-badge-processing': 'Processing',
+                        'tab-badge-pending':    'Pending & Processing',
                         'tab-badge-ready':      'Ready for Pickup',
                         'tab-badge-completed':  'Completed',
                         'tab-badge-rejected':   'Rejected',
@@ -3099,7 +3235,7 @@
                     // 7. Update KPIs with count animation
                     const elementIds = [
                         'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
-                        'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
+                        'tab-badge-pending', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
                     ];
                     elementIds.forEach(id => {
                         const newEl = doc.getElementById(id);

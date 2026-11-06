@@ -620,21 +620,22 @@ class AdminDashboardController extends Controller
             1
         );
 
+        $pendingProcessingCount = DocumentRequest::whereIn('status', ['Pending', 'Under Review', 'Processing'])->count();
+
         $tabCounts = [
-            'Pending_Review' => DocumentRequest::whereIn('status', ['Pending', 'Under Review'])->count(),
-            'Processing'     => DocumentRequest::where('status', 'Processing')->count(),
-            'Ready'          => DocumentRequest::where('status', 'Ready')->count(),
-            'Completed'      => DocumentRequest::where('status', 'Completed')->count(),
-            'Rejected'       => DocumentRequest::where('status', 'Rejected')->count(),
+            'Pending_Processing' => $pendingProcessingCount,
+            'Pending_Review'     => $pendingProcessingCount,
+            'Processing'         => DocumentRequest::where('status', 'Processing')->count(),
+            'Ready'              => DocumentRequest::where('status', 'Ready')->count(),
+            'Completed'          => DocumentRequest::where('status', 'Completed')->count(),
+            'Rejected'           => DocumentRequest::where('status', 'Rejected')->count(),
         ];
 
-        // UX improvement: default to the first active stage with records if Pending & Review is empty
-        $autoSelectedStatus = 'Pending_Review';
+        // UX improvement: default to the first active stage with records if Pending & Processing is empty
+        $autoSelectedStatus = 'Pending_Processing';
         if (!$request->has('status')) {
-            if ($tabCounts['Pending_Review'] === 0) {
-                if ($tabCounts['Processing'] > 0) {
-                    $autoSelectedStatus = 'Processing';
-                } elseif ($tabCounts['Ready'] > 0) {
+            if ($tabCounts['Pending_Processing'] === 0) {
+                if ($tabCounts['Ready'] > 0) {
                     $autoSelectedStatus = 'Ready';
                 }
             }
@@ -645,8 +646,8 @@ class AdminDashboardController extends Controller
 
         $query = DocumentRequest::with('user')->orderBy('created_at', 'desc');
 
-        if ($currentStatus === 'Pending_Review') {
-            $query->whereIn('status', ['Pending', 'Under Review']);
+        if (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing'])) {
+            $query->whereIn('status', ['Pending', 'Under Review', 'Processing']);
         } elseif ($currentStatus !== 'All') {
             $query->where('status', $currentStatus);
         }
@@ -1585,6 +1586,9 @@ class AdminDashboardController extends Controller
             'message'         => "Request #{$docRequest->tracking_number} moved to Processing.",
         ]);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'status' => 'Processing', 'message' => 'Request accepted and moved to Processing.']);
+        }
         return back()->with('success', 'Request accepted and moved to Processing.');
     }
 
@@ -2098,6 +2102,9 @@ class AdminDashboardController extends Controller
             'message'         => "Request #{$request->tracking_number} is Ready for Pick-up!",
         ]);
 
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'status' => 'Ready', 'message' => 'Document marked as Ready for Pick-up! Notification sent to the resident.']);
+        }
         return back()->with('success', 'Document marked as Ready for Pick-up! Notification sent to the resident.');
     }
 
@@ -2117,6 +2124,14 @@ class AdminDashboardController extends Controller
             'document_type'   => $request->document_type,
             'message'         => "Request #{$request->tracking_number} marked as Completed.",
         ]);
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'status'  => 'Completed',
+                'message' => 'Document marked as Completed!',
+            ]);
+        }
 
         return back()->with('success', 'Document marked as Completed!');
     }
