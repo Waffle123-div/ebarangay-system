@@ -1569,6 +1569,120 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
             50%       { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.0); }
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           MODAL WORKFLOW ACTION BUTTONS (CENTERED, PROMINENT & HIGH-CONTRAST)
+           ═══════════════════════════════════════════════════════════ */
+        .btn-modal-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            font-size: 14.5px;
+            font-weight: 700;
+            line-height: 1.25;
+            padding: 11px 28px;
+            min-height: 44px;
+            border-radius: 10px;
+            letter-spacing: -0.01em;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn-modal-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-modal-action:active {
+            transform: translateY(0);
+        }
+
+        /* 1. Reject Button */
+        .btn-modal-reject {
+            background-color: #ffffff;
+            color: #dc2626;
+            border: 1.5px solid #fca5a5;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+        }
+        .btn-modal-reject:hover {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+            color: #b91c1c;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.22);
+        }
+
+        /* 2. Accept Request Button */
+        .btn-modal-accept {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: #ffffff !important;
+            border: 1.5px solid #15803d;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+        }
+        .btn-modal-accept:hover {
+            background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+            border-color: #166534;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.48);
+        }
+
+        /* 3. Ready for Pickup Button */
+        .btn-modal-ready {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff !important;
+            border: 1.5px solid #0284c7;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+        }
+        .btn-modal-ready:hover {
+            background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+            border-color: #0369a1;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.48);
+        }
+
+        /* 4. Complete Request Button */
+        .btn-modal-complete {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #ffffff !important;
+            border: 1.5px solid #047857;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+        }
+        .btn-modal-complete:hover {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+            border-color: #047857;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.48);
+        }
+
+        /* 5. Save Changes (Edit Mode) Button */
+        .btn-modal-save {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            border: 1.5px solid #1d4ed8;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .btn-modal-save:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            border-color: #1e40af;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.48);
+        }
+
+        /* Dark mode overrides for modal action buttons */
+        html[data-theme="dark"] .btn-modal-reject,
+        html[data-bs-theme="dark"] .btn-modal-reject {
+            background-color: rgba(220, 38, 38, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        html[data-theme="dark"] .btn-modal-reject:hover,
+        html[data-bs-theme="dark"] .btn-modal-reject:hover {
+            background-color: rgba(220, 38, 38, 0.3);
+            border-color: #f87171;
+            color: #ffffff;
+        }
     </style>
 
     <div class="card border-0 shadow-sm rounded-4">
@@ -2421,82 +2535,80 @@
                 </div>{{-- /modal-body --}}
 
                 {{-- ======================== --}}
-                {{-- FOOTER                --}}
+                {{-- FOOTER                   --}}
                 {{-- ======================== --}}
-                <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between align-items-center gap-2">
+                <div class="modal-footer bg-light border-top px-4 py-3 position-relative d-flex justify-content-center align-items-center">
 
                     {{-- Left: Delete (only for terminal states — Rejected or Completed) --}}
-                    <div>
-                        @if($editable && in_array($request->status, ['Rejected', 'Completed']))
+                    @if($editable && in_array($request->status, ['Rejected', 'Completed']))
+                        <div class="position-absolute start-0 ms-4" id="modal-left-actions-{{ $request->id }}">
                             <form action="{{ route('admin.requests.destroy', $request->id) }}" method="POST" class="m-0"
                                   onsubmit="return confirm('Permanently delete {{ $request->tracking_number }}? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-3 px-3">
-                                    <i class="fa-solid fa-trash me-1"></i> Delete Permanently
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-3 px-3 py-1.5 fw-semibold">
+                                    <i class="fa-solid fa-trash me-1"></i> Delete
                                 </button>
                             </form>
-                        @else
-                            <span></span>
-                        @endif
-                    </div>
+                        </div>
+                    @else
+                        <div class="position-absolute start-0 ms-4" id="modal-left-actions-{{ $request->id }}"></div>
+                    @endif
 
-                    {{-- Right: Close + Save Changes + Workflow Action Buttons --}}
-                    <div class="d-flex gap-2 align-items-center">
-                        
-
+                    {{-- Center: Prominent Centered Workflow Action Buttons --}}
+                    <div class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
                         @if($editable)
                             <button type="submit" form="edit-form-{{ $request->id }}"
-                                    class="btn btn-sm btn-primary rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm d-none"
+                                    class="btn-modal-action btn-modal-save d-none"
                                     id="btn-save-{{ $request->id }}">
-                                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                                <i class="fa-solid fa-floppy-disk me-1.5"></i> Save Changes
                             </button>
 
                             @if(in_array($request->status, ['Pending', 'Under Review']))
-                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
+                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
                                 <form action="{{ route('admin.requests.reject', $request->id) }}" method="POST" class="m-0"
                                       onsubmit="return confirm('Reject this request? The resident will be notified.');">
                                     @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-3 px-3 py-1.5 fw-semibold">
-                                        <i class="fa-solid fa-xmark me-1"></i> Reject
+                                    <button type="submit" class="btn-modal-action btn-modal-reject">
+                                        <i class="fa-solid fa-xmark me-1.5"></i> Reject
                                     </button>
                                 </form>
                                 {{-- Accept button: AJAX so the modal auto-flows to the next step --}}
                                 <button type="button"
-                                        class="btn btn-sm btn-success rounded-3 px-3 py-1.5 fw-semibold shadow-sm btn-accept-request"
+                                        class="btn-modal-action btn-modal-accept btn-accept-request"
                                         data-accept-url="{{ route('admin.requests.accept', $request->id) }}"
                                         data-ready-url="{{ route('admin.requests.ready', $request->id) }}"
                                         data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
                                         data-csrf="{{ csrf_token() }}"
                                         data-request-id="{{ $request->id }}">
-                                    <i class="fa-solid fa-check me-1"></i> Accept Request
+                                    <i class="fa-solid fa-check me-1.5"></i> Accept Request
                                 </button>
                             </div>
                             @elseif($request->status == 'Processing')
-                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
+                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
                                 <button type="button"
-                                        class="btn btn-sm btn-info text-white rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-ready-request"
+                                        class="btn-modal-action btn-modal-ready btn-ready-request"
                                         data-ready-url="{{ route('admin.requests.ready', $request->id) }}"
                                         data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
                                         data-csrf="{{ csrf_token() }}"
                                         data-request-id="{{ $request->id }}">
-                                    <i class="fa-solid fa-bell me-1"></i> Ready for Pickup
+                                    <i class="fa-solid fa-bell me-1.5"></i> Ready for Pickup
                                 </button>
                             </div>
                             @elseif($request->status == 'Ready')
-                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
+                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
                                 <button type="button"
-                                        class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-complete-request"
+                                        class="btn-modal-action btn-modal-complete btn-complete-request"
                                         data-complete-url="{{ route('admin.requests.complete', $request->id) }}"
                                         data-csrf="{{ csrf_token() }}"
                                         data-request-id="{{ $request->id }}">
-                                    <i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed
+                                    <i class="fa-solid fa-check-double me-1.5"></i> Mark Claimed / Completed
                                 </button>
                             </div>
                             @elseif($request->status == 'Completed')
-                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
-                                <span class="badge bg-success bg-opacity-10 text-success py-2 px-3 fw-bold rounded-pill">
-                                    <i class="fa-solid fa-circle-check me-1"></i> Completed
+                            <div id="accept-reject-{{ $request->id }}" class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
+                                <span class="badge bg-success bg-opacity-10 text-success py-2.5 px-4 fw-bold rounded-pill" style="font-size: 14.5px; border: 1.5px solid #86efac;">
+                                    <i class="fa-solid fa-circle-check me-1.5 text-success"></i> Completed
                                 </span>
                             </div>
                             @else
@@ -2728,12 +2840,12 @@
             const footerDiv = document.getElementById('accept-reject-' + requestId);
             if (footerDiv) {
                 footerDiv.innerHTML =
-                    '<button type="button" class="btn btn-sm btn-info text-white rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-ready-request" ' +
+                    '<button type="button" class="btn-modal-action btn-modal-ready btn-ready-request" ' +
                     'data-ready-url="' + readyUrl + '" ' +
                     'data-complete-url="' + completeUrl + '" ' +
                     'data-csrf="' + csrfToken + '" ' +
                     'data-request-id="' + requestId + '">' +
-                    '<i class="fa-solid fa-bell me-1"></i> Ready for Pickup' +
+                    '<i class="fa-solid fa-bell me-1.5"></i> Ready for Pickup' +
                     '</button>';
             }
 
@@ -2809,11 +2921,11 @@
             const footerDiv = document.getElementById('accept-reject-' + requestId);
             if (footerDiv) {
                 footerDiv.innerHTML =
-                    '<button type="button" class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm btn-complete-request" ' +
+                    '<button type="button" class="btn-modal-action btn-modal-complete btn-complete-request" ' +
                     'data-complete-url="' + completeUrl + '" ' +
                     'data-csrf="' + csrfToken + '" ' +
                     'data-request-id="' + requestId + '">' +
-                    '<i class="fa-solid fa-check-double me-1"></i> Mark Claimed / Completed' +
+                    '<i class="fa-solid fa-check-double me-1.5"></i> Mark Claimed / Completed' +
                     '</button>';
             }
 
@@ -2882,8 +2994,8 @@
             const footerDiv = document.getElementById('accept-reject-' + requestId);
             if (footerDiv) {
                 footerDiv.innerHTML =
-                    '<span class="badge bg-success bg-opacity-10 text-success py-2 px-3 fw-bold rounded-pill">' +
-                    '<i class="fa-solid fa-circle-check me-1"></i> Completed</span>';
+                    '<span class="badge bg-success bg-opacity-10 text-success py-2.5 px-4 fw-bold rounded-pill" style="font-size: 14.5px; border: 1.5px solid #86efac;">' +
+                    '<i class="fa-solid fa-circle-check me-1.5 text-success"></i> Completed</span>';
             }
 
             if (typeof window.agToast === 'function') {
