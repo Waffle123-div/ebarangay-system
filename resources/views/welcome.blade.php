@@ -1094,40 +1094,66 @@
     }
 
     .chat-toggle {
-      width: 58px;
-      height: 58px;
+      width: 62px;
+      height: 62px;
       border-radius: var(--radius-full);
-      background: linear-gradient(135deg, #1E40AF 0%, #2563EB 55%, #3B82F6 100%);
-      color: white;
+      background: #FFFFFF;
+      color: #1E40AF;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 28px -4px rgba(37, 99, 235, 0.5), 0 4px 12px rgba(0, 0, 0, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 10px 28px -4px rgba(37, 99, 235, 0.45), 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 2.5px solid #2563EB;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
+      padding: 3px;
+      animation: floatMascot 3s ease-in-out infinite;
     }
     .chat-toggle:hover {
-      transform: translateY(-3px) scale(1.06);
-      box-shadow: 0 16px 36px -4px rgba(37, 99, 235, 0.65);
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 0 16px 36px -4px rgba(37, 99, 235, 0.6);
+      border-color: #1D4ED8;
     }
     .chat-toggle.active {
       background: #DC2626 !important;
-      border-color: rgba(255, 255, 255, 0.5);
+      border-color: #B91C1C !important;
+      color: #FFFFFF !important;
+      animation: none !important;
     }
     .chat-toggle .chat-icon-avatar {
-      font-size: 1.45rem;
-      transition: transform 0.25s ease;
-      display: inline-flex;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      overflow: hidden;
     }
-    .chat-toggle:hover .chat-icon-avatar {
-      transform: scale(1.15) rotate(-8deg);
+    .chat-toggle .chat-mascot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+      transition: transform 0.25s ease;
+    }
+    .chat-toggle:hover .chat-mascot-img {
+      transform: scale(1.1);
     }
     .chat-toggle .chat-icon-open { display: none; }
-    .chat-toggle .chat-icon-close { display: none; font-size: 1.35rem; }
+    .chat-toggle .chat-icon-close { 
+      display: none; 
+      font-size: 1.5rem; 
+      color: #FFFFFF;
+    }
     .chat-toggle.active .chat-icon-avatar { display: none; }
     .chat-toggle.active .chat-icon-close { display: inline-flex; }
+
+    @keyframes floatMascot {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
 
     /* Istong AI Window */
     .chat-window {
@@ -1162,20 +1188,24 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     .istong-avatar {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      background: #FFFFFF;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.85);
       flex-shrink: 0;
+      padding: 2px;
     }
-    .istong-avatar .avatar-emoji {
-      font-size: 1.35rem;
-      line-height: 1;
+    .istong-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
     }
     .istong-avatar .avatar-ai-badge {
       position: absolute;
@@ -2449,7 +2479,7 @@
     <div class="chat-window" id="chatWindow">
       <div class="chat-header">
         <div class="chat-avatar istong-avatar">
-          <span class="avatar-emoji">🎣</span>
+          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI" class="istong-avatar-img">
           <span class="avatar-ai-badge">AI</span>
         </div>
         <div class="chat-header-info">
@@ -2518,8 +2548,9 @@
         <span>Pangutana kang <strong>Istong AI</strong></span>
       </div>
       <button class="chat-toggle" id="chatToggle" aria-label="Open Istong AI Assistant" title="Open Istong AI">
-        <span class="chat-icon-avatar">🎣</span>
-        <i class="icon-message-circle chat-icon-open"></i>
+        <span class="chat-icon-avatar">
+          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI Mascot" class="chat-mascot-img">
+        </span>
         <i class="icon-x chat-icon-close"></i>
       </button>
     </div>
