@@ -618,6 +618,39 @@ class AdminDocumentCrudTest extends TestCase
         $this->assertEquals('EMPLOYMENT VERIFICATION', $docRequest->purpose);
         $this->assertEquals("Driver's License", $docRequest->id_type);
         $this->assertEquals(50.00, (float)$docRequest->fee);
+
+        // 3. Submit update via AJAX / JSON request (seamless modal flow)
+        $ajaxResponse = $this->actingAs($admin)->patchJson(route('admin.requests.update', $docRequest->id), [
+            'first_name'     => 'Troy',
+            'last_name'      => 'Suson Ajax',
+            'middle_initial' => 'B',
+            'age'            => 27,
+            'document_type'  => 'Barangay Certificate',
+            'purpose'        => '',
+            'contact_number' => '09987654321',
+            'resident_email' => 'troysuson.ajax@example.com',
+            'id_type'        => 'National ID',
+            'fee'            => 0,
+        ]);
+
+        $ajaxResponse->assertStatus(200);
+        $ajaxResponse->assertJson([
+            'success' => true,
+            'request' => [
+                'id'         => $docRequest->id,
+                'first_name' => 'TROY',
+                'last_name'  => 'SUSON AJAX',
+                'age'        => 27,
+                'id_type'    => 'National ID',
+            ]
+        ]);
+
+        $docRequest->refresh();
+        $this->assertEquals('TROY', $docRequest->first_name);
+        $this->assertEquals('SUSON AJAX', $docRequest->last_name);
+        $this->assertEquals('B', $docRequest->middle_initial);
+        $this->assertEquals(27, $docRequest->age);
+        $this->assertEquals('National ID', $docRequest->id_type);
     }
 }
 

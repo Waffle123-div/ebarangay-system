@@ -136,6 +136,30 @@ class AdminDashboardController extends Controller
 
         ActivityLog::record('request_updated', "Updated document request #{$docRequest->tracking_number} ({$docRequest->document_type}).");
 
+        if ($httpRequest->expectsJson() || $httpRequest->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Request #{$docRequest->tracking_number} updated successfully.",
+                'request' => [
+                    'id'              => $docRequest->id,
+                    'tracking_number' => $docRequest->tracking_number,
+                    'first_name'      => $docRequest->first_name,
+                    'last_name'       => $docRequest->last_name,
+                    'middle_initial'  => $docRequest->middle_initial,
+                    'full_name'       => trim($docRequest->first_name . ' ' . ($docRequest->middle_initial ? $docRequest->middle_initial . ' ' : '') . $docRequest->last_name),
+                    'age'             => $docRequest->age,
+                    'contact_number'  => $docRequest->contact_number,
+                    'resident_email'  => $docRequest->resident_email,
+                    'contact_display' => $docRequest->resident_email ?? $docRequest->contact_number ?? '—',
+                    'fee'             => $docRequest->fee,
+                    'fee_formatted'   => $docRequest->fee !== null && (float)$docRequest->fee > 0 ? '₱' . number_format($docRequest->fee, 2) : 'FREE',
+                    'id_type'         => $docRequest->id_type,
+                    'document_type'   => $docRequest->document_type,
+                    'purpose'         => $docRequest->purpose,
+                ]
+            ]);
+        }
+
         return back()->with('success', 'Request updated successfully.');
     }
 

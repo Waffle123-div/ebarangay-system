@@ -26,6 +26,21 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-start" role="alert" style="background-color: #fef2f2; color: #991b1b; border: 1.5px solid #fecaca; margin-bottom: var(--spacing-gap, 14px) !important;">
+            <i class="fa-solid fa-triangle-exclamation me-2 text-danger fa-lg mt-1"></i>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1">Please check the form for errors:</div>
+                <ul class="mb-0 ps-3 small">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="stat-cards-grid" style="margin-bottom: var(--spacing-gap, 14px);">
         {{-- Card 1: Total & Active Workload Requests --}}
         <a href="{{ route('admin.requests', ['status' => 'All', 'quick_filter' => 'active']) }}" 
@@ -2085,19 +2100,22 @@
                     <div class="ms-auto d-flex align-items-center gap-2">
                         @if($editable)
                             <button type="button"
-                                    class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm"
+                                    class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm btn-edit-request"
                                     id="btn-edit-{{ $request->id }}"
+                                    data-request-id="{{ $request->id }}"
                                     onclick="toggleEditMode({{ $request->id }}, true)">
                                 <i class="fa-solid fa-pen-to-square me-1"></i> Edit
                             </button>
                             <button type="submit" form="edit-form-{{ $request->id }}"
-                                    class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm d-none"
-                                    id="btn-header-save-{{ $request->id }}">
+                                    class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm btn-save-request d-none"
+                                    id="btn-header-save-{{ $request->id }}"
+                                    data-request-id="{{ $request->id }}">
                                 <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
                             </button>
                             <button type="button"
-                                    class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1.5 fw-semibold d-none"
+                                    class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1.5 fw-semibold btn-cancel-request d-none"
                                     id="btn-cancel-edit-{{ $request->id }}"
+                                    data-request-id="{{ $request->id }}"
                                     onclick="toggleEditMode({{ $request->id }}, false)">
                                 <i class="fa-solid fa-xmark me-1"></i> Cancel Edit
                             </button>
@@ -2165,11 +2183,11 @@
                             <div class="row g-0">
                                 <div class="col-sm-6 p-3 grid-cell grid-cell-border-r grid-cell-border-b">
                                     <p class="text-muted mb-1 details-cell-label">Applicant Name</p>
-                                    <p class="fw-bold text-dark mb-0 details-cell-value">{{ strtoupper($request->first_name . ' ' . $request->middle_initial . ' ' . $request->last_name) }}</p>
+                                    <p class="fw-bold text-dark mb-0 details-cell-value" id="modal-view-applicant-{{ $request->id }}">{{ strtoupper($request->first_name . ' ' . $request->middle_initial . ' ' . $request->last_name) }}</p>
                                 </div>
                                 <div class="col-sm-6 p-3 grid-cell grid-cell-border-b">
                                     <p class="text-muted mb-1 details-cell-label">Age</p>
-                                    <p class="fw-bold text-dark mb-0 details-cell-value">{{ $request->age ?? '—' }}</p>
+                                    <p class="fw-bold text-dark mb-0 details-cell-value" id="modal-view-age-{{ $request->id }}">{{ $request->age ?? '—' }}</p>
                                 </div>
                             </div>
 
@@ -2177,11 +2195,11 @@
                             <div class="row g-0">
                                 <div class="col-sm-6 p-3 grid-cell grid-cell-border-r grid-cell-border-b">
                                     <p class="text-muted mb-1 details-cell-label">Contact Info</p>
-                                    <p class="fw-semibold text-dark mb-0 details-cell-value" style="font-size:14px; word-break: break-all;">{{ $request->resident_email ?? $request->contact_number ?? '—' }}</p>
+                                    <p class="fw-semibold text-dark mb-0 details-cell-value" id="modal-view-contact-{{ $request->id }}" style="font-size:14px; word-break: break-all;">{{ $request->resident_email ?? $request->contact_number ?? '—' }}</p>
                                 </div>
                                 <div class="col-sm-6 p-3 grid-cell grid-cell-border-b">
                                     <p class="text-muted mb-1 details-cell-label">ID Type</p>
-                                    <p class="fw-semibold text-dark mb-0 details-cell-value" style="font-size:14px;">
+                                    <p class="fw-semibold text-dark mb-0 details-cell-value" id="modal-view-idtype-{{ $request->id }}" style="font-size:14px;">
                                         @if($idType)
                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 fw-semibold">
                                                 <i class="fa-solid fa-id-card me-1"></i> {{ $idType }}
@@ -2376,7 +2394,7 @@
                                 <div class="bg-light rounded-3 p-3 border mb-2 d-flex justify-content-between align-items-center gap-3 modal-doc-item">
                                     <div class="flex-grow-1 min-w-0">
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="fw-bold text-dark details-cell-value" style="font-size: 14px;">{{ $request->document_type }}</span>
+                                            <span class="fw-bold text-dark details-cell-value" id="modal-view-doctype-{{ $request->id }}" style="font-size: 14px;">{{ $request->document_type }}</span>
                                             @if(!$isBusinessClearance)
                                                 <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
                                             @elseif($request->fee !== null && (float)$request->fee > 0)
@@ -2385,7 +2403,7 @@
                                                 <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
                                             @endif
                                         </div>
-                                        <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
+                                        <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> <span id="modal-view-purpose-{{ $request->id }}">{{ $request->purpose ?? 'No purpose provided.' }}</span></div>
                                     </div>
                                     <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
@@ -2406,10 +2424,14 @@
                     @if($editable)
                     <div id="edit-mode-{{ $request->id }}" class="d-none p-4">
                         <form id="edit-form-{{ $request->id }}"
+                              class="edit-request-form"
+                              data-request-id="{{ $request->id }}"
                               action="{{ route('admin.requests.update', $request->id) }}"
                               method="POST">
                             @csrf
                             @method('PATCH')
+
+                            <div id="edit-form-alert-{{ $request->id }}" class="alert alert-danger py-2 px-3 small rounded-3 d-none mb-3"></div>
 
                             <div class="alert alert-primary border-0 small rounded-3 mb-4 py-2 px-3 d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-pen-to-square"></i>
@@ -2520,12 +2542,12 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-dark">
-                                        <i class="fa-solid fa-bullseye text-primary me-1"></i> Purpose <span class="text-danger">*</span>
+                                        <i class="fa-solid fa-bullseye text-primary me-1"></i> Purpose
                                     </label>
                                     <input type="text" class="form-control form-control-sm rounded-3" name="purpose" 
                                            style="text-transform: uppercase;"
                                            value="{{ $request->purpose }}" 
-                                           placeholder="e.g. SCHOLARSHIP APPLICATION, EMPLOYMENT" required>
+                                           placeholder="e.g. SCHOLARSHIP APPLICATION, EMPLOYMENT">
                                 </div>
                             </div>
                         </form>
@@ -2559,8 +2581,9 @@
                     <div class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
                         @if($editable)
                             <button type="submit" form="edit-form-{{ $request->id }}"
-                                    class="btn-modal-action btn-modal-save d-none"
-                                    id="btn-save-{{ $request->id }}">
+                                    class="btn-modal-action btn-modal-save btn-save-request d-none"
+                                    id="btn-save-{{ $request->id }}"
+                                    data-request-id="{{ $request->id }}">
                                 <i class="fa-solid fa-floppy-disk me-1.5"></i> Save Changes
                             </button>
 
@@ -2704,6 +2727,7 @@
     };
 
     function toggleEditMode(id, editing) {
+        id = String(id);
         const viewMode      = document.getElementById('view-mode-' + id);
         const editMode      = document.getElementById('edit-mode-' + id);
         const btnEdit       = document.getElementById('btn-edit-' + id);
@@ -2714,26 +2738,177 @@
         const titleLabel    = document.getElementById('modal-title-label-' + id);
 
         if (editing) {
-            viewMode?.classList.add('d-none');
-            editMode?.classList.remove('d-none');
-            btnEdit?.classList.add('d-none');
-            btnCancel?.classList.remove('d-none');
-            btnSave?.classList.remove('d-none');
-            btnHeaderSave?.classList.remove('d-none');
-            acceptReject?.classList.add('d-none');
+            if (viewMode) viewMode.classList.add('d-none');
+            if (editMode) editMode.classList.remove('d-none');
+            if (btnEdit) btnEdit.classList.add('d-none');
+            if (btnCancel) btnCancel.classList.remove('d-none');
+            if (btnSave) btnSave.classList.remove('d-none');
+            if (btnHeaderSave) btnHeaderSave.classList.remove('d-none');
+            if (acceptReject) acceptReject.classList.add('d-none');
             if (titleLabel) titleLabel.textContent = 'Edit Request';
         } else {
-            viewMode?.classList.remove('d-none');
-            editMode?.classList.add('d-none');
-            btnEdit?.classList.remove('d-none');
-            btnCancel?.classList.add('d-none');
-            btnSave?.classList.add('d-none');
-            btnHeaderSave?.classList.add('d-none');
-            acceptReject?.classList.remove('d-none');
+            if (viewMode) viewMode.classList.remove('d-none');
+            if (editMode) editMode.classList.add('d-none');
+            if (btnEdit) btnEdit.classList.remove('d-none');
+            if (btnCancel) btnCancel.classList.add('d-none');
+            if (btnSave) btnSave.classList.add('d-none');
+            if (btnHeaderSave) btnHeaderSave.classList.add('d-none');
+            if (acceptReject) acceptReject.classList.remove('d-none');
             if (titleLabel) titleLabel.textContent = 'Request Details';
         }
     }
     window.toggleEditMode = toggleEditMode;
+
+    // Delegated click handler for Edit and Cancel Edit buttons
+    document.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('.btn-edit-request');
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = editBtn.dataset.requestId;
+            if (id && typeof window.toggleEditMode === 'function') {
+                window.toggleEditMode(id, true);
+            }
+            return;
+        }
+
+        const cancelBtn = e.target.closest('.btn-cancel-request');
+        if (cancelBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = cancelBtn.dataset.requestId;
+            if (id && typeof window.toggleEditMode === 'function') {
+                window.toggleEditMode(id, false);
+            }
+            return;
+        }
+    });
+
+    // Seamless AJAX submission for edit-request-form (keeps modal open, updates view dynamically)
+    document.addEventListener('submit', function(e) {
+        const form = e.target.closest('.edit-request-form');
+        if (!form) return;
+
+        e.preventDefault();
+
+        const id = form.dataset.requestId;
+        const btnSave = document.getElementById('btn-save-' + id);
+        const btnHeaderSave = document.getElementById('btn-header-save-' + id);
+        const alertBox = document.getElementById('edit-form-alert-' + id);
+
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+            alertBox.textContent = '';
+        }
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const origSaveHtml = btnSave ? btnSave.innerHTML : '';
+        const origHeaderHtml = btnHeaderSave ? btnHeaderSave.innerHTML : '';
+
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status"></span> Saving…';
+        }
+        if (btnHeaderSave) {
+            btnHeaderSave.disabled = true;
+            btnHeaderSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Saving…';
+        }
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    const msg = errData.message || (errData.errors ? Object.values(errData.errors).flat().join(' ') : 'Failed to update request.');
+                    throw new Error(msg);
+                });
+            }
+            return response.json();
+        })
+        .then(res => {
+            const reqData = res.request;
+            if (reqData) {
+                // Update view mode elements
+                const elApp = document.getElementById('modal-view-applicant-' + id);
+                if (elApp) elApp.textContent = reqData.full_name;
+
+                const elAge = document.getElementById('modal-view-age-' + id);
+                if (elAge) elAge.textContent = reqData.age || '—';
+
+                const elContact = document.getElementById('modal-view-contact-' + id);
+                if (elContact) elContact.textContent = reqData.contact_display || '—';
+
+                const elIdType = document.getElementById('modal-view-idtype-' + id);
+                if (elIdType) {
+                    if (reqData.id_type) {
+                        elIdType.innerHTML = '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 fw-semibold"><i class="fa-solid fa-id-card me-1"></i> ' + reqData.id_type + '</span>';
+                    } else {
+                        elIdType.innerHTML = '<span class="text-muted">—</span>';
+                    }
+                }
+
+                const elDocType = document.getElementById('modal-view-doctype-' + id);
+                if (elDocType) elDocType.textContent = reqData.document_type;
+
+                const elPurpose = document.getElementById('modal-view-purpose-' + id);
+                if (elPurpose) elPurpose.textContent = reqData.purpose || 'No purpose provided.';
+
+                // Also update background table row
+                const rowApplicant = document.querySelector('#req-row-' + id + ' .col-applicant .fw-bold');
+                if (rowApplicant) rowApplicant.textContent = (reqData.first_name + ' ' + reqData.last_name).trim();
+
+                const rowAvatar = document.querySelector('#req-row-' + id + ' .col-applicant .rounded-circle');
+                if (rowAvatar) {
+                    const initials = ((reqData.first_name ? reqData.first_name.charAt(0) : '') + (reqData.last_name ? reqData.last_name.charAt(0) : '')).toUpperCase();
+                    rowAvatar.textContent = initials || 'R';
+                }
+
+                const rowContact = document.querySelector('#req-row-' + id + ' .col-applicant .text-muted');
+                if (rowContact) rowContact.textContent = reqData.contact_display;
+
+                const rowDoc = document.querySelector('#req-row-' + id + ' .col-doctype .fw-semibold');
+                if (rowDoc) rowDoc.textContent = reqData.document_type;
+            }
+
+            // Smoothly switch back to view mode without closing modal
+            toggleEditMode(id, false);
+
+            if (typeof window.agToast === 'function') {
+                window.agToast('Changes Saved', 'Document request details have been updated.', 'success', 3500);
+            }
+        })
+        .catch(err => {
+            console.error('Save request error:', err);
+            if (alertBox) {
+                alertBox.textContent = err.message || 'An error occurred while saving changes.';
+                alertBox.classList.remove('d-none');
+            } else {
+                alert(err.message || 'Could not save changes. Please try again.');
+            }
+        })
+        .finally(() => {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = origSaveHtml;
+            }
+            if (btnHeaderSave) {
+                btnHeaderSave.disabled = false;
+                btnHeaderSave.innerHTML = origHeaderHtml;
+            }
+        });
+    });
         // Copy tracking number helper
     window.copyTrackingNumber = function(text, btnEl) {
         function showFeedback() {
@@ -3273,6 +3448,14 @@
         document.addEventListener('admin:realtime-event', function(e) {
             const payload = e.detail;
             console.log('⚡ Admin requests received realtime event:', payload);
+            const isModalOpen = document.body.classList.contains('modal-open') || 
+                                document.querySelector('.modal.show') !== null ||
+                                document.querySelector('.modal-backdrop') !== null;
+            if (isModalOpen) {
+                // Keep the open modal completely intact; only update stat counts
+                if (typeof silentUpdateCounts === 'function') silentUpdateCounts();
+                return;
+            }
             if (typeof window.loadPageUrl === 'function') {
                 window.loadPageUrl(window.location.href, false, true);
             }
@@ -3313,10 +3496,12 @@
                         currMobile.innerHTML = newMobile.innerHTML;
                     }
 
-                    // 4. Update modals container
+                    // 4. Update modals container (never replace if a modal is currently open on screen!)
+                    const isAnyModalOpen = document.body.classList.contains('modal-open') || 
+                                          document.querySelector('.modal.show') !== null;
                     const newModals = doc.getElementById('modals-container');
                     const currModals = document.getElementById('modals-container');
-                    if (newModals && currModals) {
+                    if (newModals && currModals && !isAnyModalOpen) {
                         currModals.innerHTML = newModals.innerHTML;
                     }
 
