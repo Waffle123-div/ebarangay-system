@@ -2924,7 +2924,9 @@ section[id] {
 }
 
 /* Mobile nav overlay */
-[data-theme="dark"] .nav-links { background: #0C1929; }
+@media (max-width: 768px) {
+  [data-theme="dark"] .nav-links { background: #0C1929; }
+}
 
 /* How It Works */
 [data-theme="dark"] .hiw-step-body { border-color: var(--color-border); }
