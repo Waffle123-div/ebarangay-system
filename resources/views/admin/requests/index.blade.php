@@ -2249,11 +2249,13 @@
                                     <i class="fa-solid fa-file-lines text-primary me-1.5"></i> Requested {{ $docsCount > 1 ? 'Documents (' . $docsCount . ')' : 'Document' }}
                                 </p>
                                 @if($docsCount > 1)
+                                    @if(in_array($request->status, ['Ready', 'Completed']))
                                     <a href="{{ route('admin.requests.generate', $request->id) }}" 
                                        class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
                                        title="Download All Documents in a Single ZIP Archive">
                                         <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
                                     </a>
+                                    @endif
                                 @endif
                             </div>
 
@@ -2280,11 +2282,13 @@
                                                     <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
                                                 </div>
                                             </div>
+                                            @if(in_array($request->status, ['Ready', 'Completed']))
                                             <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
                                                class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
                                                title="Generate Word Document for {{ $docItem['type'] }}">
                                                 <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
                                             </a>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -2303,11 +2307,13 @@
                                         </div>
                                         <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> {{ $request->purpose ?? 'No purpose provided.' }}</div>
                                     </div>
+                                    @if(in_array($request->status, ['Ready', 'Completed']))
                                     <a href="{{ route('admin.requests.generate', $request->id) }}" 
                                        class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
                                        title="Generate Word Document">
                                         <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
                                     </a>
+                                    @endif
                                 </div>
                             @endif
                         </div>
@@ -2489,12 +2495,15 @@
                                         <i class="fa-solid fa-xmark me-1"></i> Reject
                                     </button>
                                 </form>
-                                <form action="{{ route('admin.requests.accept', $request->id) }}" method="POST" class="m-0">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-success rounded-3 px-3.5 py-1.5 fw-semibold shadow-sm">
-                                        <i class="fa-solid fa-check me-1"></i> Accept Request
-                                    </button>
-                                </form>
+                                {{-- Accept button: AJAX so the modal auto-flows to the next step --}}
+                                <button type="button"
+                                        class="btn btn-sm btn-success rounded-3 px-3 py-1.5 fw-semibold shadow-sm btn-accept-request"
+                                        data-accept-url="{{ route('admin.requests.accept', $request->id) }}"
+                                        data-csrf="{{ csrf_token() }}"
+                                        data-request-id="{{ $request->id }}"
+                                        data-ready-url="{{ route('admin.requests.ready', $request->id) }}">
+                                    <i class="fa-solid fa-check me-1"></i> Accept Request
+                                </button>
                             </div>
                             @elseif($request->status == 'Processing')
                             <div id="accept-reject-{{ $request->id }}" class="d-flex gap-2">
@@ -2670,6 +2679,95 @@
     };
 
     window.syncDocsJson = function(id) { return true; };
+
+    // ── AJAX Accept Request: auto-flow to "Ready for Pickup" step ──
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-accept-request');
+        if (!btn) return;
+
+        const acceptUrl  = btn.dataset.acceptUrl;
+        const csrfToken  = btn.dataset.csrf;
+        const requestId  = btn.dataset.requestId;
+        const readyUrl   = btn.dataset.readyUrl;
+
+        // Disable button to prevent double-click
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Accepting…';
+
+        fetch(acceptUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: '_method=PATCH&_token=' + encodeURIComponent(csrfToken),
+            redirect: 'follow',
+        })
+        .then(response => {
+            // Laravel redirects after PATCH — a 200 on the redirect target is success
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            return response;
+        })
+        .then(() => {
+            // 1. Update status badge inside the modal
+            const modalStatusBadge = document.getElementById('modal-status-badge-' + requestId);
+            if (modalStatusBadge) {
+                modalStatusBadge.innerHTML =
+                    '<span class="status-badge status-processing px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
+                    '<span class="status-dot"></span><span>Processing</span></span>';
+            }
+
+            // Also update the row status badge in the table
+            const rowBadge = document.getElementById('status-badge-' + requestId);
+            if (rowBadge) {
+                rowBadge.innerHTML = '<span class="status-badge status-processing">Processing</span>';
+            }
+            const rowBadgeMobile = document.getElementById('status-badge-mobile-' + requestId);
+            if (rowBadgeMobile) {
+                rowBadgeMobile.innerHTML = '<span class="status-badge status-processing">Processing</span>';
+            }
+
+            // 2. Swap footer buttons → show "Ready for Pickup"
+            const footerDiv = document.getElementById('accept-reject-' + requestId);
+            if (footerDiv) {
+                footerDiv.innerHTML =
+                    '<form action="' + readyUrl + '" method="POST" class="m-0">' +
+                    '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                    '<input type="hidden" name="_method" value="PATCH">' +
+                    '<button type="submit" class="btn btn-sm btn-info text-white rounded-3 px-3 py-1.5 fw-semibold shadow-sm">' +
+                    '<i class="fa-solid fa-bell me-1"></i> Ready for Pickup' +
+                    '</button></form>';
+            }
+
+            // 3. Flash a success toast if available
+            if (typeof window.agToast === 'function') {
+                window.agToast('Request Accepted', 'Request is now Processing. Mark it Ready for Pickup when done.', 'success', 5000);
+            }
+
+            // 4. Silently refresh KPI counts in the background (no visual jump)
+            fetch(window.location.href)
+                .then(r => r.text())
+                .then(html => {
+                    const doc2 = new DOMParser().parseFromString(html, 'text/html');
+                    const ids = ['kpi-total','kpi-pending','kpi-approved','kpi-overdue',
+                                 'tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+                    ids.forEach(id => {
+                        const nEl = doc2.getElementById(id);
+                        const oEl = document.getElementById(id);
+                        if (nEl && oEl) oEl.innerHTML = nEl.innerHTML;
+                    });
+                })
+                .catch(() => {}); // silent
+        })
+        .catch(err => {
+            console.error('Accept AJAX error:', err);
+            // Restore button on failure
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Accept Request';
+            alert('Could not accept the request. Please try again.');
+        });
+    });
 
     // Automatically reset modal to view mode when closed
     document.addEventListener('hidden.bs.modal', function(e) {
