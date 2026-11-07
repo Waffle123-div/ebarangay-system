@@ -40,13 +40,24 @@
             vertical-align: middle;
             font-size: 0.84rem;
         }
+        .user-row-clickable {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .user-row-clickable:hover {
+            background-color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .user-row-clickable:hover,
+        html[data-bs-theme="dark"] .user-row-clickable:hover {
+            background-color: rgba(59, 130, 246, 0.08) !important;
+        }
         .table-users thead th.col-actions,
         .table-users tbody td.col-actions {
             white-space: nowrap;
             text-align: right;
             padding-right: 1rem !important;
-            min-width: 195px;
-            width: 195px;
+            min-width: 125px;
+            width: 125px;
             position: sticky;
             right: 0;
             z-index: 2;
@@ -88,24 +99,6 @@
         }
         .btn-table-action:hover {
             transform: translateY(-1px);
-        }
-        .btn-view-user {
-            color: #1d4ed8 !important;
-            background: rgba(37, 99, 235, 0.08);
-            border-color: rgba(37, 99, 235, 0.16);
-        }
-        .btn-view-user:hover {
-            background: rgba(37, 99, 235, 0.18);
-            color: #1e40af !important;
-        }
-        .btn-edit-user {
-            color: #b45309 !important;
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.2);
-        }
-        .btn-edit-user:hover {
-            background: rgba(245, 158, 11, 0.2);
-            color: #92400e !important;
         }
         .btn-toggle-status.action-deactivate {
             color: #dc2626 !important;
@@ -465,26 +458,6 @@
         }
 
         /* ── Action buttons in Table (Dark Mode) ── */
-        html[data-theme="dark"] .btn-view-user,
-        html[data-bs-theme="dark"] .btn-view-user,
-        html[data-theme="dark"] .btn-view-user i,
-        html[data-bs-theme="dark"] .btn-view-user i {
-            color: #60a5fa !important;
-        }
-        html[data-theme="dark"] .btn-view-user:hover,
-        html[data-bs-theme="dark"] .btn-view-user:hover {
-            color: #93c5fd !important;
-        }
-        html[data-theme="dark"] .btn-edit-user,
-        html[data-bs-theme="dark"] .btn-edit-user,
-        html[data-theme="dark"] .btn-edit-user i,
-        html[data-bs-theme="dark"] .btn-edit-user i {
-            color: #fbbf24 !important;
-        }
-        html[data-theme="dark"] .btn-edit-user:hover,
-        html[data-bs-theme="dark"] .btn-edit-user:hover {
-            color: #fde047 !important;
-        }
         html[data-theme="dark"] .btn-toggle-status.action-deactivate,
         html[data-bs-theme="dark"] .btn-toggle-status.action-deactivate,
         html[data-theme="dark"] .btn-toggle-status.action-deactivate i,
@@ -539,6 +512,66 @@
             background-color: rgba(148, 163, 184, 0.18) !important;
             color: #cbd5e1 !important;
             border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        }
+
+        /* ── User Details Modal Dark Mode ── */
+        html[data-theme="dark"] #viewUserModal .modal-content,
+        html[data-bs-theme="dark"] #viewUserModal .modal-content {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+        html[data-theme="dark"] #viewUserModal .modal-header,
+        html[data-bs-theme="dark"] #viewUserModal .modal-header,
+        html[data-theme="dark"] #viewUserModal .modal-footer,
+        html[data-bs-theme="dark"] #viewUserModal .modal-footer {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] #viewUserModal .card,
+        html[data-bs-theme="dark"] #viewUserModal .card {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #viewUserModal .card-header,
+        html[data-bs-theme="dark"] #viewUserModal .card-header {
+            background-color: #182238 !important;
+            border-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        html[data-theme="dark"] #viewUserModal .hero-user-card,
+        html[data-bs-theme="dark"] #viewUserModal .hero-user-card {
+            background: linear-gradient(135deg, #131d31 0%, #1e293b 100%) !important;
+            border-color: #1e293b !important;
+        }
+        html[data-theme="dark"] #viewUserModal .form-control,
+        html[data-bs-theme="dark"] #viewUserModal .form-control,
+        html[data-theme="dark"] #viewUserModal .form-select,
+        html[data-bs-theme="dark"] #viewUserModal .form-select {
+            background-color: #182238 !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] #viewUserModal .form-control:focus,
+        html[data-bs-theme="dark"] #viewUserModal .form-control:focus,
+        html[data-theme="dark"] #viewUserModal .form-select:focus,
+        html[data-bs-theme="dark"] #viewUserModal .form-select:focus {
+            background-color: #1e2b45 !important;
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] #viewUserModal .text-dark,
+        html[data-bs-theme="dark"] #viewUserModal .text-dark {
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #viewUserModal .text-muted,
+        html[data-bs-theme="dark"] #viewUserModal .text-muted {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] #viewUserModal .btn-close,
+        html[data-bs-theme="dark"] #viewUserModal .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
         }
 
     </style>
@@ -839,8 +872,38 @@
                 </thead>
                 <tbody class="border-top-0">
                     @forelse($allUsers as $user)
-                    <tr id="user-row-{{ $user->id }}">
-                        <td class="ps-3 text-center py-2.5" style="width: 38px;">
+                    <tr id="user-row-{{ $user->id }}"
+                        class="user-row-clickable"
+                        title="Click to view details for {{ $user->name }}"
+                        role="button"
+                        tabindex="0"
+                        data-id="{{ $user->id }}"
+                        data-user-id-code="USR-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}"
+                        data-name="{{ $user->name }}"
+                        data-email="{{ $user->email }}"
+                        data-phone="{{ $user->phone_number ?? '' }}"
+                        data-role="{{ $user->role }}"
+                        data-status="{{ $user->status }}"
+                        data-registered="{{ $user->created_at->format('M d, Y') }}"
+                        data-gender="{{ $user->gender ?? 'N/A' }}"
+                        data-birthdate="{{ $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->format('M d, Y') : 'N/A' }}"
+                        data-birthdate-raw="{{ $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->format('Y-m-d') : '' }}"
+                        data-age="{{ $user->age ?? 'N/A' }}"
+                        data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
+                        data-civil-status="{{ $user->civil_status ?? 'N/A' }}"
+                        data-nationality="{{ $user->nationality ?? 'Filipino' }}"
+                        data-occupation="{{ $user->occupation ?? 'N/A' }}"
+                        data-purok="{{ $user->purok ?? 'N/A' }}"
+                        data-sitio="{{ $user->sitio ?? 'N/A' }}"
+                        data-barangay="{{ $user->barangay_address ?? 'Cogon East' }}"
+                        data-municipality="{{ $user->municipality ?? 'Carmen' }}"
+                        data-province="{{ $user->province ?? 'Cebu' }}"
+                        data-zip="{{ $user->zip_code ?? '6005' }}"
+                        data-id-type="{{ $user->id_type ?? 'N/A' }}"
+                        data-id-doc-url="{{ $user->id_document_url }}"
+                        data-selfie-url="{{ $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : '' }}"
+                        data-face-verified="{{ $user->face_verified_at ? \Carbon\Carbon::parse($user->face_verified_at)->format('M d, Y h:i A') : '' }}">
+                        <td class="ps-3 text-center py-2.5" style="width: 38px;" onclick="event.stopPropagation()">
                             <input class="form-check-input user-checkbox" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}" {{ $user->id === auth()->id() ? 'disabled title="Cannot delete your own account"' : '' }}>
                         </td>
                         <td class="fw-bold text-dark text-nowrap">
@@ -874,42 +937,8 @@
                             @endif
                         </td>
                         <td class="text-muted text-nowrap" style="font-size: 12px;">{{ $user->created_at->format('M d, Y') }}</td>
-                        <td class="pe-3 text-end text-nowrap col-actions">
+                        <td class="pe-3 text-end text-nowrap col-actions" onclick="event.stopPropagation()">
                             <div class="user-actions-group">
-                                {{-- VIEW BUTTON --}}
-                                <button type="button"
-                                    class="btn-table-action btn-view-user"
-                                    aria-label="View user details for {{ $user->name }}"
-                                    title="View details"
-                                    data-id="{{ $user->id }}"
-                                    data-name="{{ $user->name }}"
-                                    data-email="{{ $user->email }}"
-                                    data-role="{{ $user->role }}"
-                                    data-status="{{ $user->status }}"
-                                    data-registered="{{ $user->created_at->format('M d, Y') }}"
-                                    data-gender="{{ $user->gender ?? 'N/A' }}"
-                                    data-birthdate="{{ $user->birthdate ?? 'N/A' }}"
-                                    data-age="{{ $user->age ?? 'N/A' }}"
-                                    data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
-                                    data-id-type="{{ $user->id_type ?? 'N/A' }}"
-                                    data-id-doc-url="{{ $user->id_document_url }}">
-                                    <i class="fa-solid fa-eye me-1"></i>
-                                    <span>View</span>
-                                </button>
-
-                                {{-- EDIT BUTTON --}}
-                                <button type="button"
-                                    class="btn-table-action btn-edit-user"
-                                    aria-label="Edit user account for {{ $user->name }}"
-                                    title="Edit user"
-                                    data-id="{{ $user->id }}"
-                                    data-name="{{ $user->name }}"
-                                    data-email="{{ $user->email }}"
-                                    data-role="{{ $user->role }}">
-                                    <i class="fa-solid fa-pen-to-square me-1"></i>
-                                    <span>Edit</span>
-                                </button>
-
                                 {{-- DEACTIVATE / ACTIVATE BUTTON --}}
                                 <button type="button"
                                     class="btn-table-action btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'action-deactivate text-danger' : 'action-activate text-success' }}"
@@ -941,10 +970,39 @@
         {{-- Mobile Cards View (Screens < 768px, matching Request tab) --}}
         <div class="d-md-none p-3" id="users-mobile-list">
             @forelse($allUsers as $user)
-                <div class="mobile-user-card">
+                <div class="mobile-user-card user-row-clickable"
+                     role="button"
+                     tabindex="0"
+                     title="Tap to view user details for {{ $user->name }}"
+                     data-id="{{ $user->id }}"
+                     data-user-id-code="USR-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}"
+                     data-name="{{ $user->name }}"
+                     data-email="{{ $user->email }}"
+                     data-phone="{{ $user->phone_number ?? '' }}"
+                     data-role="{{ $user->role }}"
+                     data-status="{{ $user->status }}"
+                     data-registered="{{ $user->created_at->format('M d, Y') }}"
+                     data-gender="{{ $user->gender ?? 'N/A' }}"
+                     data-birthdate="{{ $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->format('M d, Y') : 'N/A' }}"
+                     data-birthdate-raw="{{ $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->format('Y-m-d') : '' }}"
+                     data-age="{{ $user->age ?? 'N/A' }}"
+                     data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
+                     data-civil-status="{{ $user->civil_status ?? 'N/A' }}"
+                     data-nationality="{{ $user->nationality ?? 'Filipino' }}"
+                     data-occupation="{{ $user->occupation ?? 'N/A' }}"
+                     data-purok="{{ $user->purok ?? 'N/A' }}"
+                     data-sitio="{{ $user->sitio ?? 'N/A' }}"
+                     data-barangay="{{ $user->barangay_address ?? 'Cogon East' }}"
+                     data-municipality="{{ $user->municipality ?? 'Carmen' }}"
+                     data-province="{{ $user->province ?? 'Cebu' }}"
+                     data-zip="{{ $user->zip_code ?? '6005' }}"
+                     data-id-type="{{ $user->id_type ?? 'N/A' }}"
+                     data-id-doc-url="{{ $user->id_document_url }}"
+                     data-selfie-url="{{ $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : '' }}"
+                     data-face-verified="{{ $user->face_verified_at ? \Carbon\Carbon::parse($user->face_verified_at)->format('M d, Y h:i A') : '' }}">
                     {{-- Header: ID + Role + Status --}}
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation()">
                             <input class="form-check-input user-checkbox mt-0" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}" {{ $user->id === auth()->id() ? 'disabled title="Cannot delete your own account"' : '' }}>
                             <span class="font-monospace fw-bold text-dark" style="font-size: 13px;">
                                 USR-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}
@@ -977,41 +1035,21 @@
                             <div class="text-muted text-truncate" style="font-size: 12px;">{{ $user->email }}</div>
                             <div class="text-muted" style="font-size: 11px;">Registered: {{ $user->created_at->format('M d, Y') }}</div>
                         </div>
+                        <div class="text-muted ms-2">
+                            <i class="fa-solid fa-chevron-right text-muted opacity-50" style="font-size: 12px;"></i>
+                        </div>
                     </div>
 
-                    {{-- Actions Grid for Mobile --}}
-                    <div class="d-flex gap-2 pt-2 border-top mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-3 flex-fill fw-semibold py-2 btn-view-user"
-                                style="min-height: 42px;"
-                                data-id="{{ $user->id }}"
-                                data-name="{{ $user->name }}"
-                                data-email="{{ $user->email }}"
-                                data-role="{{ $user->role }}"
-                                data-status="{{ $user->status }}"
-                                data-registered="{{ $user->created_at->format('M d, Y') }}"
-                                data-gender="{{ $user->gender ?? 'N/A' }}"
-                                data-birthdate="{{ $user->birthdate ?? 'N/A' }}"
-                                data-age="{{ $user->age ?? 'N/A' }}"
-                                data-birthplace="{{ $user->birthplace ?? 'N/A' }}"
-                                data-id-type="{{ $user->id_type ?? 'N/A' }}"
-                                data-id-doc-url="{{ $user->id_document_url }}">
-                            <i class="fa-solid fa-eye me-1"></i> View
-                        </button>
-                        <button type="button" class="btn btn-sm rounded-3 flex-fill fw-semibold py-2 btn-edit-user"
-                                style="color: #92400e; border: 1.5px solid #d97706; background-color: #fef3c7; min-height: 42px;"
-                                data-id="{{ $user->id }}"
-                                data-name="{{ $user->name }}"
-                                data-email="{{ $user->email }}"
-                                data-role="{{ $user->role }}">
-                            <i class="fa-solid fa-pen me-1"></i> Edit
-                        </button>
-                        <button type="button" class="btn btn-sm rounded-3 flex-fill fw-semibold py-2 btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                style="min-height: 42px;"
+                    {{-- Actions Grid for Mobile: Clickable row opens details, button activates/deactivates --}}
+                    <div class="d-flex gap-2 pt-2 border-top mt-2" onclick="event.stopPropagation()">
+                        <button type="button" class="btn btn-sm rounded-3 w-100 fw-semibold py-2 btn-toggle-status {{ in_array(strtolower($user->status), ['active']) ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                style="min-height: 38px;"
                                 data-id="{{ $user->id }}"
                                 data-name="{{ $user->name }}"
                                 data-action="{{ in_array(strtolower($user->status), ['active']) ? 'deactivate' : 'activate' }}"
                                 data-url="{{ route('admin.users.toggle-status', $user->id) }}">
-                            {{ in_array(strtolower($user->status), ['active']) ? 'Deactivate' : 'Activate' }}
+                            <i class="fa-solid {{ in_array(strtolower($user->status), ['active']) ? 'fa-ban' : 'fa-check' }} me-1"></i>
+                            {{ in_array(strtolower($user->status), ['active']) ? 'Deactivate User' : 'Activate User' }}
                         </button>
                     </div>
                 </div>
@@ -1097,112 +1135,358 @@
     </div>
 </div>
 
-{{-- ===================== VIEW USER MODAL ===================== --}}
+{{-- ===================== USER DETAILS MODAL (EXPANDED HORIZONTALLY) ===================== --}}
 <div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-            <div class="modal-header border-0 px-4 pt-4" style="background: var(--gradient-primary); border-radius: 1rem 1rem 0 0;">
-                <div>
-                    <h5 class="modal-title fw-bold text-white" id="viewUserModalLabel">
-                        <i class="fa-solid fa-user-circle me-2"></i> User Details
-                    </h5>
-                    <div class="text-white opacity-75 small" id="viewUserIdLabel"></div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body px-4 py-4">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase" style="width: 56px; height: 56px; font-size: 20px;" id="viewUserAvatar"></div>
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 1040px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            {{-- MODAL HEADER WITH EDIT BUTTON --}}
+            <div class="modal-header bg-light border-bottom d-flex align-items-center py-3 px-4">
+                <div class="d-flex align-items-center gap-2.5">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <i class="fa-solid fa-user-circle fs-5"></i>
+                    </div>
                     <div>
-                        <div class="fw-bold text-dark" id="viewUserName" style="font-size: 17px;"></div>
-                        <div class="text-muted small" id="viewUserEmail"></div>
+                        <h5 class="modal-title fw-bold mb-0 text-dark" id="viewUserModalLabel">
+                            <span id="userModalHeaderTitle">User Details</span>
+                        </h5>
+                        <div class="text-muted small font-monospace" id="viewUserIdLabel">USR-00000</div>
                     </div>
                 </div>
+
+                {{-- RIGHT-SIDE CONTROLS: EDIT BUTTON ON USER DETAILS CARD + CLOSE --}}
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm"
+                            id="viewModalEditBtn"
+                            onclick="toggleUserModalEdit(true)">
+                        <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                    </button>
+                    <button type="submit" form="editUserForm"
+                            class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm d-none"
+                            id="viewModalSaveBtn">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1.5 fw-semibold d-none"
+                            id="viewModalCancelBtn"
+                            onclick="toggleUserModalEdit(false)">
+                        <i class="fa-solid fa-xmark me-1"></i> Cancel Edit
+                    </button>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            {{-- ================= VIEW MODE ================= --}}
+            <div id="userModalViewSection" class="modal-body p-4 text-start">
+                {{-- Top Hero Card --}}
+                <div class="hero-user-card p-3.5 p-md-4 rounded-3 border mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 shadow-xs"
+                     style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-white rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase shadow-sm flex-shrink-0"
+                             style="width: 58px; height: 58px; font-size: 20px; background: linear-gradient(135deg, #0f2240 0%, #1e40af 100%) !important;"
+                             id="viewUserAvatar">
+                            US
+                        </div>
+                        <div class="min-w-0">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h4 class="fw-bold text-dark mb-0 text-truncate" id="viewUserName">JUAN DELA CRUZ</h4>
+                                <span id="viewUserRoleBadge"></span>
+                                <span id="viewUserStatusBadge"></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 mt-1.5 flex-wrap text-muted small">
+                                <div><i class="fa-solid fa-envelope me-1 text-primary"></i> <span id="viewUserEmail">user@example.com</span></div>
+                                <div id="viewUserPhoneWrap"><i class="fa-solid fa-phone me-1 text-primary"></i> <span id="viewUserPhone">N/A</span></div>
+                                <div><i class="fa-solid fa-calendar-check me-1 text-muted"></i> Registered: <span id="viewUserRegistered">Nov 07, 2026</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 3-Column Horizontally Expanded Grid --}}
                 <div class="row g-3">
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">ROLE</div>
-                        <div id="viewUserRole" class="fw-semibold"></div>
+                    {{-- Column 1: Personal Demographics --}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border shadow-xs rounded-3">
+                            <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-id-card text-primary"></i>
+                                <span class="fw-bold text-dark small text-uppercase letter-spacing-wide">Personal Details</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2.5">
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">GENDER</div>
+                                        <div id="viewUserGender" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">CIVIL STATUS</div>
+                                        <div id="viewUserCivilStatus" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">BIRTHDATE</div>
+                                        <div id="viewUserBirthdate" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">AGE</div>
+                                        <div id="viewUserAge" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">BIRTHPLACE</div>
+                                        <div id="viewUserBirthplace" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">NATIONALITY</div>
+                                        <div id="viewUserNationality" class="fw-bold text-dark small">Filipino</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">OCCUPATION</div>
+                                        <div id="viewUserOccupation" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">STATUS</div>
-                        <div id="viewUserStatus"></div>
+
+                    {{-- Column 2: Address & Location --}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border shadow-xs rounded-3">
+                            <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-location-dot text-primary"></i>
+                                <span class="fw-bold text-dark small text-uppercase letter-spacing-wide">Residence & Location</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row g-2.5">
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">BARANGAY</div>
+                                        <div id="viewUserBarangay" class="fw-bold text-dark small">Cogon East</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">PUROK</div>
+                                        <div id="viewUserPurok" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">SITIO</div>
+                                        <div id="viewUserSitio" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">ZIP CODE</div>
+                                        <div id="viewUserZip" class="fw-bold text-dark small">6005</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">MUNICIPALITY</div>
+                                        <div id="viewUserMunicipality" class="fw-bold text-dark small">Carmen</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">PROVINCE</div>
+                                        <div id="viewUserProvince" class="fw-bold text-dark small">Cebu</div>
+                                    </div>
+                                    <div class="col-12 pt-1 border-top">
+                                        <div class="text-muted small fw-semibold" style="font-size: 11px;">CONTACT NUMBER</div>
+                                        <div id="viewUserContactCard" class="fw-bold text-dark small">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">GENDER</div>
-                        <div id="viewUserGender" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">BIRTHDATE</div>
-                        <div id="viewUserBirthdate" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">AGE</div>
-                        <div id="viewUserAge" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">BIRTHPLACE</div>
-                        <div id="viewUserBirthplace" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">ID TYPE</div>
-                        <div id="viewUserIdType" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-6">
-                        <div class="text-muted small fw-bold mb-1">REGISTERED</div>
-                        <div id="viewUserRegistered" class="fw-semibold text-dark"></div>
-                    </div>
-                    <div class="col-12 mt-2 pt-2 border-top">
-                        <div class="text-muted small fw-bold mb-1">VERIFICATION / ID DOCUMENT</div>
-                        <div id="viewUserIdDoc">
-                            <span class="text-muted small">No ID Uploaded</span>
+
+                    {{-- Column 3: Identity & Biometrics Cross-Check --}}
+                    <div class="col-lg-4 col-md-12">
+                        <div class="card h-100 border shadow-xs rounded-3">
+                            <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-primary"></i>
+                                <span class="fw-bold text-dark small text-uppercase letter-spacing-wide">Verification & Documents</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="mb-3">
+                                    <div class="text-muted small fw-semibold mb-1" style="font-size: 11px;">GOVERNMENT-ISSUED ID</div>
+                                    <div class="d-flex align-items-center gap-2 mb-1.5">
+                                        <span class="badge bg-light text-dark border px-2 py-1" id="viewUserIdType">N/A</span>
+                                    </div>
+                                    <div id="viewUserIdDoc">
+                                        <span class="text-muted small">No ID Uploaded</span>
+                                    </div>
+                                </div>
+                                <div class="pt-2 border-top mb-3">
+                                    <div class="text-muted small fw-semibold mb-1" style="font-size: 11px;">LIVE FACIAL SELFIE</div>
+                                    <div id="viewUserSelfie">
+                                        <span class="text-muted small">No live selfie captured</span>
+                                    </div>
+                                </div>
+                                <div class="pt-2 border-top">
+                                    <div class="text-muted small fw-semibold mb-1" style="font-size: 11px;">FACIAL VERIFICATION STATUS</div>
+                                    <div id="viewUserFaceVerified">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Not Verified</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 px-4 pb-4">
-                <button type="button" class="btn btn-light rounded-3 fw-semibold px-4" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-{{-- ===================== EDIT USER MODAL ===================== --}}
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-            <div class="modal-header border-0 px-4 pt-4">
-                <h5 class="modal-title fw-bold" id="editUserModalLabel">
-                    <i class="fa-solid fa-user-pen me-2 text-primary"></i> Edit User
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            {{-- ================= EDIT MODE (EXPANDED HORIZONTALLY) ================= --}}
+            <div id="userModalEditSection" class="modal-body p-4 text-start d-none">
+                <form id="editUserForm" method="POST" action="">
+                    @csrf
+                    @method('PATCH')
+                    
+                    <div class="alert alert-primary border-0 small rounded-3 mb-4 py-2.5 px-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square fs-6"></i>
+                        <span>Editing account information for <strong id="editUserHeaderName">User</strong>. Update the fields below and click <strong>Save Changes</strong>.</span>
+                    </div>
+
+                    {{-- Form Row 1: Account Essentials (Name, Email, Role, Status, Phone) --}}
+                    <div class="card border shadow-xs rounded-3 mb-3">
+                        <div class="card-header bg-light py-2 px-3 border-bottom fw-bold text-dark small text-uppercase">
+                            <i class="fa-solid fa-user-gear text-primary me-1.5"></i> Account & Credentials
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        FULL NAME <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" name="name" id="editUserName" class="form-control rounded-3" style="text-transform: uppercase;" required placeholder="e.g. JUAN DELA CRUZ">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        EMAIL ADDRESS <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" name="email" id="editUserEmail" class="form-control rounded-3" required placeholder="user@example.com">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        SYSTEM ROLE <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="role" id="editUserRoleSelect" class="form-select rounded-3">
+                                        <option value="Resident">Resident</option>
+                                        <option value="Admin">Administrator</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        ACCOUNT STATUS <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="status" id="editUserStatusSelect" class="form-select rounded-3">
+                                        <option value="active">Active</option>
+                                        <option value="pending_approval">Pending Approval</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        PHONE / MOBILE NUMBER
+                                    </label>
+                                    <input type="text" name="phone_number" id="editUserPhone" class="form-control rounded-3" placeholder="09123456789">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Form Row 2: Demographics (Gender, Civil Status, Birthdate, Occupation, Nationality) --}}
+                    <div class="card border shadow-xs rounded-3 mb-3">
+                        <div class="card-header bg-light py-2 px-3 border-bottom fw-bold text-dark small text-uppercase">
+                            <i class="fa-solid fa-id-card text-primary me-1.5"></i> Personal Demographics
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">GENDER</label>
+                                    <select name="gender" id="editUserGender" class="form-select rounded-3">
+                                        <option value="">-- Select Gender --</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">CIVIL STATUS</label>
+                                    <select name="civil_status" id="editUserCivilStatus" class="form-select rounded-3">
+                                        <option value="">-- Select Status --</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Widowed">Widowed</option>
+                                        <option value="Separated">Separated</option>
+                                        <option value="Divorced">Divorced</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">BIRTHDATE</label>
+                                    <input type="date" name="birthdate" id="editUserBirthdate" class="form-control rounded-3">
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">NATIONALITY</label>
+                                    <input type="text" name="nationality" id="editUserNationality" class="form-control rounded-3" placeholder="Filipino">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">BIRTHPLACE</label>
+                                    <input type="text" name="birthplace" id="editUserBirthplace" class="form-control rounded-3" placeholder="e.g. Carmen, Cebu">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">OCCUPATION</label>
+                                    <input type="text" name="occupation" id="editUserOccupation" class="form-control rounded-3" placeholder="e.g. Fisherman, Farmer, Private Employee">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Form Row 3: Address & Residence (Purok, Sitio, Barangay, Municipality, Province, ZIP) --}}
+                    <div class="card border shadow-xs rounded-3 mb-3">
+                        <div class="card-header bg-light py-2 px-3 border-bottom fw-bold text-dark small text-uppercase">
+                            <i class="fa-solid fa-map-location-dot text-primary me-1.5"></i> Residence & Address
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">PUROK</label>
+                                    <input type="text" name="purok" id="editUserPurok" class="form-control rounded-3" placeholder="e.g. Purok 1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">SITIO</label>
+                                    <input type="text" name="sitio" id="editUserSitio" class="form-control rounded-3" placeholder="e.g. Sitio Manga">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">BARANGAY</label>
+                                    <input type="text" name="barangay_address" id="editUserBarangay" class="form-control rounded-3" placeholder="Cogon East">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">MUNICIPALITY</label>
+                                    <input type="text" name="municipality" id="editUserMunicipality" class="form-control rounded-3" placeholder="Carmen">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">PROVINCE</label>
+                                    <input type="text" name="province" id="editUserProvince" class="form-control rounded-3" placeholder="Cebu">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-dark mb-1">ZIP CODE</label>
+                                    <input type="text" name="zip_code" id="editUserZip" class="form-control rounded-3" placeholder="6005">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- In-Form Submit Actions --}}
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <button type="button" class="btn btn-light border px-4 rounded-3 fw-semibold" onclick="toggleUserModalEdit(false)">
+                            <i class="fa-solid fa-xmark me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold shadow-sm" style="background-color: #0f2240; border-color: #0f2240;">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
-            <form id="editUserForm" method="POST" action="">
-                @csrf
-                @method('PATCH')
-                <div class="modal-body px-4 py-3">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">FULL NAME</label>
-                        <input type="text" name="name" id="editUserName" class="form-control rounded-3" style="text-transform: uppercase;" required placeholder="FULL NAME">
+
+            {{-- MODAL FOOTER --}}
+            <div class="modal-footer bg-light border-top px-4 py-3">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <div class="text-muted small" id="userModalFooterHint">
+                        <i class="fa-solid fa-circle-info me-1"></i> Click <strong>Edit</strong> in the top header to modify this user account.
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">EMAIL ADDRESS</label>
-                        <input type="email" name="email" id="editUserEmail" class="form-control rounded-3" required placeholder="email@example.com">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">ROLE</label>
-                        <select name="role" id="editUserRoleSelect" class="form-select rounded-3">
-                            <option value="Resident">Resident</option>
-                            <option value="Admin">Admin</option>
-                        </select>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary rounded-3 fw-semibold px-4" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
-                <div class="modal-footer border-0 px-4 pb-4">
-                    <button type="button" class="btn btn-light rounded-3 fw-semibold px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4">
-                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1236,75 +1520,205 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ---- VIEW MODAL ----
-    document.querySelectorAll('.btn-view-user').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const id   = this.dataset.id;
-            const name = this.dataset.name;
+    // ---- TOGGLE MODAL EDIT MODE ----
+    let currentUserData = null;
 
-            document.getElementById('viewUserIdLabel').textContent  = 'USR-' + String(id).padStart(5, '0');
-            document.getElementById('viewUserAvatar').textContent   = name.substring(0, 2).toUpperCase();
-            document.getElementById('viewUserName').textContent     = name;
-            document.getElementById('viewUserEmail').textContent    = this.dataset.email;
-            document.getElementById('viewUserRole').textContent     = this.dataset.role;
-            document.getElementById('viewUserGender').textContent   = this.dataset.gender;
-            document.getElementById('viewUserBirthdate').textContent= this.dataset.birthdate;
-            document.getElementById('viewUserAge').textContent      = this.dataset.age || 'N/A';
-            document.getElementById('viewUserBirthplace').textContent = this.dataset.birthplace || 'N/A';
-            document.getElementById('viewUserIdType').textContent   = this.dataset.idType || 'N/A';
-            document.getElementById('viewUserRegistered').textContent = this.dataset.registered;
+    function toggleUserModalEdit(editing) {
+        const viewSec = document.getElementById('userModalViewSection');
+        const editSec = document.getElementById('userModalEditSection');
+        const btnEdit = document.getElementById('viewModalEditBtn');
+        const btnSave = document.getElementById('viewModalSaveBtn');
+        const btnCancel = document.getElementById('viewModalCancelBtn');
+        const title = document.getElementById('userModalHeaderTitle');
+        const hint = document.getElementById('userModalFooterHint');
 
-            const docUrl = this.dataset.idDocUrl;
-            const docContainer = document.getElementById('viewUserIdDoc');
-            if (docContainer) {
-                if (docUrl) {
-                    const isPdf = docUrl.toLowerCase().split('?')[0].endsWith('.pdf');
-                    docContainer.innerHTML = `
-                        <div class="d-flex align-items-center gap-2 mt-1">
-                            <a href="${docUrl}" target="_blank" class="btn btn-sm btn-light border text-primary rounded-2 px-3 py-1.5 fw-semibold shadow-sm">
-                                <i class="fa-solid ${isPdf ? 'fa-file-pdf text-danger' : 'fa-id-card text-primary'} me-1"></i> View ID Document <i class="fa-solid fa-arrow-up-right-from-square ms-1 text-muted small"></i>
-                            </a>
-                        </div>
-                    `;
-                } else {
-                    docContainer.innerHTML = '<span class="text-muted small">No ID Uploaded</span>';
-                }
+        if (editing) {
+            viewSec.classList.add('d-none');
+            editSec.classList.remove('d-none');
+            btnEdit.classList.add('d-none');
+            btnSave.classList.remove('d-none');
+            btnCancel.classList.remove('d-none');
+            if (title) title.textContent = 'Edit User Details';
+            if (hint) {
+                hint.innerHTML = '<i class="fa-solid fa-pen-to-square me-1 text-primary"></i> Modify the fields above and click <strong>Save Changes</strong>.';
             }
+        } else {
+            viewSec.classList.remove('d-none');
+            editSec.classList.add('d-none');
+            btnEdit.classList.remove('d-none');
+            btnSave.classList.add('d-none');
+            btnCancel.classList.add('d-none');
+            if (title) title.textContent = 'User Details';
+            if (hint) {
+                hint.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i> Click <strong>Edit</strong> in the top header to modify this user account.';
+            }
+        }
+    }
+    window.toggleUserModalEdit = toggleUserModalEdit;
 
-            // Status badge
-            const status = this.dataset.status.toLowerCase();
-            let badgeHtml = '';
-            if (status === 'active') {
-                badgeHtml = '<span class="status-badge status-active">Active</span>';
-            } else if (status === 'pending_approval') {
-                badgeHtml = '<span class="status-badge status-pending-approval">Pending</span>';
+    // ---- OPEN USER DETAILS MODAL ----
+    const userDetailsModalEl = document.getElementById('viewUserModal');
+    const userDetailsModal = userDetailsModalEl ? new bootstrap.Modal(userDetailsModalEl) : null;
+
+    function openUserDetails(dataset) {
+        if (!dataset || !userDetailsModal) return;
+        currentUserData = dataset;
+        toggleUserModalEdit(false);
+
+        const id = dataset.id;
+        const name = dataset.name || '';
+        const email = dataset.email || '';
+        const phone = dataset.phone || '';
+        const role = dataset.role || 'Resident';
+        const status = (dataset.status || 'active').toLowerCase();
+        const registered = dataset.registered || '';
+        const gender = dataset.gender && dataset.gender !== 'N/A' ? dataset.gender : '—';
+        const birthdate = dataset.birthdate && dataset.birthdate !== 'N/A' ? dataset.birthdate : '—';
+        const birthdateRaw = dataset.birthdateRaw || '';
+        const age = dataset.age && dataset.age !== 'N/A' ? dataset.age : '—';
+        const birthplace = dataset.birthplace && dataset.birthplace !== 'N/A' ? dataset.birthplace : '—';
+        const civilStatus = dataset.civilStatus && dataset.civilStatus !== 'N/A' ? dataset.civilStatus : '—';
+        const nationality = dataset.nationality || 'Filipino';
+        const occupation = dataset.occupation && dataset.occupation !== 'N/A' ? dataset.occupation : '—';
+        const purok = dataset.purok && dataset.purok !== 'N/A' ? dataset.purok : '—';
+        const sitio = dataset.sitio && dataset.sitio !== 'N/A' ? dataset.sitio : '—';
+        const barangay = dataset.barangay || 'Cogon East';
+        const municipality = dataset.municipality || 'Carmen';
+        const province = dataset.province || 'Cebu';
+        const zip = dataset.zip || '6005';
+        const idType = dataset.idType && dataset.idType !== 'N/A' ? dataset.idType : 'Not Specified';
+        const idDocUrl = dataset.idDocUrl || '';
+        const selfieUrl = dataset.selfieUrl || '';
+        const faceVerified = dataset.faceVerified || '';
+
+        // Populate View Section
+        document.getElementById('viewUserIdLabel').textContent = dataset.userIdCode || ('USR-' + String(id).padStart(5, '0'));
+        document.getElementById('viewUserAvatar').textContent = name.substring(0, 2).toUpperCase();
+        document.getElementById('viewUserName').textContent = name;
+        document.getElementById('viewUserEmail').textContent = email;
+        document.getElementById('viewUserPhone').textContent = phone || 'No phone provided';
+        document.getElementById('viewUserContactCard').textContent = phone || 'No phone provided';
+        document.getElementById('viewUserRegistered').textContent = registered;
+
+        // Badges
+        document.getElementById('viewUserRoleBadge').innerHTML = role === 'Admin'
+            ? '<span class="badge bg-opacity-10 px-2.5 py-1 rounded-pill" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; font-size: 11px;">Admin</span>'
+            : '<span class="badge bg-secondary bg-opacity-10 text-secondary px-2.5 py-1 rounded-pill" style="font-size: 11px;">Resident</span>';
+
+        let statusBadge = '<span class="status-badge status-inactive">Inactive</span>';
+        if (status === 'active') {
+            statusBadge = '<span class="status-badge status-active">Active</span>';
+        } else if (status === 'pending_approval') {
+            statusBadge = '<span class="status-badge status-pending-approval">Pending</span>';
+        }
+        document.getElementById('viewUserStatusBadge').innerHTML = statusBadge;
+
+        document.getElementById('viewUserGender').textContent = gender;
+        document.getElementById('viewUserCivilStatus').textContent = civilStatus;
+        document.getElementById('viewUserBirthdate').textContent = birthdate;
+        document.getElementById('viewUserAge').textContent = age;
+        document.getElementById('viewUserBirthplace').textContent = birthplace;
+        document.getElementById('viewUserNationality').textContent = nationality;
+        document.getElementById('viewUserOccupation').textContent = occupation;
+
+        document.getElementById('viewUserBarangay').textContent = barangay;
+        document.getElementById('viewUserPurok').textContent = purok;
+        document.getElementById('viewUserSitio').textContent = sitio;
+        document.getElementById('viewUserMunicipality').textContent = municipality;
+        document.getElementById('viewUserProvince').textContent = province;
+        document.getElementById('viewUserZip').textContent = zip;
+
+        // ID Type & Doc
+        document.getElementById('viewUserIdType').textContent = idType;
+        const docContainer = document.getElementById('viewUserIdDoc');
+        if (docContainer) {
+            if (idDocUrl) {
+                const isPdf = idDocUrl.toLowerCase().split('?')[0].endsWith('.pdf');
+                docContainer.innerHTML = `
+                    <a href="${idDocUrl}" target="_blank" class="btn btn-sm btn-light border text-primary rounded-2 px-3 py-1.5 fw-semibold shadow-xs">
+                        <i class="fa-solid ${isPdf ? 'fa-file-pdf text-danger' : 'fa-id-card text-primary'} me-1"></i> View ID Document <i class="fa-solid fa-arrow-up-right-from-square ms-1 text-muted small"></i>
+                    </a>
+                `;
             } else {
-                badgeHtml = '<span class="status-badge status-inactive">Inactive</span>';
+                docContainer.innerHTML = '<span class="text-muted small">No ID Uploaded</span>';
             }
-            document.getElementById('viewUserStatus').innerHTML = badgeHtml;
+        }
 
-            new bootstrap.Modal(document.getElementById('viewUserModal')).show();
-        });
+        // Selfie
+        const selfieContainer = document.getElementById('viewUserSelfie');
+        if (selfieContainer) {
+            if (selfieUrl) {
+                selfieContainer.innerHTML = `
+                    <a href="${selfieUrl}" target="_blank" class="btn btn-sm btn-light border text-success rounded-2 px-3 py-1.5 fw-semibold shadow-xs">
+                        <i class="fa-solid fa-camera me-1"></i> View Live Selfie <i class="fa-solid fa-arrow-up-right-from-square ms-1 text-muted small"></i>
+                    </a>
+                `;
+            } else {
+                selfieContainer.innerHTML = '<span class="text-muted small">No live selfie captured</span>';
+            }
+        }
+
+        // Face verified
+        const faceContainer = document.getElementById('viewUserFaceVerified');
+        if (faceContainer) {
+            if (faceVerified) {
+                faceContainer.innerHTML = `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-circle-check me-1"></i> Verified (${faceVerified})</span>`;
+            } else {
+                faceContainer.innerHTML = '<span class="badge bg-secondary bg-opacity-10 text-secondary">Not Verified</span>';
+            }
+        }
+
+        // Populate Edit Section Form
+        document.getElementById('editUserHeaderName').textContent = name;
+        document.getElementById('editUserName').value = name.toUpperCase();
+        document.getElementById('editUserEmail').value = email;
+        document.getElementById('editUserRoleSelect').value = role;
+        document.getElementById('editUserStatusSelect').value = status;
+        document.getElementById('editUserPhone').value = phone || '';
+        document.getElementById('editUserGender').value = ['Male', 'Female', 'Other'].includes(gender) ? gender : '';
+        document.getElementById('editUserCivilStatus').value = ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'].includes(civilStatus) ? civilStatus : '';
+        document.getElementById('editUserBirthdate').value = birthdateRaw || '';
+        document.getElementById('editUserNationality').value = nationality;
+        document.getElementById('editUserBirthplace').value = birthplace !== '—' ? birthplace : '';
+        document.getElementById('editUserOccupation').value = occupation !== '—' ? occupation : '';
+        document.getElementById('editUserPurok').value = purok !== '—' ? purok : '';
+        document.getElementById('editUserSitio').value = sitio !== '—' ? sitio : '';
+        document.getElementById('editUserBarangay').value = barangay !== '—' ? barangay : '';
+        document.getElementById('editUserMunicipality').value = municipality !== '—' ? municipality : '';
+        document.getElementById('editUserProvince').value = province !== '—' ? province : '';
+        document.getElementById('editUserZip').value = zip !== '—' ? zip : '';
+
+        const baseUrl = '{{ url("/admin/users") }}';
+        document.getElementById('editUserForm').action = baseUrl + '/' + id + '/update';
+
+        // Show modal
+        userDetailsModal.show();
+    }
+    window.openUserDetails = openUserDetails;
+
+    // ---- CLICKABLE ROW & CARD HANDLER ----
+    document.addEventListener('click', function (e) {
+        const row = e.target.closest('.user-row-clickable');
+        if (!row) return;
+
+        // Ignore clicks on form inputs, checkboxes, action buttons, or links
+        if (e.target.closest('input, button, a, .form-check, .user-actions-group')) {
+            return;
+        }
+
+        openUserDetails(row.dataset);
     });
 
-    // ---- EDIT MODAL ----
-    document.querySelectorAll('.btn-edit-user').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const id    = this.dataset.id;
-            const name  = this.dataset.name;
-            const email = this.dataset.email;
-            const role  = this.dataset.role;
-
-            const editUserNameInput = document.getElementById('editUserName');
-            editUserNameInput.value          = (name || '').toUpperCase();
-            document.getElementById('editUserEmail').value         = email;
-            document.getElementById('editUserRoleSelect').value    = role;
-
-            const baseUrl = '{{ url("/admin/users") }}';
-            document.getElementById('editUserForm').action = baseUrl + '/' + id + '/update';
-
-            new bootstrap.Modal(document.getElementById('editUserModal')).show();
-        });
+    // Keyboard support (Enter/Space on focused row)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.classList.contains('user-row-clickable')) {
+                if (e.target.closest('input, button, a, .form-check, .user-actions-group')) return;
+                e.preventDefault();
+                openUserDetails(activeEl.dataset);
+            }
+        }
     });
 
     const editUserNameInput = document.getElementById('editUserName');

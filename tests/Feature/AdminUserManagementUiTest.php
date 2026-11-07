@@ -93,4 +93,83 @@ class AdminUserManagementUiTest extends TestCase
             'role'  => 'Resident',
         ]);
     }
+
+    public function test_user_table_and_mobile_cards_are_clickable_without_view_and_edit_buttons(): void
+    {
+        $resident = User::create([
+            'user_id'           => 'RES-' . strtoupper(substr(uniqid(), -6)),
+            'name'              => 'CLICKABLE ROW USER',
+            'email'             => 'clickable_' . uniqid() . '@example.com',
+            'role'              => 'Resident',
+            'status'            => 'active',
+            'password'          => bcrypt('password123'),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.users'));
+        $response->assertStatus(200);
+
+        // View and Edit buttons removed from table and cards
+        $response->assertDontSee('<span>View</span>', false);
+        $response->assertDontSee('<span>Edit</span>', false);
+        $response->assertDontSee('> View</button>', false);
+        $response->assertDontSee('> Edit</button>', false);
+
+        // Clickable rows enabled
+        $response->assertSee('user-row-clickable');
+
+        // Edit button is placed on User Details card
+        $response->assertSee('id="viewModalEditBtn"', false);
+
+        // Horizontally expanded view and edit sections exist
+        $response->assertSee('id="userModalViewSection"', false);
+        $response->assertSee('id="userModalEditSection"', false);
+        $response->assertSee('modal-xl');
+    }
+
+    public function test_admin_can_update_user_with_expanded_details(): void
+    {
+        $resident = User::create([
+            'user_id'           => 'RES-' . strtoupper(substr(uniqid(), -6)),
+            'name'              => 'INITIAL RESIDENT NAME',
+            'email'             => 'update_test_' . uniqid() . '@example.com',
+            'role'              => 'Resident',
+            'status'            => 'active',
+            'password'          => bcrypt('password123'),
+        ]);
+
+        $updatedEmail = 'updated_' . uniqid() . '@example.com';
+        $uniquePhone = '09' . mt_rand(100000000, 999999999);
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.users.update', $resident->id), [
+            'name'             => 'UPDATED RESIDENT FULLNAME',
+            'email'            => $updatedEmail,
+            'role'             => 'Resident',
+            'phone_number'     => $uniquePhone,
+            'gender'           => 'Male',
+            'birthdate'        => '1995-05-15',
+            'civil_status'     => 'Single',
+            'occupation'       => 'Software Engineer',
+            'nationality'      => 'Filipino',
+            'purok'            => 'Purok Mangga',
+            'sitio'            => 'Sitio Central',
+            'barangay_address' => 'Cogon East',
+            'municipality'     => 'Carmen',
+            'province'         => 'Cebu',
+            'zip_code'         => '6005',
+            'status'           => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id'           => $resident->id,
+            'name'         => 'UPDATED RESIDENT FULLNAME',
+            'email'        => $updatedEmail,
+            'phone_number' => $uniquePhone,
+            'civil_status' => 'Single',
+            'occupation'   => 'Software Engineer',
+            'purok'        => 'Purok Mangga',
+        ]);
+    }
 }

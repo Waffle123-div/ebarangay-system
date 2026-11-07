@@ -533,21 +533,80 @@ class AdminDashboardController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'role'  => 'required|in:Admin,Resident',
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|unique:users,email,' . $id,
+            'role'             => 'required|in:Admin,Resident',
+            'phone_number'     => 'nullable|string|max:30|unique:users,phone_number,' . $id,
+            'gender'           => 'nullable|string|max:20',
+            'birthdate'        => 'nullable|date',
+            'civil_status'     => 'nullable|string|max:50',
+            'occupation'       => 'nullable|string|max:100',
+            'nationality'      => 'nullable|string|max:50',
+            'purok'            => 'nullable|string|max:100',
+            'sitio'            => 'nullable|string|max:100',
+            'barangay_address' => 'nullable|string|max:150',
+            'municipality'     => 'nullable|string|max:100',
+            'province'         => 'nullable|string|max:100',
+            'zip_code'         => 'nullable|string|max:20',
+            'status'           => 'nullable|in:active,inactive,pending_approval',
         ]);
 
         $oldRole = $user->role;
         $fullName = strtoupper(trim($request->name));
         $nameParts = explode(' ', $fullName);
-        $user->update([
+
+        $updateData = [
             'name'       => $fullName,
             'first_name' => $nameParts[0] ?? $user->first_name,
             'last_name'  => count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : $user->last_name,
             'email'      => $request->email,
             'role'       => $request->role,
-        ]);
+        ];
+
+        if ($request->has('phone_number')) {
+            $updateData['phone_number'] = $request->phone_number;
+        }
+        if ($request->has('gender')) {
+            $updateData['gender'] = $request->gender;
+        }
+        if ($request->filled('birthdate')) {
+            $updateData['birthdate'] = $request->birthdate;
+            try {
+                $updateData['age'] = \Carbon\Carbon::parse($request->birthdate)->age;
+            } catch (\Throwable $e) {}
+        }
+        if ($request->has('civil_status')) {
+            $updateData['civil_status'] = $request->civil_status;
+        }
+        if ($request->has('occupation')) {
+            $updateData['occupation'] = $request->occupation;
+        }
+        if ($request->has('nationality')) {
+            $updateData['nationality'] = $request->nationality;
+        }
+        if ($request->has('purok')) {
+            $updateData['purok'] = $request->purok;
+        }
+        if ($request->has('sitio')) {
+            $updateData['sitio'] = $request->sitio;
+        }
+        if ($request->has('barangay_address')) {
+            $updateData['barangay_address'] = $request->barangay_address;
+        }
+        if ($request->has('municipality')) {
+            $updateData['municipality'] = $request->municipality;
+        }
+        if ($request->has('province')) {
+            $updateData['province'] = $request->province;
+        }
+        if ($request->has('zip_code')) {
+            $updateData['zip_code'] = $request->zip_code;
+        }
+        if ($request->filled('status')) {
+            $updateData['status'] = $request->status;
+        }
+
+        $user->update($updateData);
 
         ActivityLog::record('user_updated', "Updated user {$user->name}: role changed from {$oldRole} to {$request->role}.");
 
