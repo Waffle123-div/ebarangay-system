@@ -1705,21 +1705,33 @@ class AdminDashboardController extends Controller
     public function rejectRequest(Request $request, $id)
     {
         $docRequest = DocumentRequest::findOrFail($id);
-        $docRequest->status = 'Rejected';
-        $docRequest->save();
+        $trackingNumber = $docRequest->tracking_number;
+        $docType = $docRequest->document_type;
+        $residentName = $docRequest->resident_name;
 
-        ActivityLog::record('request_rejected', "Rejected document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
-
+        // Broadcast rejection status update before deleting
         \App\Services\WebSocketService::broadcast('request.status_changed', [
             'id'              => $docRequest->id,
-            'tracking_number' => $docRequest->tracking_number,
+            'tracking_number' => $trackingNumber,
             'status'          => 'Rejected',
-            'applicant'       => $docRequest->resident_name,
-            'document_type'   => $docRequest->document_type,
-            'message'         => "Request #{$docRequest->tracking_number} has been rejected.",
+            'applicant'       => $residentName,
+            'document_type'   => $docType,
+            'message'         => "Request #{$trackingNumber} has been rejected and deleted.",
         ]);
 
-        return back()->with('success', 'Request has been rejected.');
+        // Delete the request record
+        $docRequest->delete();
+
+        ActivityLog::record('request_rejected', "Rejected and deleted document request #{$trackingNumber} ({$docType}) for {$residentName}.");
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Request #{$trackingNumber} has been rejected and deleted.",
+            ]);
+        }
+
+        return back()->with('success', "Request #{$trackingNumber} has been rejected and deleted.");
     }
 
     private function numberToWords(float $number): string

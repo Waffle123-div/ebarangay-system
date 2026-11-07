@@ -100,4 +100,45 @@ class AdminRequestsUiTest extends TestCase
         $response->assertSee('sidebarBackdrop');
         $response->assertSee('sidebar-wrapper');
     }
+
+    public function test_admin_requests_view_contains_rejection_confirmation_modal(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.requests'));
+
+        $response->assertStatus(200);
+        $response->assertSee('id="rejectRequestConfirmModal"', false);
+        $response->assertSee('openRejectRequestModal', false);
+        $response->assertDontSee("confirm('Reject this request? The resident will be notified.')", false);
+    }
+
+    public function test_admin_can_reject_request_and_it_is_deleted(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Reject Test Resident',
+            'email' => 'reject_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-REJ-' . strtoupper(substr(uniqid(), -6)),
+            'first_name' => 'Reject',
+            'last_name' => 'Resident',
+            'resident_email' => $resident->email,
+            'document_type' => 'Barangay Clearance',
+            'status' => 'Pending',
+        ]);
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.requests.reject', $docRequest->id));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('document_requests', [
+            'id' => $docRequest->id,
+        ]);
+    }
 }

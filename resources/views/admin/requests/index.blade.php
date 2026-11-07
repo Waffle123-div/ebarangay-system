@@ -1936,6 +1936,22 @@
             border-color: #f87171;
             color: #ffffff;
         }
+
+        /* Dark mode for Reject Confirmation Modal */
+        html[data-theme="dark"] #rejectRequestConfirmModal .modal-content,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .modal-content {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+        html[data-theme="dark"] #rejectRequestConfirmModal .text-dark,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .text-dark {
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #rejectRequestConfirmModal .text-muted,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .text-muted {
+            color: #94a3b8 !important;
+        }
     </style>
 
     <div class="card border-0 shadow-sm rounded-4">
@@ -2905,13 +2921,10 @@
 
                             @if(in_array($request->status, ['Pending', 'Under Review']))
                             <div id="accept-reject-{{ $request->id }}" class="d-flex gap-3 justify-content-center align-items-center flex-wrap">
-                                <form action="{{ route('admin.requests.reject', $request->id) }}" method="POST" class="m-0"
-                                      onsubmit="return confirm('Reject this request? The resident will be notified.');">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="btn-modal-action btn-modal-reject">
-                                        <i class="fa-solid fa-xmark me-1.5"></i> Reject
-                                    </button>
-                                </form>
+                                <button type="button" class="btn-modal-action btn-modal-reject"
+                                        onclick="openRejectRequestModal({{ $request->id }}, '{{ addslashes($request->tracking_number) }}', '{{ addslashes($request->resident_name) }}')">
+                                    <i class="fa-solid fa-xmark me-1.5"></i> Reject
+                                </button>
                                 {{-- Accept button: AJAX so the modal auto-flows to the next step --}}
                                 <button type="button"
                                         class="btn-modal-action btn-modal-accept btn-accept-request"
@@ -4030,6 +4043,78 @@
         </div>
     </div>
 </div>
+
+{{-- MODAL: CONFIRM REJECT & DELETE REQUEST --}}
+<div class="modal fade" id="rejectRequestConfirmModal" tabindex="-1" aria-labelledby="rejectRequestConfirmLabel" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px;">
+                    <i class="fa-solid fa-triangle-exclamation fs-3"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1" id="rejectRequestConfirmLabel">Reject this request?</h5>
+                <p class="text-muted small mb-3">
+                    Are you sure you want to reject request <strong id="rejectModalTrackingNumber" class="text-danger font-monospace"></strong> for <strong id="rejectModalResidentName"></strong>? The request will be deleted and the resident will be notified.
+                </p>
+                <form id="rejectRequestForm" action="" method="POST" class="m-0">
+                    @csrf
+                    @method('PATCH')
+                    <div class="d-flex justify-content-center gap-2 pt-2">
+                        <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 py-2 rounded-3 fw-semibold shadow-sm" id="confirmRejectSubmitBtn">
+                            <i class="fa-solid fa-xmark me-1.5"></i> Reject & Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.openRejectRequestModal = function(requestId, trackingNumber, residentName) {
+    const modalEl = document.getElementById('rejectRequestConfirmModal');
+    if (!modalEl) return;
+
+    const form = document.getElementById('rejectRequestForm');
+    const trackingEl = document.getElementById('rejectModalTrackingNumber');
+    const nameEl = document.getElementById('rejectModalResidentName');
+
+    if (form) {
+        form.action = '/admin/requests/' + requestId + '/reject';
+    }
+    if (trackingEl) {
+        trackingEl.textContent = trackingNumber || ('#' + requestId);
+    }
+    if (nameEl) {
+        nameEl.textContent = residentName || 'Resident';
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    const rejectModalEl = document.getElementById('rejectRequestConfirmModal');
+    const rejectForm = document.getElementById('rejectRequestForm');
+    const rejectSubmitBtn = document.getElementById('confirmRejectSubmitBtn');
+
+    if (rejectModalEl) {
+        rejectModalEl.addEventListener('hidden.bs.modal', function () {
+            if (document.querySelectorAll('.modal.show').length > 0) {
+                document.body.classList.add('modal-open');
+            }
+        });
+    }
+
+    if (rejectForm && rejectSubmitBtn) {
+        rejectForm.addEventListener('submit', function () {
+            rejectSubmitBtn.disabled = true;
+            rejectSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1.5"></i> Rejecting...';
+        });
+    }
+});
+</script>
 
 <script>
 /* ─── Delegated Interactive Row Click Handler (Always active across AJAX, Live Search, & Auto-Refresh) ─── */
