@@ -44,7 +44,8 @@ class AdminUserManagementUiTest extends TestCase
         $response->assertSee('User Management');
         $response->assertSee('Dashboard');
         $response->assertSee('Manage resident accounts, permissions, and system roles');
-        $response->assertSee('+ Create New User');
+        $response->assertSee('Create New User');
+        $response->assertDontSee('+ Create New User');
 
         // Merged 4 Metric / Filter cards
         $response->assertSee('All Users');

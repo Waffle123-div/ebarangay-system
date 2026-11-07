@@ -578,7 +578,7 @@
 
     {{-- Header Section --}}
     <div class="mb-4">
-        {{-- Title + Subtitle on Left, "+ Create New User" on Top Right --}}
+        {{-- Title + Subtitle on Left, "Create New User" on Top Right --}}
         <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800 m-0" style="color: #1e293b; font-size: 1.5rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em;">
@@ -590,12 +590,11 @@
             </div>
             <div class="d-flex align-items-center flex-shrink-0">
                 <button type="button" 
-                        class="btn btn-create-user-header d-inline-flex align-items-center justify-content-center gap-2"
+                        class="btn btn-create-user-header d-inline-flex align-items-center justify-content-center"
                         data-bs-toggle="modal" 
                         data-bs-target="#createUserModal"
                         aria-label="Create New User">
-                    <i class="fa-solid fa-plus fa-sm" aria-hidden="true"></i>
-                    <span>+ Create New User</span>
+                    <span>Create New User</span>
                 </button>
             </div>
         </div>
