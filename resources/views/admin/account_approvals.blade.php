@@ -30,6 +30,63 @@
             padding-right: 1.25rem !important;
         }
 
+        /* Clickable Selection Rows and Cards */
+        .approval-row-clickable {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .approval-row-clickable:hover {
+            background-color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .approval-row-clickable:hover,
+        html[data-bs-theme="dark"] .approval-row-clickable:hover {
+            background-color: rgba(59, 130, 246, 0.08) !important;
+        }
+
+        /* Dark Mode for Verification Modal */
+        html[data-theme="dark"] #docPreviewModal .modal-content,
+        html[data-bs-theme="dark"] #docPreviewModal .modal-content {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .modal-header,
+        html[data-bs-theme="dark"] #docPreviewModal .modal-header,
+        html[data-theme="dark"] #docPreviewModal .modal-footer,
+        html[data-bs-theme="dark"] #docPreviewModal .modal-footer {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .modal-body,
+        html[data-bs-theme="dark"] #docPreviewModal .modal-body {
+            background-color: #0b1120 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .card,
+        html[data-bs-theme="dark"] #docPreviewModal .card {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .card-header,
+        html[data-bs-theme="dark"] #docPreviewModal .card-header {
+            background-color: #182238 !important;
+            border-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .text-dark,
+        html[data-bs-theme="dark"] #docPreviewModal .text-dark {
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .text-muted,
+        html[data-bs-theme="dark"] #docPreviewModal .text-muted {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] #docPreviewModal .btn-close,
+        html[data-bs-theme="dark"] #docPreviewModal .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
         /* Mobile Status Pills Scroll & Card Layout */
         @media (max-width: 767.98px) {
             .approvals-nav-pills {
@@ -52,6 +109,13 @@
                 margin-bottom: 12px;
                 padding: 14px;
             }
+        }
+
+        html[data-bs-theme="dark"] .mobile-approval-card,
+        html[data-theme="dark"] .mobile-approval-card {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
         }
 
         html[data-bs-theme="dark"] #bulkActionsBar,
@@ -158,18 +222,40 @@
                             <input class="form-check-input" type="checkbox" id="selectAllApprovals" title="Select All">
                         </th>
                         <th class="ps-2 py-3 border-0 text-start" style="min-width: 170px;">NAME</th>
-                        <th class="py-3 border-0" style="min-width: 180px;">EMAIL</th>
+                        <th class="py-3 border-0 text-start" style="min-width: 180px;">EMAIL</th>
                         <th class="py-3 border-0 text-nowrap" style="width: 140px;">DATE SUBMITTED</th>
-                        <th class="py-3 border-0 text-nowrap" style="width: 140px;">ID TYPE</th>
-                        <th class="py-3 border-0 text-nowrap" style="width: 130px;">DOCUMENT</th>
-                        <th class="pe-4 py-3 border-0 text-end col-actions">ACTIONS</th>
+                        <th class="py-3 border-0 text-nowrap" style="width: 150px;">ID TYPE</th>
+                        <th class="py-3 border-0 text-center text-nowrap" style="width: 130px;">BIOMETRICS</th>
+                        <th class="pe-4 py-3 border-0 text-end text-nowrap" style="width: 120px;">STATUS</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     @forelse($pendingUsers as $user)
-                    <tr>
-                        <td class="ps-3 text-center" style="width: 42px;">
-                            <input class="form-check-input approval-select-checkbox" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}">
+                    @php
+                        $docUrl = $user->id_document_url;
+                        $rawSelfie = trim($user->selfie_photo ?? '');
+                        $selfieUrl = null;
+                        if ($rawSelfie !== '') {
+                            if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
+                                $selfieUrl = $rawSelfie;
+                            } else {
+                                $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
+                            }
+                        }
+                    @endphp
+                    <tr id="approval-row-{{ $user->id }}"
+                        class="approval-row-clickable"
+                        role="button"
+                        tabindex="0"
+                        title="Click to View ID & face verification for {{ $user->name }}"
+                        data-id="{{ $user->id }}"
+                        data-name="{{ $user->name }}"
+                        data-id-type="{{ $user->id_type ?? 'Resident ID' }}"
+                        data-doc-url="{{ $docUrl ?? '' }}"
+                        data-selfie-url="{{ $selfieUrl ?? '' }}"
+                        data-status="{{ $currentStatus }}">
+                        <td class="ps-3 text-center" style="width: 42px;" onclick="event.stopPropagation()">
+                            <input class="form-check-input approval-select-checkbox" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}" onclick="event.stopPropagation()">
                         </td>
                         <td class="ps-2 fw-bold text-dark text-start">
                             <div class="d-flex align-items-center">
@@ -179,73 +265,30 @@
                                 <div class="text-truncate" style="max-width: 160px;">{{ $user->name }}</div>
                             </div>
                         </td>
-                        <td class="text-muted text-truncate" style="max-width: 180px; font-size: 13px;">{{ $user->email }}</td>
+                        <td class="text-muted text-start text-truncate" style="max-width: 180px; font-size: 13px;">{{ $user->email }}</td>
                         <td class="text-nowrap text-muted" style="font-size: 12.5px;">{{ $user->created_at->format('M d, Y') }}</td>
                         <td class="text-nowrap">
                             <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">{{ $user->id_type ?? 'N/A' }}</span>
                         </td>
-                        <td class="text-nowrap">
-                            @php
-                                $docUrl = $user->id_document_url;
-                                $rawSelfie = trim($user->selfie_photo ?? '');
-                                $selfieUrl = null;
-                                if ($rawSelfie !== '') {
-                                    if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
-                                        $selfieUrl = $rawSelfie;
-                                    } else {
-                                        $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
-                                    }
-                                }
-                                $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
-                            @endphp
-                            <div class="d-inline-flex align-items-center gap-1.5 flex-wrap justify-content-center">
-                                @if($docUrl || $selfieUrl)
-                                    <button type="button" 
-                                            class="btn btn-sm btn-light border text-primary rounded-2 px-2.5 py-1 fw-semibold shadow-sm" 
-                                            style="font-size: 12px;"
-                                            onclick="previewApprovalDocument('{{ $docUrl }}', '{{$selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{$currentStatus }}')">
-                                        <i class="fa-solid fa-user-shield text-primary me-1"></i> View ID & Face
-                                    </button>
-                                @else
-                                    <span class="text-muted small">No Files</span>
-                                @endif
-
-                                @if($selfieUrl)
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill" style="font-size: 11px;" title="Live face selfie verified">
-                                        <i class="fa-solid fa-camera me-1"></i> Face
-                                    </span>
-                                @else
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border px-1.5 py-1 rounded-pill" style="font-size: 10px;" title="No live selfie">
-                                        No Face
-                                    </span>
-                                @endif
-                            </div>
+                        <td class="text-center text-nowrap">
+                            @if($selfieUrl)
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill" style="font-size: 11px;" title="Live face selfie verified">
+                                    <i class="fa-solid fa-camera me-1"></i> Face
+                                </span>
+                            @else
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border px-1.5 py-1 rounded-pill" style="font-size: 10px;" title="No live selfie">
+                                    No Face
+                                </span>
+                            @endif
                         </td>
-                        <td class="pe-4 text-end col-actions">
-                            <div class="d-flex justify-content-end align-items-center gap-2">
-                                @if($currentStatus == 'pending_approval')
-                                    <!-- ONLY SHOW ACTIONS IN THE PENDING TAB -->
-                                    <form action="{{ route('admin.approvals.approve', $user->id) }}" method="POST" class="m-0">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-success btn-sm rounded-2 shadow-sm px-2.5 py-1" title="Approve">
-                                            <i class="fa-solid fa-check"></i> Approve
-                                        </button>
-                                    </form>
-
-                                    <form action="{{ route('admin.approvals.reject', $user->id) }}" method="POST" class="m-0" onsubmit="return confirm('Reject this account?');">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-danger btn-sm rounded-2 shadow-sm px-2.5 py-1" title="Reject">
-                                            <i class="fa-solid fa-xmark"></i> Reject
-                                        </button>
-                                    </form>
-                                @elseif($currentStatus == 'active')
-                                    <span class="status-badge status-approved">Approved</span>
-                                @elseif($currentStatus == 'rejected')
-                                    <span class="status-badge status-rejected">Rejected</span>
-                                @endif
-                            </div>
+                        <td class="pe-4 text-end text-nowrap">
+                            @if($currentStatus == 'pending_approval')
+                                <span class="status-badge status-pending-approval" style="font-size: 11px;">Pending</span>
+                            @elseif($currentStatus == 'active')
+                                <span class="status-badge status-approved" style="font-size: 11px;">Approved</span>
+                            @elseif($currentStatus == 'rejected')
+                                <span class="status-badge status-rejected" style="font-size: 11px;">Rejected</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
@@ -264,11 +307,37 @@
         {{-- Mobile Cards View (Screens < 768px) --}}
         <div class="d-md-none p-3" id="approvals-mobile-list">
             @forelse($pendingUsers as $user)
-                <div class="mobile-approval-card">
+                @php
+                    $docUrl = $user->id_document_url;
+                    $rawSelfie = trim($user->selfie_photo ?? '');
+                    $selfieUrl = null;
+                    if ($rawSelfie !== '') {
+                        if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
+                            $selfieUrl = $rawSelfie;
+                        } else {
+                            $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
+                        }
+                    }
+                @endphp
+                <div class="mobile-approval-card approval-row-clickable"
+                     id="mobile-approval-card-{{ $user->id }}"
+                     role="button"
+                     tabindex="0"
+                     title="Click to view ID & face verification for {{ $user->name }}"
+                     data-id="{{ $user->id }}"
+                     data-name="{{ $user->name }}"
+                     data-id-type="{{ $user->id_type ?? 'Resident ID' }}"
+                     data-doc-url="{{ $docUrl ?? '' }}"
+                     data-selfie-url="{{ $selfieUrl ?? '' }}"
+                     data-status="{{ $currentStatus }}">
                     {{-- Header: Resident Name + Status --}}
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <input class="form-check-input approval-select-checkbox flex-shrink-0" type="checkbox" value="{{ $user->id }}" data-name="{{ $user->name }}">
+                            <input class="form-check-input approval-select-checkbox flex-shrink-0"
+                                   type="checkbox"
+                                   value="{{ $user->id }}"
+                                   data-name="{{ $user->name }}"
+                                   onclick="event.stopPropagation()">
                             <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase flex-shrink-0" style="width: 32px; height: 32px; font-size: 12px;">
                                 {{ substr(strip_tags($user->name), 0, 2) }}
                             </div>
@@ -294,58 +363,23 @@
                         </div>
                     </div>
 
-                    {{-- Document & Face Link --}}
-                    <div class="my-2">
-                        @php
-                            $docUrl = $user->id_document_url;
-                            $rawSelfie = trim($user->selfie_photo ?? '');
-                            $selfieUrl = null;
-                            if ($rawSelfie !== '') {
-                                if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
-                                    $selfieUrl = $rawSelfie;
-                                } else {
-                                    $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
-                                }
-                            }
-                            $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
-                        @endphp
-                        @if($docUrl || $selfieUrl)
-                            <div class="d-flex gap-2 align-items-center">
-                                <button type="button" 
-                                        class="btn btn-sm btn-light border text-primary flex-fill rounded-3 py-1.5 fw-semibold shadow-sm"
-                                        onclick="previewApprovalDocument('{{ $docUrl }}', '{{$selfieUrl }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->id_type ?? 'Resident ID') }}', '{{ $user->id }}', '{{$currentStatus }}')">
-                                    <i class="fa-solid fa-user-shield me-1"></i> View ID & Face
-                                </button>
-                                @if($selfieUrl)
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-2 px-2.5 rounded-3" title="Live Face Photo Available">
-                                        <i class="fa-solid fa-camera"></i>
-                                    </span>
-                                @endif
-                            </div>
-                        @else
-                            <div class="text-muted small fst-italic py-1 text-center bg-light rounded-3">No ID Uploaded</div>
-                        @endif
-                    </div>
-
-                    {{-- Actions for Mobile --}}
-                    @if($currentStatus == 'pending_approval')
-                        <div class="d-flex gap-2 pt-2 border-top mt-2">
-                            <form action="{{ route('admin.approvals.approve', $user->id) }}" method="POST" class="m-0 flex-fill">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-success btn-sm w-100 rounded-3 shadow-sm py-2 fw-semibold">
-                                    <i class="fa-solid fa-check me-1"></i> Approve
-                                </button>
-                            </form>
-                            <form action="{{ route('admin.approvals.reject', $user->id) }}" method="POST" class="m-0 flex-fill" onsubmit="return confirm('Reject this account?');">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-danger btn-sm w-100 rounded-3 shadow-sm py-2 fw-semibold">
-                                    <i class="fa-solid fa-xmark me-1"></i> Reject
-                                </button>
-                            </form>
+                    {{-- Biometrics & Review Indicator Footer --}}
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <div>
+                            @if($selfieUrl)
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-1 px-2 rounded-pill" style="font-size: 11px;" title="Live face selfie verified">
+                                    <i class="fa-solid fa-camera me-1"></i> Face Captured
+                                </span>
+                            @else
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border py-1 px-2 rounded-pill" style="font-size: 10px;">
+                                    No Face
+                                </span>
+                            @endif
                         </div>
-                    @endif
+                        <span class="text-primary small fw-semibold d-inline-flex align-items-center gap-1">
+                            Review <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+                        </span>
+                    </div>
                 </div>
             @empty
                 <div class="text-center py-4 text-muted">
@@ -486,12 +520,28 @@
             } else {
                 if (pdfWrapper) pdfWrapper.classList.add('d-none');
                 if (imgWrapper) imgWrapper.classList.remove('d-none');
-                if (imgEl) imgEl.src = docUrl;
+                if (imgEl) {
+                    imgEl.onerror = function () {
+                        if (imgWrapper) imgWrapper.classList.add('d-none');
+                        if (noIdEl) {
+                            noIdEl.classList.remove('d-none');
+                            noIdEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation fa-2x mb-2 d-block text-warning"></i> Unable to display ID document';
+                        }
+                    };
+                    imgEl.onload = function () {
+                        if (noIdEl) noIdEl.classList.add('d-none');
+                        if (imgWrapper) imgWrapper.classList.remove('d-none');
+                    };
+                    imgEl.src = docUrl;
+                }
             }
         } else {
             if (imgWrapper) imgWrapper.classList.add('d-none');
             if (pdfWrapper) pdfWrapper.classList.add('d-none');
-            if (noIdEl) noIdEl.classList.remove('d-none');
+            if (noIdEl) {
+                noIdEl.classList.remove('d-none');
+                noIdEl.innerHTML = '<i class="fa-solid fa-image-slash fa-2x mb-2 d-block"></i> No ID document available';
+            }
         }
 
         // Handle Selfie Display
@@ -567,13 +617,43 @@
 
         const modalEl = document.getElementById('docPreviewModal');
         if (modalEl) {
-            const modal = new bootstrap.Modal(modalEl);
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
         }
     }
 
     // ---- MULTI-SELECT & BULK APPROVE/REJECT ----
     document.addEventListener('DOMContentLoaded', function () {
+        // Clickable Approval Selection Rows and Cards
+        document.addEventListener('click', function (e) {
+            const clickable = e.target.closest('.approval-row-clickable');
+            if (!clickable) return;
+
+            // Prevent opening modal when clicking on checkbox, forms, buttons, or links
+            if (e.target.closest('input, button, a, form, .form-check')) {
+                return;
+            }
+
+            const d = clickable.dataset;
+            if (d) {
+                previewApprovalDocument(d.docUrl, d.selfieUrl, d.name, d.idType, d.id, d.status);
+            }
+        });
+
+        // Accessible Keyboard Activation (Enter or Space)
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const clickable = document.activeElement && document.activeElement.classList.contains('approval-row-clickable') ? document.activeElement : null;
+                if (clickable && !['INPUT', 'BUTTON', 'A', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                    e.preventDefault();
+                    const d = clickable.dataset;
+                    if (d) {
+                        previewApprovalDocument(d.docUrl, d.selfieUrl, d.name, d.idType, d.id, d.status);
+                    }
+                }
+            }
+        });
+
         const bulkActionsBar = document.getElementById('bulkActionsBar');
         const selectedCountBadge = document.getElementById('selectedCountBadge');
         const bulkApproveCount = document.getElementById('bulkApproveCount');
@@ -816,5 +896,4 @@
         </div>
     </div>
 </div>
-</script>
 @endsection

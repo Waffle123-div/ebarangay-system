@@ -154,11 +154,12 @@ class FaceVerificationRegistrationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Account Approvals');
-        $response->assertSee('View ID & Face', false);
+        $response->assertSee('approval-row-clickable', false);
         $response->assertSee('selfiePreviewWrapper', false);
         $response->assertSee('docPreviewImgWrapper', false);
         $response->assertSee('Government-Issued ID', false);
         $response->assertSee('Live Facial Selfie', false);
+        $response->assertDontSee('>View ID & Face<', false);
     }
 
     public function test_admin_can_stream_selfie_from_public_disk()
