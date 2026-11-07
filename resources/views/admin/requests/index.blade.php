@@ -1345,6 +1345,224 @@
             color: var(--color-navy, #14284b) !important;
         }
 
+        /* ============================================================
+           MODAL PROGRESS STEPPER (Pending -> Processing -> Ready for Pick-up)
+           ============================================================ */
+        .modal-stepper-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+            animation: modalStepperSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            --stepper-pad: 38px;
+        }
+
+        @keyframes modalStepperSlideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-stepper-wrapper {
+            position: relative;
+            padding: 0 var(--stepper-pad);
+        }
+
+        .modal-stepper-track-bg {
+            position: absolute;
+            top: 17px;
+            left: calc(var(--stepper-pad) + 18px);
+            right: calc(var(--stepper-pad) + 18px);
+            height: 3.5px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            z-index: 1;
+        }
+
+        .modal-stepper-track-fill {
+            position: absolute;
+            top: 17px;
+            left: calc(var(--stepper-pad) + 18px);
+            height: 3.5px;
+            background: linear-gradient(90deg, #10b981 0%, #18365D 50%, #2563eb 100%);
+            border-radius: 4px;
+            z-index: 2;
+            transition: width 0.65s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
+            max-width: calc(100% - (var(--stepper-pad) * 2 + 36px));
+        }
+
+        .modal-stepper-nodes {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 3;
+        }
+
+        .modal-step-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 120px;
+            margin: 0 -42px;
+        }
+
+        .modal-step-node {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13.5px;
+            font-weight: 800;
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 3.5px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .modal-step-node .step-icon-check,
+        .modal-step-node .step-icon-reject {
+            display: none;
+        }
+
+        .modal-step-text {
+            margin-top: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: color 0.3s ease, font-weight 0.3s ease;
+            white-space: nowrap;
+        }
+
+        /* --- ACTIVE STATE --- */
+        .modal-step-col.active .modal-step-node {
+            background: #18365D;
+            color: #ffffff;
+            border-color: #ffffff;
+            transform: scale(1.08);
+            animation: modalStepPulse 2.2s infinite ease-in-out;
+        }
+
+        .modal-step-col.active .modal-step-text {
+            color: #18365D;
+            font-weight: 800;
+        }
+
+        @keyframes modalStepPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(24, 54, 93, 0.45), 0 3px 8px rgba(24, 54, 93, 0.25);
+            }
+            60% {
+                box-shadow: 0 0 0 8px rgba(24, 54, 93, 0), 0 4px 12px rgba(24, 54, 93, 0.15);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(24, 54, 93, 0.45), 0 3px 8px rgba(24, 54, 93, 0.25);
+            }
+        }
+
+        /* --- COMPLETED STATE --- */
+        .modal-step-col.completed .modal-step-node {
+            background: #10b981;
+            color: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.22), 0 2px 6px rgba(16, 185, 129, 0.3);
+            animation: stepSuccessPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-step-col.completed .modal-step-node .step-num {
+            display: none;
+        }
+
+        .modal-step-col.completed .modal-step-node .step-icon-check {
+            display: inline-flex;
+            font-size: 13px;
+        }
+
+        .modal-step-col.completed .modal-step-text {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        @keyframes stepSuccessPop {
+            0% { transform: scale(0.85); }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- REJECTED STATE --- */
+        .modal-step-col.rejected .modal-step-node {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+        }
+        .modal-step-col.rejected .modal-step-node .step-num { display: none; }
+        .modal-step-col.rejected .modal-step-node .step-icon-reject { display: inline-flex; }
+        .modal-step-col.rejected .modal-step-text { color: #dc2626; font-weight: 700; }
+
+        @media (max-width: 576px) {
+            .modal-stepper-card {
+                --stepper-pad: 18px;
+                padding: 12px 14px 10px;
+            }
+            .modal-step-text {
+                font-size: 10.5px;
+            }
+        }
+
+        /* Dark Mode Overrides for Modal Stepper */
+        html[data-theme="dark"] .modal-stepper-card,
+        html[data-bs-theme="dark"] .modal-stepper-card {
+            background: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        html[data-theme="dark"] .modal-stepper-track-bg,
+        html[data-bs-theme="dark"] .modal-stepper-track-bg {
+            background: #334155;
+        }
+
+        html[data-theme="dark"] .modal-step-node,
+        html[data-bs-theme="dark"] .modal-step-node {
+            background: #334155;
+            color: #94a3b8;
+            border-color: #1e293b;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        html[data-theme="dark"] .modal-step-col.active .modal-step-node,
+        html[data-bs-theme="dark"] .modal-step-col.active .modal-step-node {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #1e293b;
+        }
+
+        html[data-theme="dark"] .modal-step-col.active .modal-step-text,
+        html[data-bs-theme="dark"] .modal-step-col.active .modal-step-text {
+            color: #60a5fa;
+        }
+
+        html[data-theme="dark"] .modal-step-col.completed .modal-step-node,
+        html[data-bs-theme="dark"] .modal-step-col.completed .modal-step-node {
+            background: #10b981;
+            border-color: #1e293b;
+        }
+
+        html[data-theme="dark"] .modal-step-col.completed .modal-step-text,
+        html[data-bs-theme="dark"] .modal-step-col.completed .modal-step-text {
+            color: #34d399;
+        }
+
+        html[data-theme="dark"] .modal-stepper-track-fill,
+        html[data-bs-theme="dark"] .modal-stepper-track-fill {
+            background: linear-gradient(90deg, #10b981 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+
         .tracking-hero-card {
             background: linear-gradient(135deg, rgba(37, 99, 184, 0.06) 0%, rgba(15, 196, 232, 0.08) 100%) !important;
             border: 1.5px solid rgba(37, 99, 184, 0.22) !important;
@@ -2180,7 +2398,63 @@
                             $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
                             $modalDocsList = $request->documents_list;
                             $docsCount = count($modalDocsList);
+
+                            $rawStatus = strtolower(trim($request->status ?? 'pending'));
+                            $currentStep = 1;
+                            if (in_array($rawStatus, ['processing', 'approved', 'in progress'])) {
+                                $currentStep = 2;
+                            } elseif (in_array($rawStatus, ['ready', 'ready for pickup', 'ready for pick-up'])) {
+                                $currentStep = 3;
+                            } elseif (in_array($rawStatus, ['completed', 'claimed'])) {
+                                $currentStep = 4;
+                            } elseif (in_array($rawStatus, ['rejected', 'cancelled'])) {
+                                $currentStep = -1;
+                            }
+                            $initialFillWidth = $currentStep == 1 ? '0%' : ($currentStep == 2 ? '50%' : '100%');
                         @endphp
+
+                        {{-- Progress Pipeline Stepper (Pending -> Processing -> Ready for Pick-up) --}}
+                        <div class="modal-stepper-card mb-3" id="modal-stepper-card-{{ $request->id }}">
+                            <div class="modal-stepper-wrapper">
+                                <div class="modal-stepper-track-bg"></div>
+                                <div class="modal-stepper-track-fill" 
+                                     id="modal-stepper-fill-{{ $request->id }}" 
+                                     data-target-width="{{ $initialFillWidth }}"
+                                     style="width: {{ $initialFillWidth }}; {{ $currentStep >= 4 ? 'background: #10b981 !important;' : '' }}"></div>
+                                <div class="modal-stepper-nodes">
+                                    {{-- Step 1: Pending --}}
+                                    <div class="modal-step-col {{ $currentStep > 1 ? 'completed' : ($currentStep == 1 ? 'active' : ($currentStep == -1 ? 'rejected' : '')) }}" 
+                                         id="step-col-1-{{ $request->id }}">
+                                        <div class="modal-step-node">
+                                            <i class="fa-solid fa-check step-icon-check"></i>
+                                            <i class="fa-solid fa-xmark step-icon-reject"></i>
+                                            <span class="step-num">1</span>
+                                        </div>
+                                        <div class="modal-step-text">Pending</div>
+                                    </div>
+
+                                    {{-- Step 2: Processing --}}
+                                    <div class="modal-step-col {{ $currentStep > 2 ? 'completed' : ($currentStep == 2 ? 'active' : '') }}" 
+                                         id="step-col-2-{{ $request->id }}">
+                                        <div class="modal-step-node">
+                                            <i class="fa-solid fa-check step-icon-check"></i>
+                                            <span class="step-num">2</span>
+                                        </div>
+                                        <div class="modal-step-text">Processing</div>
+                                    </div>
+
+                                    {{-- Step 3: Ready for Pick-up --}}
+                                    <div class="modal-step-col {{ $currentStep >= 4 ? 'completed' : ($currentStep == 3 ? 'active' : '') }}" 
+                                         id="step-col-3-{{ $request->id }}">
+                                        <div class="modal-step-node">
+                                            <i class="fa-solid fa-check step-icon-check"></i>
+                                            <span class="step-num">3</span>
+                                        </div>
+                                        <div class="modal-step-text">Ready for Pick-up</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         {{-- 1. Tracking Number at the Top (Big Highlight & Status) --}}
                         <div class="tracking-hero-card mb-3 p-3 p-sm-4 rounded-3 border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 shadow-xs">
@@ -3042,6 +3316,9 @@
                     '<span class="status-badge status-processing px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
                     '<span class="status-dot"></span><span>Processing</span></span>';
             }
+            if (typeof updateModalStepper === 'function') {
+                updateModalStepper(requestId, 2);
+            }
 
             // 2. Also update row badge in the background table
             const rowBadge = document.getElementById('status-badge-' + requestId);
@@ -3116,6 +3393,9 @@
                 modalStatusBadge.innerHTML =
                     '<span class="status-badge status-ready px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
                     '<span class="status-dot"></span><span>Ready for Pickup</span></span>';
+            }
+            if (typeof updateModalStepper === 'function') {
+                updateModalStepper(requestId, 3);
             }
 
             // 2. Also update row badge in the background table
@@ -3196,6 +3476,9 @@
                     '<span class="status-badge status-completed px-3 py-1.5 fw-bold shadow-xs" style="font-size:13px;">' +
                     '<span class="status-dot"></span><span>Completed</span></span>';
             }
+            if (typeof updateModalStepper === 'function') {
+                updateModalStepper(requestId, 4);
+            }
 
             // 2. Also update row badge in the background table
             const rowBadge = document.getElementById('status-badge-' + requestId);
@@ -3241,6 +3524,63 @@
                 if (typeof window.loadPageUrl === 'function') {
                     window.loadPageUrl(window.location.href, false);
                 }
+            }
+        }
+    });
+
+    // ── Function to update Modal Stepper Progress Bar & Nodes ──
+    function updateModalStepper(requestId, step) {
+        const fill = document.getElementById('modal-stepper-fill-' + requestId);
+        const col1 = document.getElementById('step-col-1-' + requestId);
+        const col2 = document.getElementById('step-col-2-' + requestId);
+        const col3 = document.getElementById('step-col-3-' + requestId);
+
+        if (!fill || !col1 || !col2 || !col3) return;
+
+        // Reset classes
+        [col1, col2, col3].forEach(c => c.classList.remove('active', 'completed', 'rejected'));
+
+        if (step === 1) {
+            fill.dataset.targetWidth = '0%';
+            fill.style.width = '0%';
+            fill.style.background = '';
+            col1.classList.add('active');
+        } else if (step === 2) {
+            fill.dataset.targetWidth = '50%';
+            fill.style.width = '50%';
+            fill.style.background = '';
+            col1.classList.add('completed');
+            col2.classList.add('active');
+        } else if (step === 3) {
+            fill.dataset.targetWidth = '100%';
+            fill.style.width = '100%';
+            fill.style.background = '';
+            col1.classList.add('completed');
+            col2.classList.add('completed');
+            col3.classList.add('active');
+        } else if (step >= 4) {
+            fill.dataset.targetWidth = '100%';
+            fill.style.width = '100%';
+            fill.style.background = '#10b981';
+            col1.classList.add('completed');
+            col2.classList.add('completed');
+            col3.classList.add('completed');
+        }
+    }
+    window.updateModalStepper = updateModalStepper;
+
+    // Trigger smooth entrance fill animation when modal opens
+    document.addEventListener('shown.bs.modal', function(e) {
+        if (e.target && e.target.id && e.target.id.startsWith('viewModal')) {
+            const fill = e.target.querySelector('.modal-stepper-track-fill');
+            if (fill && fill.dataset.targetWidth) {
+                const target = fill.dataset.targetWidth;
+                fill.style.width = '0%';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        fill.style.width = target;
+                    });
+                });
             }
         }
     });
