@@ -470,9 +470,9 @@
                 </div>
             </div>
 
-            <div class="modal-footer border-top py-3 px-4 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <span class="text-muted small"><i class="fa-solid fa-circle-info me-1 text-primary"></i> Confirm facial likeness to maintain registry security.</span>
-                <div id="modalActionButtons" class="d-inline-flex gap-2"></div>
+            <div class="modal-footer border-top py-3.5 px-4 bg-white d-flex flex-column align-items-center justify-content-center gap-2">
+                <div id="modalActionButtons" class="d-flex align-items-center justify-content-center flex-wrap gap-3 w-100"></div>
+                <span class="text-muted small text-center"><i class="fa-solid fa-circle-info me-1 text-primary"></i> Confirm facial likeness to maintain registry security.</span>
             </div>
         </div>
     </div>
@@ -598,15 +598,15 @@
                     <form action="/admin/account-approvals/${userId}/reject" method="POST" class="m-0" onsubmit="return confirm('Reject this account?');">
                         <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'}">
                         <input type="hidden" name="_method" value="PATCH">
-                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 px-3 fw-semibold">
-                            <i class="fa-solid fa-xmark me-1"></i> Reject
+                        <button type="submit" class="btn btn-outline-danger border-2 px-4 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 170px; font-size: 15px;">
+                            <i class="fa-solid fa-xmark fs-5"></i> Reject
                         </button>
                     </form>
                     <form action="/admin/account-approvals/${userId}/approve" method="POST" class="m-0">
                         <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'}">
                         <input type="hidden" name="_method" value="PATCH">
-                        <button type="submit" class="btn btn-success btn-sm rounded-3 px-3 fw-semibold shadow-sm">
-                            <i class="fa-solid fa-check me-1"></i> Approve Resident
+                        <button type="submit" class="btn btn-success px-4 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 210px; font-size: 15px;">
+                            <i class="fa-solid fa-check fs-5"></i> Approve Resident
                         </button>
                     </form>
                 `;
