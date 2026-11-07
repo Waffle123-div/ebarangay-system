@@ -804,17 +804,12 @@
                     </div>
                 </div>
 
-                <!-- Remember Me & Security Indicator -->
+                <!-- Remember Me -->
                 <div class="form-options-row">
                     <label class="custom-checkbox-label">
                         <input type="checkbox" name="remember" class="custom-checkbox-input" id="rememberMe" {{ old('remember') ? 'checked' : '' }}>
                         <span>Remember session</span>
                     </label>
-
-                    <div class="security-indicator" title="Encrypted Connection">
-                        <i class="fa-solid fa-lock"></i>
-                        <span>256-bit SSL</span>
-                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -826,19 +821,6 @@
 
             <!-- Card Meta Footer -->
             <div class="card-meta-footer">
-                <div class="meta-badges-row">
-                    <span class="meta-pill">
-                        <i class="fa-solid fa-shield-check"></i> Encrypted
-                    </span>
-                    <span class="meta-pill">&bull;</span>
-                    <span class="meta-pill">
-                        <i class="fa-solid fa-bolt"></i> Realtime Sync
-                    </span>
-                    <span class="meta-pill">&bull;</span>
-                    <span class="meta-pill">
-                        <i class="fa-solid fa-fingerprint"></i> Audit Trail
-                    </span>
-                </div>
                 <p class="copyright-text">
                     &copy; {{ date('Y') }} E-Barangay Digital Services System &bull; All Rights Reserved
                 </p>
