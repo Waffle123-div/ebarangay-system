@@ -1161,17 +1161,6 @@
                             onclick="toggleUserModalEdit(true)">
                         <i class="fa-solid fa-pen-to-square me-1"></i> Edit
                     </button>
-                    <button type="submit" form="editUserForm"
-                            class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm d-none"
-                            id="viewModalSaveBtn">
-                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1.5 fw-semibold d-none"
-                            id="viewModalCancelBtn"
-                            onclick="toggleUserModalEdit(false)">
-                        <i class="fa-solid fa-xmark me-1"></i> Cancel Edit
-                    </button>
                     <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
@@ -1464,12 +1453,12 @@
                         </div>
                     </div>
 
-                    {{-- In-Form Submit Actions --}}
-                    <div class="d-flex justify-content-end gap-2 pt-2">
-                        <button type="button" class="btn btn-light border px-4 rounded-3 fw-semibold" onclick="toggleUserModalEdit(false)">
+                    {{-- In-Form Submit Actions (Centered) --}}
+                    <div class="d-flex justify-content-center align-items-center gap-3 pt-3">
+                        <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold shadow-xs" onclick="toggleUserModalEdit(false)">
                             <i class="fa-solid fa-xmark me-1"></i> Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold shadow-sm" style="background-color: #0f2240; border-color: #0f2240;">
+                        <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow-sm" style="background-color: #0f2240; border-color: #0f2240;">
                             <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
                         </button>
                     </div>
@@ -1477,14 +1466,9 @@
             </div>
 
             {{-- MODAL FOOTER --}}
-            <div class="modal-footer bg-light border-top px-4 py-3">
-                <div class="d-flex align-items-center justify-content-between w-100">
-                    <div class="text-muted small" id="userModalFooterHint">
-                        <i class="fa-solid fa-circle-info me-1"></i> Click <strong>Edit</strong> in the top header to modify this user account.
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-secondary rounded-3 fw-semibold px-4" data-bs-dismiss="modal">Close</button>
-                    </div>
+            <div class="modal-footer bg-light border-top px-4 py-2.5">
+                <div class="text-muted small text-center w-100" id="userModalFooterHint">
+                    <i class="fa-solid fa-circle-info me-1"></i> Click <strong>Edit</strong> in the top header to modify this user account.
                 </div>
             </div>
         </div>
@@ -1527,27 +1511,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const viewSec = document.getElementById('userModalViewSection');
         const editSec = document.getElementById('userModalEditSection');
         const btnEdit = document.getElementById('viewModalEditBtn');
-        const btnSave = document.getElementById('viewModalSaveBtn');
-        const btnCancel = document.getElementById('viewModalCancelBtn');
         const title = document.getElementById('userModalHeaderTitle');
         const hint = document.getElementById('userModalFooterHint');
 
         if (editing) {
-            viewSec.classList.add('d-none');
-            editSec.classList.remove('d-none');
-            btnEdit.classList.add('d-none');
-            btnSave.classList.remove('d-none');
-            btnCancel.classList.remove('d-none');
+            viewSec?.classList.add('d-none');
+            editSec?.classList.remove('d-none');
+            btnEdit?.classList.add('d-none');
             if (title) title.textContent = 'Edit User Details';
             if (hint) {
                 hint.innerHTML = '<i class="fa-solid fa-pen-to-square me-1 text-primary"></i> Modify the fields above and click <strong>Save Changes</strong>.';
             }
         } else {
-            viewSec.classList.remove('d-none');
-            editSec.classList.add('d-none');
-            btnEdit.classList.remove('d-none');
-            btnSave.classList.add('d-none');
-            btnCancel.classList.add('d-none');
+            viewSec?.classList.remove('d-none');
+            editSec?.classList.add('d-none');
+            btnEdit?.classList.remove('d-none');
             if (title) title.textContent = 'User Details';
             if (hint) {
                 hint.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i> Click <strong>Edit</strong> in the top header to modify this user account.';

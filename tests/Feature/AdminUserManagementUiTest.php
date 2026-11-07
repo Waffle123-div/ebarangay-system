@@ -124,6 +124,12 @@ class AdminUserManagementUiTest extends TestCase
         $response->assertSee('id="userModalViewSection"', false);
         $response->assertSee('id="userModalEditSection"', false);
         $response->assertSee('modal-xl');
+
+        // Modal footer does not have redundant Close button
+        $response->assertDontSee('>Close</button>', false);
+
+        // Cancel and Save buttons are centered in the form
+        $response->assertSee('justify-content-center align-items-center gap-3 pt-3', false);
     }
 
     public function test_admin_can_update_user_with_expanded_details(): void
