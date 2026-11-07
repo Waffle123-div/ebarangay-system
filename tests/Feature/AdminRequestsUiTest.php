@@ -141,4 +141,54 @@ class AdminRequestsUiTest extends TestCase
             'id' => $docRequest->id,
         ]);
     }
+
+    public function test_processing_request_allows_word_doc_generation_and_ready_request_shows_attached_file(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Word Workflow Resident',
+            'email' => 'word_workflow_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $processingRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-PROC-' . strtoupper(substr(uniqid(), -6)),
+            'first_name' => 'Proc',
+            'last_name' => 'Resident',
+            'resident_email' => $resident->email,
+            'document_type' => 'Certificate of Residency',
+            'status' => 'Processing',
+        ]);
+
+        $readyRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-READY-' . strtoupper(substr(uniqid(), -6)),
+            'first_name' => 'Ready',
+            'last_name' => 'Resident',
+            'resident_email' => $resident->email,
+            'document_type' => 'Barangay Clearance',
+            'status' => 'Ready',
+        ]);
+
+        // 1. In Processing: Generate Word Doc is active and not d-none for this request
+        $procResponse = $this->actingAs($this->admin)->get(route('admin.requests', ['status' => 'Processing']));
+        $procResponse->assertStatus(200);
+        $procResponse->assertSee('modal-generate-doc-btn-' . $processingRequest->id);
+        $procResponse->assertDontSee('modal-generate-doc-btn-' . $processingRequest->id . ' d-none', false);
+        // And attached card is d-none for processing
+        $procResponse->assertSee('modal-attached-word-card-' . $processingRequest->id . ' d-none', false);
+
+        // 2. In Ready: Generate Word Doc is hidden (d-none) and cannot be generated anymore
+        $readyResponse = $this->actingAs($this->admin)->get(route('admin.requests', ['status' => 'Ready']));
+        $readyResponse->assertStatus(200);
+        $readyResponse->assertSee('modal-generate-doc-btn-' . $readyRequest->id . ' d-none', false);
+        // And attached card and attached doc button are active (not d-none)
+        $readyResponse->assertDontSee('modal-attached-word-card-' . $readyRequest->id . ' d-none', false);
+        $readyResponse->assertDontSee('modal-attached-doc-btn-' . $readyRequest->id . ' d-none', false);
+        $readyResponse->assertSee('Attached Word File');
+        $readyResponse->assertSee('Official Document');
+    }
 }

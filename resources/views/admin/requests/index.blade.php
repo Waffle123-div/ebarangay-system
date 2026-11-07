@@ -2666,10 +2666,39 @@
                                     @endforeach
                                 </div>
                             @else
-                                <div class="bg-light rounded-3 p-3 border text-center text-muted" style="font-size: 12.5px;">
+                                <div id="modal-no-attachments-{{ $request->id }}" class="bg-light rounded-3 p-3 border text-center text-muted {{ in_array($request->status, ['Ready', 'Completed']) ? 'd-none' : '' }}" style="font-size: 12.5px;">
                                     <i class="fa-solid fa-file-circle-question text-secondary me-1"></i> No uploaded supporting documents attached to this request.
                                 </div>
                             @endif
+
+                            {{-- Official Word Document Card Attached in Final Step Before Complete (Ready / Completed) --}}
+                            <div class="modal-attached-word-card-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} {{ count($request->attachments_list) > 0 ? 'mt-2' : '' }}">
+                                <div class="rounded-3 border d-flex justify-content-between align-items-center gap-2 p-2.5 shadow-xs" style="background-color: #f0fdf4; border-color: #86efac !important;">
+                                    <div class="d-flex align-items-center gap-2.5 min-w-0">
+                                        <div class="rounded-3 bg-white border d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 44px; height: 44px;">
+                                            <i class="fa-solid fa-file-word text-primary fs-4"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                                                <span class="badge bg-success text-white rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 10px;">
+                                                    <i class="fa-solid fa-paperclip me-1"></i> Official Document
+                                                </span>
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 10px;">
+                                                    Attached &amp; Ready
+                                                </span>
+                                            </div>
+                                            <div class="fw-bold text-dark text-truncate" style="font-size: 13px;">
+                                                {{ $request->document_type }}.docx
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <a href="{{ route('admin.requests.generate', $request->id) }}" class="btn btn-sm btn-success rounded-3 px-3 py-1.5 fw-semibold shadow-xs d-inline-flex align-items-center gap-1" title="Download attached official file">
+                                            <i class="fa-solid fa-download"></i> <span class="d-none d-sm-inline">Download</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {{-- 4. Requested Document (Positioned AFTER Attached Documents) --}}
@@ -2679,11 +2708,20 @@
                                     <i class="fa-solid fa-file-lines text-primary me-1.5"></i> Requested {{ $docsCount > 1 ? 'Documents (' . $docsCount . ')' : 'Document' }}
                                 </p>
                                 @if($docsCount > 1)
-                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                    {{-- In Processing: Can generate document --}}
+                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }}">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
                                            class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
                                            title="Download All Documents in a Single ZIP Archive">
                                             <i class="fa-solid fa-file-zipper"></i> <span>Download All as ZIP</span>
+                                        </a>
+                                    </div>
+                                    {{-- Final step (Ready/Completed): Document is attached and can no longer be generated --}}
+                                    <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                        <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                           class="btn btn-sm btn-light border border-success border-opacity-50 text-success rounded-3 px-3 py-1 fw-semibold shadow-xs d-inline-flex align-items-center gap-1.5"
+                                           title="Download Attached ZIP Archive">
+                                            <i class="fa-solid fa-paperclip text-success"></i> <span>Attached ZIP File</span>
                                         </a>
                                     </div>
                                 @endif
@@ -2712,11 +2750,21 @@
                                                     <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
                                                 </div>
                                             </div>
-                                            <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                            {{-- Processing stage: Generate Word Doc --}}
+                                            <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }}">
                                                 <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
                                                    class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
                                                    title="Generate Word Document for {{ $docItem['type'] }}">
                                                     <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
+                                                </a>
+                                            </div>
+                                            {{-- Final step (Ready/Completed): Attached Word File --}}
+                                            <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                                <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
+                                                   class="btn btn-sm btn-light border border-success border-opacity-50 text-dark rounded-3 px-2.5 py-1 fw-semibold shadow-xs flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
+                                                   title="Download Attached Word Document for {{ $docItem['type'] }}">
+                                                    <i class="fa-solid fa-file-word text-primary"></i> <span>Attached File</span>
+                                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-1.5 py-0.5" style="font-size: 9.5px;"><i class="fa-solid fa-paperclip"></i></span>
                                                 </a>
                                             </div>
                                         </div>
@@ -2737,11 +2785,21 @@
                                         </div>
                                         <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> <span id="modal-view-purpose-{{ $request->id }}">{{ $request->purpose ?? 'No purpose provided.' }}</span></div>
                                     </div>
-                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                    {{-- Processing stage: Generate Word Doc --}}
+                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }}">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                           class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                           class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
                                            title="Generate Word Document">
                                             <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
+                                        </a>
+                                    </div>
+                                    {{-- Final step (Ready/Completed): Attached Word File --}}
+                                    <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                        <a href="{{ route('admin.requests.generate', $request->id) }}" 
+                                           class="btn btn-sm btn-light border border-success border-opacity-50 text-dark rounded-3 px-3 py-1.5 fw-semibold shadow-xs flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
+                                           title="Download Attached Word Document">
+                                            <i class="fa-solid fa-file-word text-primary"></i> <span>Attached Word File</span>
+                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>
                                         </a>
                                     </div>
                                 </div>
@@ -3343,7 +3401,19 @@
                 rowBadgeMobile.innerHTML = '<span class="status-badge status-processing"><span class="status-dot"></span><span>Processing</span></span>';
             }
 
-            // 3. Swap footer buttons → show AJAX "Ready for Pickup" button
+            // 3. Reveal "Generate Word Doc" button in modal (can generate during Processing)
+            document.querySelectorAll('.modal-generate-doc-btn-' + requestId).forEach(el => {
+                el.classList.remove('d-none');
+                el.style.animation = 'agy-fadeIn 0.4s ease';
+            });
+            document.querySelectorAll('.modal-attached-doc-btn-' + requestId).forEach(el => {
+                el.classList.add('d-none');
+            });
+            document.querySelectorAll('.modal-attached-word-card-' + requestId).forEach(el => {
+                el.classList.add('d-none');
+            });
+
+            // 4. Swap footer buttons → show AJAX "Ready for Pickup" button
             const footerDiv = document.getElementById('accept-reject-' + requestId);
             if (footerDiv) {
                 footerDiv.innerHTML =
@@ -3357,7 +3427,7 @@
             }
 
             if (typeof window.agToast === 'function') {
-                window.agToast('Request Accepted', 'Request moved to Processing. When ready, click "Ready for Pickup".', 'success', 4000);
+                window.agToast('Request Accepted', 'Request moved to Processing. Word document generation is now available.', 'success', 4000);
             }
 
             silentUpdateCounts();
@@ -3421,11 +3491,20 @@
                 rowBadgeMobile.innerHTML = '<span class="status-badge status-ready"><span class="status-dot"></span><span>Ready</span></span>';
             }
 
-            // 3. REVEAL the "Generate Word Doc" button in the modal!
+            // 3. Final step before complete: Word document is attached and can no longer be generated
             document.querySelectorAll('.modal-generate-doc-btn-' + requestId).forEach(el => {
+                el.classList.add('d-none');
+            });
+            document.querySelectorAll('.modal-attached-doc-btn-' + requestId).forEach(el => {
                 el.classList.remove('d-none');
                 el.style.animation = 'agy-fadeIn 0.4s ease';
             });
+            document.querySelectorAll('.modal-attached-word-card-' + requestId).forEach(el => {
+                el.classList.remove('d-none');
+                el.style.animation = 'agy-fadeIn 0.4s ease';
+            });
+            const emptyAtt = document.getElementById('modal-no-attachments-' + requestId);
+            if (emptyAtt) emptyAtt.classList.add('d-none');
 
             // 4. Swap footer buttons → show AJAX "Mark Claimed / Completed" button
             const footerDiv = document.getElementById('accept-reject-' + requestId);
@@ -3440,7 +3519,7 @@
             }
 
             if (typeof window.agToast === 'function') {
-                window.agToast('Ready for Pickup', 'Document marked Ready. Generate Word Doc is now available!', 'info', 4000);
+                window.agToast('Ready for Pickup', 'Document marked Ready. The Word file is now attached for pickup.', 'info', 4000);
             }
 
             silentUpdateCounts();
