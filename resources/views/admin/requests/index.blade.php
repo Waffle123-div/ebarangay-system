@@ -56,18 +56,18 @@
             </div>
         </a>
 
-        {{-- Card 2: Pending & Processing --}}
-        <a href="{{ route('admin.requests', ['status' => 'Pending_Processing']) }}" 
-           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'active-kpi-card' : '' }}"
-           title="Jump to Pending & Processing stage">
+        {{-- Card 2: Pending Reviews --}}
+        <a href="{{ route('admin.requests', ['status' => 'Pending_Review']) }}" 
+           class="stat-card request-stat-card clickable-kpi-card text-decoration-none {{ $currentStatus == 'Pending_Review' ? 'active-kpi-card' : '' }}"
+           title="Jump to Pending & Review stage">
             <div class="stat-card-icon-box" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
                 <i class="fa-solid fa-clock"></i>
             </div>
             <div class="stat-card-body">
-                <div class="stat-card-label">Pending &amp; Processing</div>
-                <h3 class="stat-card-count" id="kpi-pending">{{ $tabCounts['Pending_Processing'] ?? $pendingReviews }}</h3>
+                <div class="stat-card-label">Pending Reviews</div>
+                <h3 class="stat-card-count" id="kpi-pending">{{ $tabCounts['Pending_Review'] ?? $pendingReviews }}</h3>
                 <div class="stat-card-subtext">
-                    @if(($tabCounts['Pending_Processing'] ?? $pendingReviews) == 0)
+                    @if(($tabCounts['Pending_Review'] ?? $pendingReviews) == 0)
                         <span class="text-success fw-semibold">✓ All caught up</span>
                     @else
                         <span class="text-warning fw-semibold">Requires attention</span>
@@ -272,9 +272,18 @@
             color: #d97706;
         }
         .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #d97706, #0284c7);
+            background: linear-gradient(90deg, #d97706, #2563eb);
             opacity: 0.95;
             box-shadow: 0 0 6px rgba(217, 119, 6, 0.35);
+        }
+
+        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
+            color: #2563eb;
+        }
+        .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #2563eb, #0284c7);
+            opacity: 0.95;
+            box-shadow: 0 0 6px rgba(37, 99, 235, 0.35);
         }
 
         .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector {
@@ -659,9 +668,20 @@
         }
         html[data-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before,
         html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-pending.active) + .pipeline-arrow-connector::before {
-            background: linear-gradient(90deg, #fbbf24, #2dd4bf) !important;
+            background: linear-gradient(90deg, #fbbf24, #38bdf8) !important;
             opacity: 1;
             box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+        }
+
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before,
+        html[data-bs-theme="dark"] .pipeline-step-item:has(.tab-processing.active) + .pipeline-arrow-connector::before {
+            background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
         }
 
         html[data-theme="dark"] .pipeline-step-item:has(.tab-ready.active) + .pipeline-arrow-connector,
@@ -1707,7 +1727,8 @@
                 <div class="d-flex align-items-center gap-2">
                     @php
                         $displayStatus = match($currentStatus) {
-                            'Pending_Processing', 'Pending_Review', 'Processing' => 'Pending & Processing',
+                            'Pending_Review' => 'Pending & Review',
+                            'Processing' => 'Processing',
                             'Ready' => 'Ready for Pickup',
                             default => str_replace('_', ' ', $currentStatus)
                         };
@@ -1769,38 +1790,59 @@
             <div class="process-pipeline-wrapper w-100">
                 <div class="process-pipeline-container" role="tablist" aria-label="Request Status Stages">
                     
-                    {{-- Sequential Workflow Steps (1 -> 2 -> 3) --}}
+                    {{-- Sequential Workflow Steps (1 -> 2 -> 3 -> 4) --}}
                     <div class="process-pipeline-stages">
                         
-                        {{-- Step 1: Pending & Processing (Combined) --}}
+                        {{-- Step 1: Pending & Review --}}
                         <div class="pipeline-step-item">
-                            <a class="pipeline-pill-link tab-pending {{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'active' : '' }}" 
-                               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Processing']) }}"
+                            <a class="pipeline-pill-link tab-pending {{ $currentStatus == 'Pending_Review' ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Pending_Review']) }}"
                                role="tab"
-                               aria-selected="{{ in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) ? 'true' : 'false' }}"
-                               title="Step 1: Review incoming and in-progress applications">
+                               aria-selected="{{ $currentStatus == 'Pending_Review' ? 'true' : 'false' }}"
+                               title="Step 1: Review incoming applications">
                                 <span class="step-badge-number step-badge-pending">1</span>
                                 <i class="fa-solid fa-inbox text-step-icon"></i>
-                                <span class="step-title">Pending &amp; Processing</span>
-                                <span class="status-count-badge count-badge-pending" id="tab-badge-pending">{{ $tabCounts['Pending_Processing'] ?? $tabCounts['Pending_Review'] }}</span>
+                                <span class="step-title">Pending &amp; Review</span>
+                                <span class="status-count-badge count-badge-pending" id="tab-badge-pending">{{ $tabCounts['Pending_Review'] }}</span>
                             </a>
                         </div>
 
                         {{-- Leading Arrow 1 -> 2 --}}
+                        <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Processing">
+                            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+
+                        {{-- Step 2: Processing --}}
+                        <div class="pipeline-step-item">
+                            <a class="pipeline-pill-link tab-processing {{ $currentStatus == 'Processing' ? 'active' : '' }}" 
+                               href="{{ request()->fullUrlWithQuery(['status' => 'Processing']) }}"
+                               role="tab"
+                               aria-selected="{{ $currentStatus == 'Processing' ? 'true' : 'false' }}"
+                               title="Step 2: Processing, drafting and captain signature">
+                                <span class="step-badge-number step-badge-processing">2</span>
+                                <i class="fa-solid fa-gear text-step-icon gear-icon-spin"></i>
+                                <span class="step-title">Processing</span>
+                                <span class="status-count-badge count-badge-processing" id="tab-badge-processing">{{ $tabCounts['Processing'] }}</span>
+                            </a>
+                        </div>
+
+                        {{-- Leading Arrow 2 -> 3 --}}
                         <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Ready for Pick-up">
                             <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
 
-                        {{-- Step 2: Ready for Pick-up --}}
+                        {{-- Step 3: Ready for Pick-up --}}
                         <div class="pipeline-step-item">
                             <a class="pipeline-pill-link tab-ready {{ $currentStatus == 'Ready' ? 'active' : '' }} {{ ($tabCounts['Ready'] ?? 0) > 0 ? 'stage-waiting-action' : '' }}" 
                                href="{{ request()->fullUrlWithQuery(['status' => 'Ready']) }}"
                                role="tab"
                                aria-selected="{{ $currentStatus == 'Ready' ? 'true' : 'false' }}"
-                               title="Step 2: Document printed and ready at releasing counter">
-                                <span class="step-badge-number step-badge-ready">2</span>
+                               title="Step 3: Document printed and ready at releasing counter">
+                                <span class="step-badge-number step-badge-ready">3</span>
                                 <i class="fa-solid fa-file-signature text-step-icon"></i>
                                 <span class="step-title">Ready for Pick-up</span>
                                 <span class="status-count-badge count-badge-ready" id="tab-badge-ready">{{ $tabCounts['Ready'] }}</span>
@@ -1810,21 +1852,21 @@
                             </a>
                         </div>
 
-                        {{-- Leading Arrow 2 -> 3 --}}
+                        {{-- Leading Arrow 3 -> 4 --}}
                         <div class="pipeline-arrow-connector" aria-hidden="true" title="Leads to Completed">
                             <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
 
-                        {{-- Step 3: Completed --}}
+                        {{-- Step 4: Completed --}}
                         <div class="pipeline-step-item">
                             <a class="pipeline-pill-link tab-completed {{ $currentStatus == 'Completed' ? 'active' : '' }}" 
                                href="{{ request()->fullUrlWithQuery(['status' => 'Completed']) }}"
                                role="tab"
                                aria-selected="{{ $currentStatus == 'Completed' ? 'true' : 'false' }}"
-                               title="Step 3: Claimed by resident and archived">
-                                <span class="step-badge-number step-badge-completed">3</span>
+                               title="Step 4: Claimed by resident and archived">
+                                <span class="step-badge-number step-badge-completed">4</span>
                                 <i class="fa-solid fa-check-double text-step-icon"></i>
                                 <span class="step-title">Completed</span>
                                 <span class="status-count-badge count-badge-completed" id="tab-badge-completed">{{ $tabCounts['Completed'] }}</span>
@@ -1886,7 +1928,7 @@
                     @forelse($allRequests as $request)
 
                     @php
-                        $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                        $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                         $docTypeLower = strtolower($request->document_type ?? '');
                         $isBusinessClearance = str_contains($docTypeLower, 'business');
                     @endphp
@@ -1970,7 +2012,7 @@
         <div class="d-md-none p-3" id="requests-mobile-list">
             @forelse($allRequests as $request)
                 @php
-                    $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                    $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                     $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
                     $docTypeLower = strtolower($request->document_type ?? '');
                     $isBusinessClearance = str_contains($docTypeLower, 'business');
@@ -2132,7 +2174,7 @@
                     <div id="view-mode-{{ $request->id }}" class="p-3 p-md-4">
 
                         @php
-                            $isUrgent = (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing']) && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
+                            $isUrgent = ($currentStatus == 'Pending_Review' && $request->status == 'Pending' && $request->created_at->diffInHours(\Carbon\Carbon::now()) > 48);
                             $docTypeLower = strtolower($request->document_type ?? '');
                             $isBusinessClearance = str_contains($docTypeLower, 'business');
                             $idType = $request->resolved_id_type ?? $request->id_type ?? $request->user?->id_type;
@@ -2952,7 +2994,7 @@
             .then(html => {
                 const doc2 = new DOMParser().parseFromString(html, 'text/html');
                 const ids = ['kpi-total','kpi-pending','kpi-approved','kpi-overdue','kpi-avg',
-                             'tab-badge-pending','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+                             'tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
                 ids.forEach(id => {
                     const nEl = doc2.getElementById(id);
                     const oEl = document.getElementById(id);
@@ -3328,7 +3370,7 @@
         let _liveIndicator = document.getElementById('live-status-indicator');
 
         function _parseTabCounts(doc) {
-            const ids = ['tab-badge-pending','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
+            const ids = ['tab-badge-pending','tab-badge-processing','tab-badge-ready','tab-badge-completed','tab-badge-rejected'];
             const counts = {};
             ids.forEach(id => {
                 const el = doc.getElementById(id);
@@ -3396,7 +3438,7 @@
 
             const elementIdsToUpdate = [
                 'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
-                'tab-badge-pending', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
+                'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
             ];
 
             elementIdsToUpdate.forEach(id => {
@@ -3410,7 +3452,8 @@
             if (_countsChanged(_prevTabCounts, newCounts)) {
                 if (_prevTabCounts) {
                     const statusNames = {
-                        'tab-badge-pending':    'Pending & Processing',
+                        'tab-badge-pending':    'Pending & Review',
+                        'tab-badge-processing': 'Processing',
                         'tab-badge-ready':      'Ready for Pickup',
                         'tab-badge-completed':  'Completed',
                         'tab-badge-rejected':   'Rejected',
@@ -3532,7 +3575,7 @@
                     // 7. Update KPIs with count animation
                     const elementIds = [
                         'kpi-total', 'kpi-pending', 'kpi-approved', 'kpi-overdue', 'kpi-avg',
-                        'tab-badge-pending', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
+                        'tab-badge-pending', 'tab-badge-processing', 'tab-badge-ready', 'tab-badge-completed', 'tab-badge-rejected'
                     ];
                     elementIds.forEach(id => {
                         const newEl = doc.getElementById(id);

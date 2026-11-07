@@ -644,22 +644,21 @@ class AdminDashboardController extends Controller
             1
         );
 
-        $pendingProcessingCount = DocumentRequest::whereIn('status', ['Pending', 'Under Review', 'Processing'])->count();
-
         $tabCounts = [
-            'Pending_Processing' => $pendingProcessingCount,
-            'Pending_Review'     => $pendingProcessingCount,
-            'Processing'         => DocumentRequest::where('status', 'Processing')->count(),
-            'Ready'              => DocumentRequest::where('status', 'Ready')->count(),
-            'Completed'          => DocumentRequest::where('status', 'Completed')->count(),
-            'Rejected'           => DocumentRequest::where('status', 'Rejected')->count(),
+            'Pending_Review' => DocumentRequest::whereIn('status', ['Pending', 'Under Review'])->count(),
+            'Processing'     => DocumentRequest::where('status', 'Processing')->count(),
+            'Ready'          => DocumentRequest::where('status', 'Ready')->count(),
+            'Completed'      => DocumentRequest::where('status', 'Completed')->count(),
+            'Rejected'       => DocumentRequest::where('status', 'Rejected')->count(),
         ];
 
-        // UX improvement: default to the first active stage with records if Pending & Processing is empty
-        $autoSelectedStatus = 'Pending_Processing';
+        // UX improvement: default to the first active stage with records if Pending & Review is empty
+        $autoSelectedStatus = 'Pending_Review';
         if (!$request->has('status')) {
-            if ($tabCounts['Pending_Processing'] === 0) {
-                if ($tabCounts['Ready'] > 0) {
+            if ($tabCounts['Pending_Review'] === 0) {
+                if ($tabCounts['Processing'] > 0) {
+                    $autoSelectedStatus = 'Processing';
+                } elseif ($tabCounts['Ready'] > 0) {
                     $autoSelectedStatus = 'Ready';
                 }
             }
@@ -670,8 +669,8 @@ class AdminDashboardController extends Controller
 
         $query = DocumentRequest::with('user')->orderBy('created_at', 'desc');
 
-        if (in_array($currentStatus, ['Pending_Processing', 'Pending_Review', 'Processing'])) {
-            $query->whereIn('status', ['Pending', 'Under Review', 'Processing']);
+        if ($currentStatus === 'Pending_Review') {
+            $query->whereIn('status', ['Pending', 'Under Review']);
         } elseif ($currentStatus !== 'All') {
             $query->where('status', $currentStatus);
         }
