@@ -164,7 +164,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the public URL to view the selfie / face verification photo.
+     * Get the URL to view the selfie / face verification photo.
      */
     public function getSelfiePhotoUrlAttribute(): ?string
     {
@@ -173,8 +173,12 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        if (filter_var($path, FILTER_VALIDATE_URL)) {
+        if (filter_var($path, FILTER_VALIDATE_URL) || str_starts_with($path, 'data:image/')) {
             return $path;
+        }
+
+        if (\Illuminate\Support\Facades\Route::has('admin.resident.selfie')) {
+            return route('admin.resident.selfie', basename($path));
         }
 
         return \Illuminate\Support\Facades\Storage::url($path);

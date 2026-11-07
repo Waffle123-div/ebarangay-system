@@ -160,4 +160,49 @@ class FaceVerificationRegistrationTest extends TestCase
         $response->assertSee('Government-Issued ID', false);
         $response->assertSee('Live Facial Selfie', false);
     }
+
+    public function test_admin_can_stream_selfie_from_public_disk()
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('selfies/test_stream_public.jpg', 'fake-image-content');
+
+        $admin = User::where('role', 'Admin')->first() ?? User::create([
+            'user_id' => 'USR-ADMIN-' . uniqid(),
+            'name' => 'Admin Selfie Streamer',
+            'email' => 'admin_streamer_' . uniqid() . '@example.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'Admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.resident.selfie', 'test_stream_public.jpg'));
+        $response->assertStatus(200);
+    }
+
+    public function test_admin_can_stream_selfie_from_local_disk()
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('selfies/test_stream_local.jpg', 'fake-local-image-content');
+
+        $admin = User::where('role', 'Admin')->first() ?? User::create([
+            'user_id' => 'USR-ADMIN-' . uniqid(),
+            'name' => 'Admin Selfie Streamer Local',
+            'email' => 'admin_streamer_local_' . uniqid() . '@example.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'Admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.resident.selfie', 'test_stream_local.jpg'));
+        $response->assertStatus(200);
+    }
+
+    public function test_unauthorized_user_cannot_stream_resident_selfie()
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('selfies/secret_selfie.jpg', 'secret-image-content');
+
+        $response = $this->get(route('admin.resident.selfie', 'secret_selfie.jpg'));
+        $response->assertRedirect();
+    }
 }

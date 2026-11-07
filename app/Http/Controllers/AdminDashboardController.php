@@ -800,16 +800,44 @@ class AdminDashboardController extends Controller
 
     /**
      * Securely stream private resident selfies to authorized administrators.
+     * Supports both local (private) and public storage disks for robust backward compatibility.
      */
     public function showSelfie($filename)
     {
-        $path = 'selfies/' . $filename;
+        $safeFilename = basename($filename);
+        $path = 'selfies/' . $safeFilename;
 
-        if (!Storage::disk('local')->exists($path)) {
-            abort(404, 'Selfie not found.');
+        // 1. Check local (private) disk
+        if (Storage::disk('local')->exists($path)) {
+            return Storage::disk('local')->response($path);
         }
 
-        return Storage::disk('local')->response($path);
+        // 2. Check public disk
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path);
+        }
+
+        // 3. Check disk root in case stored without prefix
+        if (Storage::disk('local')->exists($safeFilename)) {
+            return Storage::disk('local')->response($safeFilename);
+        }
+
+        if (Storage::disk('public')->exists($safeFilename)) {
+            return Storage::disk('public')->response($safeFilename);
+        }
+
+        // 4. Fallback: check raw files directly in storage directory
+        $directLocal = storage_path('app/private/' . $path);
+        if (file_exists($directLocal)) {
+            return response()->file($directLocal);
+        }
+
+        $directPublic = storage_path('app/public/' . $path);
+        if (file_exists($directPublic)) {
+            return response()->file($directPublic);
+        }
+
+        abort(404, 'Selfie not found.');
     }
 
     public function updateProfile(Request $request)

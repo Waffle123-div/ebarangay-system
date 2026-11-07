@@ -186,8 +186,16 @@
                         </td>
                         <td class="text-nowrap">
                             @php
-                                $docUrl =$user->id_document_url;
-                                $selfieUrl = $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : null;
+                                $docUrl = $user->id_document_url;
+                                $rawSelfie = trim($user->selfie_photo ?? '');
+                                $selfieUrl = null;
+                                if ($rawSelfie !== '') {
+                                    if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
+                                        $selfieUrl = $rawSelfie;
+                                    } else {
+                                        $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
+                                    }
+                                }
                                 $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
                             @endphp
                             <div class="d-inline-flex align-items-center gap-1.5 flex-wrap justify-content-center">
@@ -289,8 +297,16 @@
                     {{-- Document & Face Link --}}
                     <div class="my-2">
                         @php
-                            $docUrl =$user->id_document_url;
-                            $selfieUrl = $user->selfie_photo ? route('admin.resident.selfie', basename($user->selfie_photo)) : null;
+                            $docUrl = $user->id_document_url;
+                            $rawSelfie = trim($user->selfie_photo ?? '');
+                            $selfieUrl = null;
+                            if ($rawSelfie !== '') {
+                                if (str_starts_with($rawSelfie, 'data:image/') || filter_var($rawSelfie, FILTER_VALIDATE_URL)) {
+                                    $selfieUrl = $rawSelfie;
+                                } else {
+                                    $selfieUrl = route('admin.resident.selfie', basename($rawSelfie));
+                                }
+                            }
                             $isPdf = $user->id_front_path && strtolower(pathinfo($user->id_front_path, PATHINFO_EXTENSION)) === 'pdf';
                         @endphp
                         @if($docUrl || $selfieUrl)
@@ -397,9 +413,14 @@
                         <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden bg-white">
                             <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
                                 <span class="fw-bold small text-dark"><i class="fa-solid fa-camera text-success me-1"></i> Live Facial Selfie</span>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5" id="selfieBadge">
-                                    <i class="fa-solid fa-circle-check me-1"></i> Live Capture
-                                </span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="#" id="selfieExternalLink" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-0.5 small d-none" style="font-size: 11px;" title="Open selfie in new tab">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Selfie
+                                    </a>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5" id="selfieBadge">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Live Capture
+                                    </span>
+                                </div>
                             </div>
                             <div class="card-body p-2 d-flex align-items-center justify-content-center bg-dark bg-opacity-10" style="min-height: 380px; max-height: 55vh; overflow: auto;">
                                 <div id="selfiePreviewWrapper" class="w-100 text-center">
@@ -443,6 +464,7 @@
         const selfieWrapper = document.getElementById('selfiePreviewWrapper');
         const selfieNone = document.getElementById('selfiePreviewNone');
         const selfieBadge = document.getElementById('selfieBadge');
+        const selfieExternalLink = document.getElementById('selfieExternalLink');
         const actionButtons = document.getElementById('modalActionButtons');
 
         if (nameEl) nameEl.textContent = name || 'Resident Identity Verification';
@@ -477,16 +499,45 @@
 
         // Handle Selfie Display
         if (selfieUrl) {
-            if (selfieNone) selfieNone.classList.add('d-none');
-            if (selfieWrapper) selfieWrapper.classList.remove('d-none');
-            if (selfieImg) selfieImg.src = selfieUrl;
+            if (selfieExternalLink) {
+                selfieExternalLink.href = selfieUrl;
+                selfieExternalLink.classList.remove('d-none');
+            }
             if (selfieBadge) {
                 selfieBadge.className = 'badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-0.5';
                 selfieBadge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Live Capture';
             }
+            if (selfieImg) {
+                selfieImg.onerror = function () {
+                    if (selfieWrapper) selfieWrapper.classList.add('d-none');
+                    if (selfieNone) {
+                        selfieNone.classList.remove('d-none');
+                        const label = selfieNone.querySelector('span');
+                        if (label) label.textContent = 'Unable to display live selfie file';
+                    }
+                    if (selfieBadge) {
+                        selfieBadge.className = 'badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-0.5';
+                        selfieBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> File Unreadable';
+                    }
+                };
+                selfieImg.onload = function () {
+                    if (selfieNone) selfieNone.classList.add('d-none');
+                    if (selfieWrapper) selfieWrapper.classList.remove('d-none');
+                };
+                selfieImg.src = selfieUrl;
+            }
+            if (selfieNone) selfieNone.classList.add('d-none');
+            if (selfieWrapper) selfieWrapper.classList.remove('d-none');
         } else {
+            if (selfieExternalLink) {
+                selfieExternalLink.classList.add('d-none');
+            }
             if (selfieWrapper) selfieWrapper.classList.add('d-none');
-            if (selfieNone) selfieNone.classList.remove('d-none');
+            if (selfieNone) {
+                selfieNone.classList.remove('d-none');
+                const label = selfieNone.querySelector('span');
+                if (label) label.textContent = 'No live selfie captured for this account';
+            }
             if (selfieBadge) {
                 selfieBadge.className = 'badge bg-secondary bg-opacity-10 text-secondary border px-2 py-0.5';
                 selfieBadge.textContent = 'No Live Selfie';

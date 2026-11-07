@@ -47,13 +47,14 @@ class AdminRequestsUiTest extends TestCase
 
         // High-Contrast Stat Cards
         $response->assertSee('Total Requests');
-        $response->assertSee('Pending &amp; Processing', false);
+        $response->assertSee('Pending Reviews');
         $response->assertSee('Approved Today');
         $response->assertSee('Overdue Requests');
         $response->assertSee('Avg Turnaround');
 
         // Process Pipeline with Sequential Steps & Connectors
-        $response->assertSee('Pending &amp; Processing', false);
+        $response->assertSee('Pending &amp; Review', false);
+        $response->assertSee('Processing');
         $response->assertSee('Ready for Pick-up');
         $response->assertSee('Completed');
         $response->assertSee('Rejected');
