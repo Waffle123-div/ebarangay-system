@@ -1983,13 +1983,13 @@
                         <span class="sidebar-badge badge-warning">{{ $pendingApprovalsCount }}</span>
                     @endif
                 </a>
-                <a href="{{ route('admin.activity-logs') }}" class="sidebar-nav-item {{ Route::is('admin.activity-logs*') ? 'active' : '' }}" title="Activity Logs">
-                    <i class="fa-solid fa-clock-rotate-left nav-icon"></i>
-                    <span class="nav-text">Activity Logs</span>
-                </a>
                 <a href="{{ route('admin.users') }}" class="sidebar-nav-item {{ Route::is('admin.users*') ? 'active' : '' }}" title="User Management">
                     <i class="fa-solid fa-user-gear nav-icon"></i>
                     <span class="nav-text">User Management</span>
+                </a>
+                <a href="{{ route('admin.activity-logs') }}" class="sidebar-nav-item {{ Route::is('admin.activity-logs*') ? 'active' : '' }}" title="Activity Logs">
+                    <i class="fa-solid fa-clock-rotate-left nav-icon"></i>
+                    <span class="nav-text">Activity Logs</span>
                 </a>
                 <a href="{{ route('admin.settings') }}" class="sidebar-nav-item {{ Route::is('admin.settings*') ? 'active' : '' }}" title="System Settings">
                     <i class="fa-solid fa-sliders nav-icon"></i>
