@@ -438,10 +438,7 @@
 
             <div class="modal-footer border-top py-3 px-4 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span class="text-muted small"><i class="fa-solid fa-circle-info me-1 text-primary"></i> Confirm facial likeness to maintain registry security.</span>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-light border btn-sm rounded-3 px-3 fw-semibold" data-bs-dismiss="modal">Close</button>
-                    <div id="modalActionButtons" class="d-inline-flex gap-2"></div>
-                </div>
+                <div id="modalActionButtons" class="d-inline-flex gap-2"></div>
             </div>
         </div>
     </div>
