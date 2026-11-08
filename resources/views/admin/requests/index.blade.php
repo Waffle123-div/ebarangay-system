@@ -1964,6 +1964,7 @@
                             'Pending_Review' => 'Pending & Review',
                             'Processing' => 'Processing',
                             'Ready' => 'Ready for Pickup',
+                            'All' => request('search') ? 'Search Results' : 'All',
                             default => str_replace('_', ' ', $currentStatus)
                         };
                     @endphp
@@ -2000,6 +2001,9 @@
                     <div class="input-group input-group-sm rounded-3 border" style="background-color: #f8fafc;">
                         <button type="submit" class="input-group-text border-0 bg-transparent text-muted"><i class="fa fa-search"></i></button>
                         <input type="text" id="searchInput" name="search" value="{{ request('search') }}" class="form-control border-0 bg-transparent shadow-none py-1.5" placeholder="Search by ID, name, or type..." autocomplete="off">
+                        @if(request('search'))
+                            <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="input-group-text border-0 bg-transparent text-muted text-decoration-none" title="Clear search"><i class="fa fa-times"></i></a>
+                        @endif
                     </div>
                 </form>
 
@@ -3756,11 +3760,16 @@
             clearTimeout(debounceTimer);
 
             debounceTimer = setTimeout(() => {
-                const searchTerm = this.value;
+                const searchTerm = this.value.trim();
                 const urlParams = new URLSearchParams(window.location.search);
-                urlParams.set('search', searchTerm); 
+                if (searchTerm) {
+                    urlParams.set('search', searchTerm);
+                } else {
+                    urlParams.delete('search');
+                }
+                urlParams.delete('page');
                 
-                const fetchUrl = window.location.pathname + '?' + urlParams.toString();
+                const fetchUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
                 window.history.pushState({}, '', fetchUrl);
 
                 fetch(fetchUrl)

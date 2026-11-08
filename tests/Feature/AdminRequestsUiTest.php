@@ -192,4 +192,67 @@ class AdminRequestsUiTest extends TestCase
         $readyResponse->assertSee('Attached Word File');
         $readyResponse->assertSee('Official Document');
     }
+
+    public function test_admin_can_search_requests_by_tracking_number_without_query_exception(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Search Test Resident',
+            'email' => 'search_test_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $trackingNumber = 'REQ-TEST-' . uniqid();
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => $trackingNumber,
+            'first_name' => 'Search',
+            'last_name' => 'Resident',
+            'resident_email' => $resident->email,
+            'document_type' => 'Barangay Clearance',
+            'status' => 'Processing',
+        ]);
+
+        // Search specifically with the exact tracking number from user query
+        $response = $this->actingAs($this->admin)->get(route('admin.requests', [
+            'search' => $trackingNumber,
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee($trackingNumber);
+        $response->assertSee('Search Results');
+    }
+
+    public function test_admin_can_search_requests_by_resident_name(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Clara Search Resident',
+            'email' => 'clara_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $trackingNumber = 'REQ-NAME-' . uniqid();
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => $trackingNumber,
+            'first_name' => 'Maria',
+            'last_name' => 'Clara',
+            'resident_email' => $resident->email,
+            'document_type' => 'Certificate of Residency',
+            'status' => 'Pending',
+        ]);
+
+        // Search by first name, last name, and full name
+        $response = $this->actingAs($this->admin)->get(route('admin.requests', [
+            'search' => 'Maria Clara',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee($trackingNumber);
+    }
 }

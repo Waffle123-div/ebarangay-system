@@ -714,7 +714,9 @@ class AdminDashboardController extends Controller
         // UX improvement: default to the first active stage with records if Pending & Review is empty
         $autoSelectedStatus = 'Pending_Review';
         if (!$request->has('status')) {
-            if ($tabCounts['Pending_Review'] === 0) {
+            if ($request->filled('search')) {
+                $autoSelectedStatus = 'All';
+            } elseif ($tabCounts['Pending_Review'] === 0) {
                 if ($tabCounts['Processing'] > 0) {
                     $autoSelectedStatus = 'Processing';
                 } elseif ($tabCounts['Ready'] > 0) {
@@ -796,11 +798,44 @@ class AdminDashboardController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function($q) use ($search) {
                 $q->where('tracking_number', 'like', "%{$search}%")
-                  ->orWhere('resident_name', 'like', "%{$search}%")
-                  ->orWhere('document_type', 'like', "%{$search}%");
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('middle_initial', 'like', "%{$search}%")
+                  ->orWhere('resident_email', 'like', "%{$search}%")
+                  ->orWhere('contact_number', 'like', "%{$search}%")
+                  ->orWhere('document_type', 'like', "%{$search}%")
+                  ->orWhere('documents', 'like', "%{$search}%")
+                  ->orWhere('purpose', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%")
+                                ->orWhere('user_id', 'like', "%{$search}%");
+                  });
+
+                $driver = \DB::connection()->getDriverName();
+                if ($driver === 'sqlite') {
+                    $q->orWhereRaw("(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')) LIKE ?", ["%{$search}%"]);
+                } else {
+                    $q->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$search}%"]);
+                }
+
+                $tokens = array_filter(explode(' ', $search));
+                if (count($tokens) > 1) {
+                    $q->orWhere(function($nameQuery) use ($tokens) {
+                        foreach ($tokens as $token) {
+                            $nameQuery->where(function($tokenQuery) use ($token) {
+                                $tokenQuery->where('first_name', 'like', "%{$token}%")
+                                           ->orWhere('last_name', 'like', "%{$token}%")
+                                           ->orWhere('middle_initial', 'like', "%{$token}%");
+                            });
+                        }
+                    });
+                }
             });
         }
 
