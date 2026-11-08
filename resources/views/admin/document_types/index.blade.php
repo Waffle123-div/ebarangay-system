@@ -340,11 +340,12 @@
                         <th class="ps-3 ps-md-4 py-3 border-0 text-center" style="width: 44px; min-width: 44px;">
                             <input class="form-check-input" type="checkbox" id="selectAllDocs" title="Select All">
                         </th>
-                        <th class="py-3 border-0" style="min-width: 220px;">DOCUMENT NAME & DETAILS</th>
-                        <th class="py-3 border-0 text-center" style="width: 105px; min-width: 95px;">STANDARD FEE</th>
-                        <th class="py-3 border-0 text-center" style="width: 125px; min-width: 115px;">PROCESSING TIME</th>
-                        <th class="py-3 border-0" style="width: 180px; min-width: 160px;">REQUIRED ATTACHMENTS</th>
-                        <th class="py-3 border-0 text-center" style="width: 105px; min-width: 95px;">AVAILABILITY</th>
+                        <th class="py-3 border-0" style="min-width: 200px;">DOCUMENT NAME & DETAILS</th>
+                        <th class="py-3 border-0 text-center" style="width: 100px; min-width: 90px;">STANDARD FEE</th>
+                        <th class="py-3 border-0 text-center" style="width: 120px; min-width: 110px;">PROCESSING TIME</th>
+                        <th class="py-3 border-0" style="min-width: 190px;">WORD TEMPLATE</th>
+                        <th class="py-3 border-0" style="width: 160px; min-width: 140px;">REQUIRED ATTACHMENTS</th>
+                        <th class="py-3 border-0 text-center" style="width: 100px; min-width: 90px;">AVAILABILITY</th>
                         <th class="pe-3 pe-md-4 py-3 border-0 text-end col-actions" style="width: 115px; min-width: 115px;">ACTIONS</th>
                     </tr>
                 </thead>
@@ -379,7 +380,7 @@
                                 </div>
                             </td>
 
-                            <td class="text-center py-3" style="width: 105px;">
+                            <td class="text-center py-3" style="width: 100px;">
                                 @if((float)$doc->fee > 0)
                                     <span class="badge px-2.5 py-1 rounded-pill fw-bold doc-fee-badge fee-paid" style="font-size: 12px;">
                                         ₱{{ number_format($doc->fee, 2) }}
@@ -391,19 +392,50 @@
                                 @endif
                             </td>
 
-                            <td class="text-center py-3" style="width: 125px;">
+                            <td class="text-center py-3" style="width: 120px;">
                                 <span class="badge px-2.5 py-1 rounded-pill bg-light text-dark border fw-semibold text-truncate d-inline-block" style="font-size: 11.5px; max-width: 120px;">
                                     <i class="fa-regular fa-clock me-1 text-muted"></i> {{ $doc->processing_days ?: '1-2 Days' }}
                                 </span>
                             </td>
 
-                            <td class="py-3" style="width: 180px;">
+                            {{-- Dedicated Word Template Column --}}
+                            <td class="py-3" style="min-width: 190px;">
+                                @if($doc->template_file)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                             style="width: 32px; height: 32px; background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+                                            <i class="fa-solid fa-file-word fs-6"></i>
+                                        </div>
+                                        <div class="min-w-0" style="max-width: 160px;">
+                                            <a href="{{ route('admin.document-types.download-template', $doc->id) }}" 
+                                               class="text-decoration-none fw-semibold text-dark text-truncate d-block small" 
+                                               style="font-size: 12px;"
+                                               title="Download {{ basename($doc->template_file) }}">
+                                                {{ basename($doc->template_file) }}
+                                            </a>
+                                            <span class="badge bg-light text-muted border px-1.5 py-0" style="font-size: 9px;">.DOCX TEMPLATE</span>
+                                        </div>
+                                        <a href="{{ route('admin.document-types.download-template', $doc->id) }}" 
+                                           class="btn btn-sm btn-light border p-1 text-primary rounded-2 ms-auto flex-shrink-0" 
+                                           style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;" 
+                                           title="Download {{ basename($doc->template_file) }}">
+                                            <i class="fa-solid fa-download" style="font-size: 10px;"></i>
+                                        </a>
+                                    </div>
+                                @else
+                                    <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 11px;">
+                                        <i class="fa-regular fa-file-circle-question me-1"></i> No Template
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="py-3" style="width: 160px;">
                                 @php
                                     $reqs = $doc->requirements_list;
                                 @endphp
                                 @if(!empty($reqs) && count($reqs) > 0)
-                                    <div class="d-flex align-items-center gap-1 flex-nowrap" style="max-width: 180px;">
-                                        <span class="badge bg-light text-secondary border px-2 py-1 text-truncate d-inline-block align-middle" style="max-width: 130px; font-size: 11px; font-weight: 500;" title="{{ $reqs[0] }}">
+                                    <div class="d-flex align-items-center gap-1 flex-nowrap" style="max-width: 160px;">
+                                        <span class="badge bg-light text-secondary border px-2 py-1 text-truncate d-inline-block align-middle" style="max-width: 115px; font-size: 11px; font-weight: 500;" title="{{ $reqs[0] }}">
                                             <i class="fa-solid fa-paperclip me-1 text-muted"></i> {{ $reqs[0] }}
                                         </span>
                                         @if(count($reqs) > 1)
@@ -546,12 +578,28 @@
                     {{-- Requirements list --}}
                     @php $reqs = $doc->requirements_list; @endphp
                     @if(!empty($reqs) && count($reqs) > 0)
-                        <div class="d-flex flex-wrap gap-1 mb-3">
+                        <div class="d-flex flex-wrap gap-1 mb-2.5">
                             @foreach($reqs as $req)
                                 <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 10.5px; font-weight: 500;">
                                     <i class="fa-solid fa-paperclip me-1 text-muted"></i> {{ $req }}
                                 </span>
                             @endforeach
+                        </div>
+                    @endif
+
+                    {{-- Word Template for Mobile --}}
+                    @if($doc->template_file)
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-light border mb-2.5">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-file-word text-primary fs-5"></i>
+                                <div class="min-w-0">
+                                    <div class="fw-semibold text-dark text-truncate small" style="font-size: 12px;">{{ basename($doc->template_file) }}</div>
+                                    <div class="text-muted" style="font-size: 10px;">Word Template (.docx)</div>
+                                </div>
+                            </div>
+                            <a href="{{ route('admin.document-types.download-template', $doc->id) }}" class="btn btn-sm btn-white border px-2.5 py-1 text-primary fw-semibold" style="font-size: 11px;">
+                                <i class="fa-solid fa-download me-1"></i> Get
+                            </a>
                         </div>
                     @endif
 
@@ -655,6 +703,18 @@
 
                     <div class="col-12">
                         <label class="form-label text-muted small fw-semibold">Word Document Template (.docx) <span class="badge bg-light text-muted border">Optional</span></label>
+                        @if(isset($availableTemplates) && count($availableTemplates) > 0)
+                            <div class="mb-2">
+                                <label class="form-label text-muted small mb-1" style="font-size: 11.5px;">Choose from template library:</label>
+                                <select name="existing_template" class="form-select px-3 py-2 small">
+                                    <option value="">-- Or leave blank to upload a new file below --</option>
+                                    @foreach($availableTemplates as $tName)
+                                        <option value="{{ $tName }}">{{ $tName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <label class="form-label text-muted small mb-1" style="font-size: 11.5px;">Or upload custom file from computer:</label>
                         <input type="file" name="template_file" class="form-control px-3 py-2" accept=".docx,.doc">
                         <div class="form-text small">Upload an official Microsoft Word (.docx) template with placeholders like <code>${name}</code>, <code>${date}</code>, <code>${purpose}</code>.</div>
                     </div>
@@ -749,6 +809,18 @@
                                 </div>
                             </div>
                         </div>
+                        @if(isset($availableTemplates) && count($availableTemplates) > 0)
+                            <div class="mb-2">
+                                <label class="form-label text-muted small mb-1" style="font-size: 11.5px;">Switch to template from library:</label>
+                                <select name="existing_template" id="edit_existing_template" class="form-select px-3 py-2 small">
+                                    <option value="">-- Keep current template / upload new file --</option>
+                                    @foreach($availableTemplates as $tName)
+                                        <option value="{{ $tName }}">{{ $tName }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <label class="form-label text-muted small mb-1" style="font-size: 11.5px;">Or upload a new file from computer:</label>
                         <input type="file" name="template_file" id="edit_template_file" class="form-control px-3 py-2" accept=".docx,.doc">
                         <div class="form-text small">Upload a new <code>.docx</code> file to replace the existing template.</div>
                     </div>
@@ -861,6 +933,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (editFileInput) editFileInput.value = '';
             if (removeTemplateCheckbox) removeTemplateCheckbox.checked = false;
+
+            const editExistingSelect = document.getElementById('edit_existing_template');
+            if (editExistingSelect) {
+                editExistingSelect.value = template ? template.split('/').pop() : '';
+            }
 
             if (template) {
                 templateBox.classList.remove('d-none');

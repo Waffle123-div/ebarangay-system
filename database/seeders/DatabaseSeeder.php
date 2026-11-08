@@ -39,5 +39,8 @@ class DatabaseSeeder extends Seeder
             'birthdate' => '1995-05-05',
             'gender' => 'Female',
         ]);
+
+        // Seed Official Document Types and Templates
+        $this->call(DocumentTypeSeeder::class);
     }
 }

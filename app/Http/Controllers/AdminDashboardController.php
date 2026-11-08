@@ -1261,19 +1261,31 @@ class AdminDashboardController extends Controller
             'free'     => DocumentType::where('fee', 0)->count(),
         ];
 
-        return view('admin.document_types.index', compact('documentTypes', 'stats'));
+        $templateDir = storage_path('app/document_templates');
+        $availableTemplates = [];
+        if (file_exists($templateDir)) {
+            $files = glob($templateDir . '/*.docx');
+            if ($files) {
+                $availableTemplates = array_map('basename', $files);
+                natsort($availableTemplates);
+                $availableTemplates = array_values($availableTemplates);
+            }
+        }
+
+        return view('admin.document_types.index', compact('documentTypes', 'stats', 'availableTemplates'));
     }
 
     public function storeDocumentType(Request $request)
     {
         $request->validate([
-            'name'            => 'required|string|max:255|unique:document_types,name',
-            'fee'             => 'required|numeric|min:0',
-            'processing_days' => 'nullable|string|max:100',
-            'description'     => 'nullable|string|max:1000',
-            'requirements'    => 'nullable|string',
-            'is_active'       => 'nullable|boolean',
-            'template_file'   => [
+            'name'              => 'required|string|max:255|unique:document_types,name',
+            'fee'               => 'required|numeric|min:0',
+            'processing_days'   => 'nullable|string|max:100',
+            'description'       => 'nullable|string|max:1000',
+            'requirements'      => 'nullable|string',
+            'is_active'         => 'nullable|boolean',
+            'existing_template' => 'nullable|string',
+            'template_file'     => [
                 'nullable',
                 'file',
                 'max:10240',
@@ -1307,6 +1319,8 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $templateFileName = 'document_templates/' . $cleanName;
+        } elseif ($request->filled('existing_template')) {
+            $templateFileName = 'document_templates/' . basename($request->existing_template);
         }
 
         $docType = DocumentType::create([
@@ -1319,7 +1333,7 @@ class AdminDashboardController extends Controller
             'is_active'       => $request->has('is_active') ? $request->boolean('is_active') : true,
         ]);
 
-        ActivityLog::record('document_type_created', "Created new document type: {$docType->name} with fee ₱" . number_format($docType->fee, 2) . ($templateFileName ? " and custom Word template." : "."));
+        ActivityLog::record('document_type_created', "Created new document type: {$docType->name} with fee ₱" . number_format($docType->fee, 2) . ($templateFileName ? " and custom Word template: " . basename($templateFileName) : "."));
 
         return back()->with('success', "Document type '{$docType->name}' added successfully" . ($templateFileName ? " with custom Word template." : "."));
     }
@@ -1329,13 +1343,14 @@ class AdminDashboardController extends Controller
         $docType = DocumentType::findOrFail($id);
 
         $request->validate([
-            'name'            => ['required', 'string', 'max:255', Rule::unique('document_types', 'name')->ignore($docType->id)],
-            'fee'             => 'required|numeric|min:0',
-            'processing_days' => 'nullable|string|max:100',
-            'description'     => 'nullable|string|max:1000',
-            'requirements'    => 'nullable|string',
-            'is_active'       => 'nullable|boolean',
-            'template_file'   => [
+            'name'              => ['required', 'string', 'max:255', Rule::unique('document_types', 'name')->ignore($docType->id)],
+            'fee'               => 'required|numeric|min:0',
+            'processing_days'   => 'nullable|string|max:100',
+            'description'       => 'nullable|string|max:1000',
+            'requirements'      => 'nullable|string',
+            'is_active'         => 'nullable|boolean',
+            'existing_template' => 'nullable|string',
+            'template_file'     => [
                 'nullable',
                 'file',
                 'max:10240',
@@ -1372,9 +1387,8 @@ class AdminDashboardController extends Controller
             if (!file_exists($destDir)) {
                 @mkdir($destDir, 0755, true);
             }
-            if ($docType->template_file && !in_array($docType->template_file, ['clearance_template.docx', 'residency_template.docx', 'business_permit_template.docx', 'indigency_template.docx'])) {
+            if ($docType->template_file && str_starts_with($docType->template_file, 'document_templates/template_')) {
                 @unlink(storage_path('app/' . $docType->template_file));
-                @unlink(storage_path('app/private/' . $docType->template_file));
             }
             $file = $request->file('template_file');
             $slug = Str::slug($request->name ?: 'document');
@@ -1382,17 +1396,18 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $updateData['template_file'] = 'document_templates/' . $cleanName;
+        } elseif ($request->filled('existing_template')) {
+            $updateData['template_file'] = 'document_templates/' . basename($request->existing_template);
         } elseif ($request->boolean('remove_template')) {
-            if ($docType->template_file && !in_array($docType->template_file, ['clearance_template.docx', 'residency_template.docx', 'business_permit_template.docx', 'indigency_template.docx'])) {
+            if ($docType->template_file && str_starts_with($docType->template_file, 'document_templates/template_')) {
                 @unlink(storage_path('app/' . $docType->template_file));
-                @unlink(storage_path('app/private/' . $docType->template_file));
             }
             $updateData['template_file'] = null;
         }
 
         $docType->update($updateData);
 
-        ActivityLog::record('document_type_updated', "Updated document type: {$docType->name}." . (!empty($updateData['template_file']) ? " Attached new Word template: " . basename($updateData['template_file']) : ""));
+        ActivityLog::record('document_type_updated', "Updated document type: {$docType->name}." . (!empty($updateData['template_file']) ? " Attached Word template: " . basename($updateData['template_file']) : ""));
 
         return back()->with('success', "Document type '{$docType->name}' updated successfully" . (!empty($updateData['template_file']) ? " with updated Word template." : "."));
     }
@@ -1406,10 +1421,12 @@ class AdminDashboardController extends Controller
 
         $possiblePaths = [
             storage_path('app/' . $docType->template_file),
+            storage_path('app/document_templates/' . basename($docType->template_file)),
             storage_path('app/document_templates/' . $docType->template_file),
             storage_path('app/templates/' . $docType->template_file),
             storage_path('app/private/' . $docType->template_file),
             storage_path('app/private/document_templates/' . $docType->template_file),
+            storage_path('app/' . basename($docType->template_file)),
         ];
 
         $foundPath = null;
@@ -1424,7 +1441,7 @@ class AdminDashboardController extends Controller
             return back()->with('error', 'Template file not found on disk.');
         }
 
-        $downloadName = Str::slug($docType->name) . '_template.' . pathinfo($foundPath, PATHINFO_EXTENSION);
+        $downloadName = basename($foundPath);
         return response()->download($foundPath, $downloadName);
     }
 
