@@ -2728,78 +2728,86 @@
                             </div>
 
                             @if($docsCount > 1)
-                                <div class="d-flex flex-column gap-2 mb-2">
+                                <div class="d-flex flex-column gap-3 mb-2">
                                     @foreach($modalDocsList as $docItem)
                                         @php
                                             $itemDocLower = strtolower($docItem['type'] ?? '');
                                             $isItemBusiness = str_contains($itemDocLower, 'business');
                                         @endphp
-                                        <div class="bg-light rounded-3 p-3 border d-flex justify-content-between align-items-center gap-3 modal-doc-item">
-                                            <div class="flex-grow-1 min-w-0">
+                                        <div class="bg-light rounded-3 p-3.5 border modal-doc-item">
+                                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span class="fw-bold text-dark details-cell-value" style="font-size: 14px;">{{ $docItem['type'] }}</span>
+                                                    <span class="fw-bold text-dark details-cell-value" style="font-size: 15px;">{{ $docItem['type'] }}</span>
                                                     @if(!$isItemBusiness)
-                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 11px;">FREE</span>
                                                     @elseif($docItem['fee'] !== null && (float)$docItem['fee'] > 0)
-                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($docItem['fee'], 2) }}</span>
+                                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 11px;">Fee: ₱{{ number_format($docItem['fee'], 2) }}</span>
                                                     @else
-                                                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 11px;">Fee: To be settled</span>
                                                     @endif
                                                 </div>
-                                                <div class="text-muted small mt-1">
-                                                    <span class="fw-semibold text-secondary">Purpose:</span> {{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}
-                                                </div>
                                             </div>
-                                            {{-- Processing stage: Generate Word Doc --}}
-                                            <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }}">
+                                            <div class="text-muted small mb-2.5">
+                                                <span class="fw-semibold text-secondary">Purpose:</span> <span class="text-dark">{{ $docItem['purpose'] ?: ($request->purpose ?? 'No purpose specified') }}</span>
+                                            </div>
+
+                                            {{-- Processing stage: Generate Word Doc (Placed at bottom, Big and Visible) --}}
+                                            <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }} pt-2.5 border-top">
                                                 <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
-                                                   class="btn btn-sm btn-outline-primary rounded-3 px-3 py-1 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1" 
+                                                   class="btn btn-primary w-100 rounded-3 py-2.5 px-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" 
+                                                   style="font-size: 14px; min-height: 44px; background-color: #0f2240; border-color: #0f2240;" 
                                                    title="Generate Word Document for {{ $docItem['type'] }}">
-                                                    <i class="fa-solid fa-file-word"></i> <span>Word Doc</span>
+                                                    <i class="fa-solid fa-file-word fs-5"></i> <span>Generate Word Doc ({{ $docItem['type'] }})</span>
                                                 </a>
                                             </div>
-                                            {{-- Final step (Ready/Completed): Attached Word File --}}
-                                            <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                            {{-- Final step (Ready/Completed): Attached Word File (Placed at bottom, Big and Visible) --}}
+                                            <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} pt-2.5 border-top">
                                                 <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
-                                                   class="btn btn-sm btn-light border border-success border-opacity-50 text-dark rounded-3 px-2.5 py-1 fw-semibold shadow-xs flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
+                                                   class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2" 
+                                                   style="font-size: 14px; min-height: 44px; background-color: #f0fdf4; border-color: #86efac !important;" 
                                                    title="Download Attached Word Document for {{ $docItem['type'] }}">
-                                                    <i class="fa-solid fa-file-word text-primary"></i> <span>Attached File</span>
-                                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-1.5 py-0.5" style="font-size: 9.5px;"><i class="fa-solid fa-paperclip"></i></span>
+                                                    <i class="fa-solid fa-file-word text-primary fs-5"></i> <span>Attached File ({{ $docItem['type'] }})</span>
+                                                    <span class="badge bg-success text-white rounded-pill px-2 py-0.5 ms-1" style="font-size: 10px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>
                                                 </a>
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
                             @else
-                                <div class="bg-light rounded-3 p-3 border mb-2 d-flex justify-content-between align-items-center gap-3 modal-doc-item">
-                                    <div class="flex-grow-1 min-w-0">
+                                <div class="bg-light rounded-3 p-3.5 border mb-2 modal-doc-item">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="fw-bold text-dark details-cell-value" id="modal-view-doctype-{{ $request->id }}" style="font-size: 14px;">{{ $request->document_type }}</span>
+                                            <span class="fw-bold text-dark details-cell-value" id="modal-view-doctype-{{ $request->id }}" style="font-size: 15px;">{{ $request->document_type }}</span>
                                             @if(!$isBusinessClearance)
-                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">FREE</span>
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 11px;">FREE</span>
                                             @elseif($request->fee !== null && (float)$request->fee > 0)
-                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 10.5px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-bold" style="font-size: 11px;">Fee: ₱{{ number_format($request->fee, 2) }}</span>
                                             @else
-                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 10.5px;">Fee: To be settled</span>
+                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 11px;">Fee: To be settled</span>
                                             @endif
                                         </div>
-                                        <div class="text-muted small mt-1"><span class="fw-semibold text-secondary">Purpose:</span> <span id="modal-view-purpose-{{ $request->id }}">{{ $request->purpose ?? 'No purpose provided.' }}</span></div>
                                     </div>
-                                    {{-- Processing stage: Generate Word Doc --}}
-                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }}">
+                                    <div class="text-muted small mb-2.5">
+                                        <span class="fw-semibold text-secondary">Purpose:</span> <span id="modal-view-purpose-{{ $request->id }}" class="text-dark">{{ $request->purpose ?? 'No purpose provided.' }}</span>
+                                    </div>
+
+                                    {{-- Processing stage: Generate Word Doc (Placed at bottom, Big and Visible) --}}
+                                    <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }} pt-2.5 border-top">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                           class="btn btn-sm btn-primary rounded-3 px-3 py-1.5 fw-semibold shadow-sm flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
+                                           class="btn btn-primary w-100 rounded-3 py-2.5 px-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" 
+                                           style="font-size: 14.5px; min-height: 46px; background-color: #0f2240; border-color: #0f2240;" 
                                            title="Generate Word Document">
-                                            <i class="fa-solid fa-file-word"></i> <span>Generate Word Doc</span>
+                                            <i class="fa-solid fa-file-word fs-5"></i> <span>Generate Word Doc</span>
                                         </a>
                                     </div>
-                                    {{-- Final step (Ready/Completed): Attached Word File --}}
-                                    <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }}">
+                                    {{-- Final step (Ready/Completed): Attached Word File (Placed at bottom, Big and Visible) --}}
+                                    <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} pt-2.5 border-top">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                           class="btn btn-sm btn-light border border-success border-opacity-50 text-dark rounded-3 px-3 py-1.5 fw-semibold shadow-xs flex-shrink-0 d-inline-flex align-items-center gap-1.5" 
+                                           class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2" 
+                                           style="font-size: 14.5px; min-height: 46px; background-color: #f0fdf4; border-color: #86efac !important;" 
                                            title="Download Attached Word Document">
-                                            <i class="fa-solid fa-file-word text-primary"></i> <span>Attached Word File</span>
-                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5" style="font-size: 10px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>
+                                            <i class="fa-solid fa-file-word text-primary fs-5"></i> <span>Attached Word File</span>
+                                            <span class="badge bg-success text-white rounded-pill px-2.5 py-1 ms-1" style="font-size: 10.5px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>
                                         </a>
                                     </div>
                                 </div>

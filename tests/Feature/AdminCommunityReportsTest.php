@@ -110,3 +110,4 @@ class AdminCommunityReportsTest extends TestCase
         ]);
     }
 }
+

@@ -173,11 +173,12 @@ class AdminRequestsUiTest extends TestCase
             'status' => 'Ready',
         ]);
 
-        // 1. In Processing: Generate Word Doc is active and not d-none for this request
+        // 1. In Processing: Generate Word Doc is active and not d-none for this request, placed at bottom of card, big and visible
         $procResponse = $this->actingAs($this->admin)->get(route('admin.requests', ['status' => 'Processing']));
         $procResponse->assertStatus(200);
         $procResponse->assertSee('modal-generate-doc-btn-' . $processingRequest->id);
         $procResponse->assertDontSee('modal-generate-doc-btn-' . $processingRequest->id . ' d-none', false);
+        $procResponse->assertSee('w-100 rounded-3 py-2.5 px-4 fw-bold', false);
         // And attached card is d-none for processing
         $procResponse->assertSee('modal-attached-word-card-' . $processingRequest->id . ' d-none', false);
 
