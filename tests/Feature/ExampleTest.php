@@ -101,5 +101,20 @@ class ExampleTest extends TestCase
             'reply' => 'Maayong adlaw! Ako si Istong, unsaon nako pagtabang nimo?'
         ]);
     }
+
+    public function test_landing_page_does_not_contain_news_and_community_concerns_sections(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Barangay News & Announcements');
+        $response->assertDontSee('Submit a Community Concern');
+        $response->assertDontSee('E-Barangay System Now Live!');
+        $response->assertDontSee('Free Barangay Clearance Day');
+        $response->assertDontSee('id="news"', false);
+        $response->assertDontSee('id="concerns"', false);
+        $response->assertDontSee('href="#news"', false);
+        $response->assertDontSee('href="#concerns"', false);
+    }
 }
 

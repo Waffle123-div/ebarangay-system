@@ -1653,8 +1653,6 @@
           <a href="#hero" class="active"><i class="icon-home mobile-nav-icon"></i> Home</a>
           <a href="#how-it-works"><i class="icon-help-circle mobile-nav-icon"></i> How It Works</a>
           <a href="#services"><i class="icon-file-text mobile-nav-icon"></i> Documents</a>
-          <a href="#news"><i class="icon-bell mobile-nav-icon"></i> News</a>
-          <a href="#concerns"><i class="icon-message-square mobile-nav-icon"></i> Community Concern</a>
           <a href="#emergency"><i class="icon-alert-triangle mobile-nav-icon"></i> Emergency</a>
         </div>
 
@@ -2286,127 +2284,6 @@
 
 
   <!-- ============================
-       NEWS & ANNOUNCEMENTS
-       ============================ -->
-  <section class="news-section" id="news">
-    <div class="container">
-      <div class="fade-in-up">
-        <div class="section-label">Latest Updates</div>
-        <h2 class="section-title">Barangay News & Announcements</h2>
-      </div>
-
-      <div class="news-grid fade-in-up">
-        <div class="news-card">
-          <div class="news-card-img">
-            <i class="icon-laptop"></i>
-          </div>
-          <div class="news-card-body">
-            <div class="news-card-date">
-              <i class="icon-calendar"></i>
-              June 10, 2026
-            </div>
-            <h3>E-Barangay System Now Live!</h3>
-            <p>The new web-based document request and tracking system is now available for all residents of Barangay Cogon East. Register now to skip the lines!</p>
-          </div>
-        </div>
-
-        <div class="news-card">
-          <div class="news-card-img" style="background: var(--gradient-gold);">
-            <i class="icon-megaphone"></i>
-          </div>
-          <div class="news-card-body">
-            <div class="news-card-date">
-              <i class="icon-calendar"></i>
-              June 5, 2026
-            </div>
-            <h3>Free Barangay Clearance Day — June 20</h3>
-            <p>In celebration of the E-Barangay launch, barangay clearance processing will be FREE for all residents on June 20, 2026. Don't miss it!</p>
-          </div>
-        </div>
-
-        <div class="news-card">
-          <div class="news-card-img" style="background: linear-gradient(135deg, #0D9488, #14B8A6);">
-            <i class="icon-calendar-check"></i>
-          </div>
-          <div class="news-card-body">
-            <div class="news-card-date">
-              <i class="icon-calendar"></i>
-              June 1, 2026
-            </div>
-            <h3>Community Assembly — June 15 at 2PM</h3>
-            <p>All residents are invited to the quarterly community assembly at the Barangay Hall covered court. Discussion on the digital transformation initiative.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================
-       COMMUNITY CONCERNS
-       ============================ -->
-  <section class="concerns-section" id="concerns">
-    <div class="container">
-      <div class="concerns-content fade-in-up">
-        <div class="concerns-text">
-          <div class="section-label">Community Feature</div>
-          <h2 class="section-title">Submit a Community Concern</h2>
-          <p class="section-subtitle">
-            Have an issue or concern in your purok? Report it online and barangay officials 
-            will monitor and address it. Together, we build a better Cogon East.
-          </p>
-          <div class="concern-types">
-            <div class="concern-type">
-              <i class="icon-construction"></i>
-              <span>Infrastructure</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-shield-alert"></i>
-              <span>Peace & Order</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-leaf"></i>
-              <span>Sanitation</span>
-            </div>
-            <div class="concern-type">
-              <i class="icon-lightbulb"></i>
-              <span>Utilities</span>
-            </div>
-          </div>
-        </div>
-        <div class="concerns-form-card">
-          @php
-            $authUser = auth()->user();
-            $isResident = $authUser && trim(strtolower($authUser->role)) !== 'admin';
-            $categories = \App\Models\CommunityConcern::categories();
-            $guestLocked = !$isResident;
-          @endphp
-
-          @if($errors->any())
-            <div class="concern-form-alert">
-              <strong>Please fix the following:</strong>
-              <ul>
-                @foreach($errors->all() as $error)
-                  <li>{{ $error }}</li>
-                @endforeach
-              </ul>
-            </div>
-          @endif
-
-          @include('partials.community-concern-form', [
-              'formId' => 'concernForm',
-              'context' => 'welcome',
-              'isResident' => $isResident,
-              'guestLocked' => $guestLocked,
-              'authUser' => $authUser,
-              'categories' => $categories,
-              'showResidentInfo' => false,
-          ])
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================
        EMERGENCY CONTACTS
        ============================ -->
   <section class="emergency-section" id="emergency">
@@ -2494,8 +2371,7 @@
             @else
               <li><a href="{{ route('resident.login') }}">Log In</a></li>
             @endif
-            <li><a href="#concerns">Submit Concern</a></li>
-            <li><a href="#news">News & Updates</a></li>
+            <li><a href="#services">Documents</a></li>
             <li><a href="#emergency">Emergency</a></li>
           </ul>
         </div>
