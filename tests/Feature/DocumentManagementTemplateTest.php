@@ -66,5 +66,38 @@ class DocumentManagementTemplateTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('content-disposition');
     }
+
+    public function test_template_tags_are_bold_in_document_templates(): void
+    {
+        $templates = [
+            '01_Barangay_Clearance_General.docx',
+            '02_Barangay_Business_Permit.docx',
+            '03_Electric_Connection_Cert.docx',
+            '04_Acknowledgement_Receipt.docx',
+            '05_Senior_Citizen_Cert.docx',
+            '06_Senior_Cash_Assistance.docx',
+            '07_Senior_Burial_Assistance.docx',
+            '08_Certificate_of_Cohabitation.docx',
+            '10_Probation_Bail_Brgy_Cert.docx',
+            '11_General_Barangay_Certificate.docx',
+            '12_First_Time_Jobseeker_Cert.docx',
+            '13_Oath_of_Undertaking_Jobseeker.docx',
+            'indigency_template.docx',
+            'residency_template.docx',
+        ];
+
+        foreach ($templates as $tmpl) {
+            $path = storage_path('app/document_templates/' . $tmpl);
+            $this->assertFileExists($path);
+
+            $zip = new \ZipArchive();
+            $this->assertTrue($zip->open($path));
+            $xml = $zip->getFromName('word/document.xml');
+            $zip->close();
+
+            // Verify ${name} is enclosed in a run with bold styling (<w:b/>)
+            $this->assertMatchesRegularExpression('/<w:r\b[^>]*>(?:(?!<\/w:r>).)*<w:b\b(?:(?!<\/w:r>).)*<w:t[^>]*>\$\{name\}<\/w:t>/s', $xml, "Tag \${name} should be bold in $tmpl");
+        }
+    }
 }
 
