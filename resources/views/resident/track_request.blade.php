@@ -477,6 +477,17 @@
             fetch("{{ route('resident.requests.check') }}")
                 .then(response => response.json())
                 .then(data => {
+                    if (data.active_count !== undefined) {
+                        const trBadge = document.getElementById('rTrackRequestsBadge');
+                        if (trBadge) {
+                            trBadge.textContent = data.active_count;
+                            if (data.active_count > 0) {
+                                trBadge.classList.remove('d-none');
+                            } else {
+                                trBadge.classList.add('d-none');
+                            }
+                        }
+                    }
                     if (data.last_update && data.last_update !== currentLastUpdate) {
                         currentLastUpdate = data.last_update;
                         

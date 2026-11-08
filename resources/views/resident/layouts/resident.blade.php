@@ -189,6 +189,43 @@
             z-index: 2;
         }
 
+        /* ─── Sidebar Counter Badge ─── */
+        .r-sidebar-badge {
+            margin-left: auto;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 0.15rem 0.55rem;
+            border-radius: 9999px;
+            line-height: 1.25;
+            flex-shrink: 0;
+            z-index: 2;
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+            letter-spacing: 0.02em;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+        }
+
+        .r-sidebar-nav-item:hover .r-sidebar-badge {
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.45);
+        }
+
+        .r-sidebar-nav-item.active .r-sidebar-badge {
+            background: #1d4ed8;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(29, 78, 216, 0.35);
+        }
+
+        body.r-sidebar-collapsed .r-sidebar-badge {
+            display: none !important;
+        }
+
         .r-sidebar-nav-item:hover {
             background-color: rgba(255, 255, 255, 0.07);
             color: #ffffff;
@@ -348,7 +385,8 @@
                 margin-right: 0 !important;
                 font-size: 1.15rem;
             }
-            body.r-sidebar-collapsed .r-sidebar-nav-item .r-nav-text {
+            body.r-sidebar-collapsed .r-sidebar-nav-item .r-nav-text,
+            body.r-sidebar-collapsed .r-sidebar-badge {
                 display: none !important;
             }
 
@@ -728,6 +766,18 @@
         html[data-theme="dark"] .r-sidebar-nav-item.active::after,
         html[data-bs-theme="dark"] .r-sidebar-nav-item.active::after {
             box-shadow: 15px -15px 0 #0b1120 !important;
+        }
+
+        html[data-theme="dark"] .r-sidebar-badge,
+        html[data-bs-theme="dark"] .r-sidebar-badge {
+            background: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+        }
+        html[data-theme="dark"] .r-sidebar-nav-item.active .r-sidebar-badge,
+        html[data-bs-theme="dark"] .r-sidebar-nav-item.active .r-sidebar-badge {
+            background: #2563eb !important;
+            color: #ffffff !important;
         }
 
         /* ── Top Header & Navigation ── */
@@ -1623,6 +1673,12 @@ $currentPageTitle = $pageTitles[$currentRoute] ?? 'Resident Portal';
 $residentName = auth()->user()?->name ?? 'Resident';
 $nameParts = explode(' ', trim($residentName));
 $residentInitials = isset($nameParts[1]) ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1)) : strtoupper(substr($nameParts[0], 0, 2));
+$residentActiveRequestsCount = 0;
+if (auth()->check()) {
+    $residentActiveRequestsCount = \App\Models\DocumentRequest::where('user_id', auth()->id())
+        ->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled'])
+        ->count();
+}
 @endphp
 
     <div id="resident-wrapper">
@@ -1672,6 +1728,7 @@ $residentInitials = isset($nameParts[1]) ? strtoupper(substr($nameParts[0], 0, 1
                    class="r-sidebar-nav-item {{ Route::is('resident.request.track') ? 'active' : '' }}" title="Track Requests">
                     <i class="fa-solid fa-magnifying-glass r-nav-icon"></i>
                     <span class="r-nav-text">Track Requests</span>
+                    <span class="r-sidebar-badge {{ $residentActiveRequestsCount > 0 ? '' : 'd-none' }}" id="rTrackRequestsBadge">{{ $residentActiveRequestsCount }}</span>
                 </a>
                 <a href="{{ route('resident.concerns') }}"
                    class="r-sidebar-nav-item {{ Route::is('resident.concerns') ? 'active' : '' }}" title="Community Concern">
@@ -2400,6 +2457,24 @@ $notification = $userNotifs[$n];
                                 const currentCount = parseInt(badge.textContent.trim(), 10) || 0;
                                 badge.textContent = currentCount + 1;
                                 badge.style.display = 'flex';
+                            }
+
+                            // Refresh Track Requests counter badge
+                            const trBadge = document.getElementById('rTrackRequestsBadge');
+                            if (trBadge) {
+                                fetch("{{ route('resident.requests.check') }}")
+                                    .then(r => r.json())
+                                    .then(res => {
+                                        if (res && res.active_count !== undefined) {
+                                            trBadge.textContent = res.active_count;
+                                            if (res.active_count > 0) {
+                                                trBadge.classList.remove('d-none');
+                                            } else {
+                                                trBadge.classList.add('d-none');
+                                            }
+                                        }
+                                    })
+                                    .catch(() => {});
                             }
                         }
                     } catch (e) {
