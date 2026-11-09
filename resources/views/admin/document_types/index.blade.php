@@ -164,6 +164,54 @@
             color: #86efac !important;
             border: 1px solid rgba(74, 222, 128, 0.45) !important;
         }
+
+        /* Current Template Box in Dark Mode */
+        html[data-theme="dark"] #current_template_box,
+        html[data-bs-theme="dark"] #current_template_box {
+            background-color: #172338 !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #current_template_box .text-dark,
+        html[data-bs-theme="dark"] #current_template_box .text-dark,
+        html[data-theme="dark"] #current_template_filename,
+        html[data-bs-theme="dark"] #current_template_filename {
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] #current_template_box .text-muted,
+        html[data-bs-theme="dark"] #current_template_box .text-muted {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] #current_template_box .fa-file-word,
+        html[data-bs-theme="dark"] #current_template_box .fa-file-word {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] #current_template_download_link,
+        html[data-bs-theme="dark"] #current_template_download_link {
+            color: #38bdf8 !important;
+            border-color: #38bdf8 !important;
+            background-color: rgba(56, 189, 248, 0.12) !important;
+        }
+        html[data-theme="dark"] #current_template_download_link:hover,
+        html[data-bs-theme="dark"] #current_template_download_link:hover {
+            color: #ffffff !important;
+            background-color: #0284c7 !important;
+            border-color: #0284c7 !important;
+        }
+        html[data-theme="dark"] #current_template_box .form-check-input,
+        html[data-bs-theme="dark"] #current_template_box .form-check-input {
+            background-color: #0b1120 !important;
+            border: 1.5px solid #64748b !important;
+        }
+        html[data-theme="dark"] #current_template_box .form-check-input:checked,
+        html[data-bs-theme="dark"] #current_template_box .form-check-input:checked {
+            background-color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+        html[data-theme="dark"] #current_template_box .form-check-label.text-danger,
+        html[data-bs-theme="dark"] #current_template_box .form-check-label.text-danger {
+            color: #f87171 !important;
+        }
 </style>
 
     {{-- Page Header --}}

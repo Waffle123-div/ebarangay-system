@@ -1543,6 +1543,58 @@
         html[data-bs-theme="dark"] .text-danger {
             color: #f87171 !important;
         }
+
+        /* ── Dark Mode Outline Buttons ── */
+        html[data-theme="dark"] .btn-outline-primary,
+        html[data-bs-theme="dark"] .btn-outline-primary {
+            color: #60a5fa !important;
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+        html[data-theme="dark"] .btn-outline-primary:hover,
+        html[data-bs-theme="dark"] .btn-outline-primary:hover,
+        html[data-theme="dark"] .btn-outline-primary:focus,
+        html[data-bs-theme="dark"] .btn-outline-primary:focus {
+            color: #ffffff !important;
+            border-color: #60a5fa !important;
+            background-color: #2563eb !important;
+        }
+        html[data-theme="dark"] .btn-outline-secondary,
+        html[data-bs-theme="dark"] .btn-outline-secondary {
+            color: #94a3b8 !important;
+            border-color: #475569 !important;
+            background-color: rgba(148, 163, 184, 0.08) !important;
+        }
+        html[data-theme="dark"] .btn-outline-secondary:hover,
+        html[data-bs-theme="dark"] .btn-outline-secondary:hover {
+            color: #ffffff !important;
+            border-color: #64748b !important;
+            background-color: #334155 !important;
+        }
+        html[data-theme="dark"] .btn-outline-success,
+        html[data-bs-theme="dark"] .btn-outline-success {
+            color: #4ade80 !important;
+            border-color: #22c55e !important;
+            background-color: rgba(34, 197, 94, 0.1) !important;
+        }
+        html[data-theme="dark"] .btn-outline-success:hover,
+        html[data-bs-theme="dark"] .btn-outline-success:hover {
+            color: #ffffff !important;
+            border-color: #4ade80 !important;
+            background-color: #16a34a !important;
+        }
+        html[data-theme="dark"] .btn-outline-danger,
+        html[data-bs-theme="dark"] .btn-outline-danger {
+            color: #f87171 !important;
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.1) !important;
+        }
+        html[data-theme="dark"] .btn-outline-danger:hover,
+        html[data-bs-theme="dark"] .btn-outline-danger:hover {
+            color: #ffffff !important;
+            border-color: #f87171 !important;
+            background-color: #dc2626 !important;
+        }
         /* ── Official Tracking Kicker ── */
         .tracking-kicker {
             background-color: rgba(37, 99, 184, 0.12) !important;
