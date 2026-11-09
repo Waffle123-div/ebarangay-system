@@ -18,8 +18,34 @@ mkdir -p storage/app/public \
 
 # Ensure an .env file exists if not provided
 if [ ! -f .env ]; then
-    echo "==> Initializing .env from .env.example..."
-    cp .env.example .env
+    if [ -f .env.example ]; then
+        echo "==> Initializing .env from .env.example..."
+        cp .env.example .env
+    else
+        echo "==> .env.example not found, generating default .env..."
+        cat << 'EOF' > .env
+APP_NAME="E-Barangay"
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=false
+APP_URL=http://localhost
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/var/www/html/database/database.sqlite
+
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=database
+
+CACHE_STORE=database
+EOF
+    fi
 fi
 
 # Ensure an APP_KEY is available
