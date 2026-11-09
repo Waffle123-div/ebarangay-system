@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+vendor
+tests
+.env
+.env.*
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+public/hot
+Thumbs.db
+.DS_Store
