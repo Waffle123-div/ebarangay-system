@@ -4158,7 +4158,7 @@
                     <div class="d-flex justify-content-center gap-2 pt-2">
                         <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-danger px-4 py-2 rounded-3 fw-semibold shadow-sm" id="confirmRejectSubmitBtn">
-                            <i class="fa-solid fa-xmark me-1.5"></i> Reject & Delete
+                            <i class="fa-solid fa-xmark me-1.5"></i> Reject
                         </button>
                     </div>
                 </form>
