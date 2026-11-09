@@ -427,8 +427,8 @@
             <div id="receiptCard{{ $request->id }}" class="bg-white">
                 <div class="p-4 text-center border-bottom position-relative" style="border-bottom: 2px solid #000 !important; background-color: #f8f9fa;">
                     <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 22px;">
-                            <i class="fa-solid fa-landmark"></i>
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 22px; color: #ffffff !important;">
+                            <i class="fa-solid fa-landmark text-white" style="color: #ffffff !important;"></i>
                         </div>
                         <div class="text-start">
                             <div class="text-uppercase text-muted fw-bold small" style="letter-spacing: 1px; font-size: 11px;">Republic of the Philippines</div>
@@ -517,7 +517,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-primary text-white text-center py-2 small fw-semibold">
+                <div class="bg-primary text-white text-center py-2 small fw-semibold" style="color: #ffffff !important;">
                     Thank you for using the E-Barangay System — Barangay Cogon East
                 </div>
             </div>

@@ -976,6 +976,14 @@
             --bs-white-rgb: 19, 29, 49 !important;
         }
 
+        /* ── Dark Mode Text White Force Fix ── */
+        html[data-theme="dark"] .text-white,
+        html[data-bs-theme="dark"] .text-white,
+        html[data-theme="dark"] .text-white *,
+        html[data-bs-theme="dark"] .text-white * {
+            color: #ffffff !important;
+        }
+
         /* ── Sidebar Active Nav Item (High Contrast Fix) ── */
         html[data-theme="dark"] .sidebar-nav-item.active,
         html[data-bs-theme="dark"] .sidebar-nav-item.active {

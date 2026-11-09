@@ -726,6 +726,14 @@
             --bs-white-rgb: 19, 29, 49 !important;
         }
 
+        /* ── Dark Mode Text White Force Fix ── */
+        html[data-theme="dark"] .text-white,
+        html[data-bs-theme="dark"] .text-white,
+        html[data-theme="dark"] .text-white *,
+        html[data-bs-theme="dark"] .text-white * {
+            color: #ffffff !important;
+        }
+
         /* ── Body & Full Layout Wrappers ── */
         html[data-theme="dark"] body,
         html[data-bs-theme="dark"] body {
@@ -1393,7 +1401,9 @@
         html[data-theme="dark"] #claimStubCard,
         html[data-bs-theme="dark"] #claimStubCard,
         html[data-theme="dark"] [id^="receiptCard"],
-        html[data-bs-theme="dark"] [id^="receiptCard"] {
+        html[data-bs-theme="dark"] [id^="receiptCard"],
+        html[data-theme="dark"] #receiptCard,
+        html[data-bs-theme="dark"] #receiptCard {
             background-color: #131d31 !important;
             border-color: #334155 !important;
             color: #f1f5f9 !important;
@@ -1401,8 +1411,23 @@
         html[data-theme="dark"] #claimStubCard .border-bottom,
         html[data-bs-theme="dark"] #claimStubCard .border-bottom,
         html[data-theme="dark"] [id^="receiptCard"] .border-bottom,
-        html[data-bs-theme="dark"] [id^="receiptCard"] .border-bottom {
+        html[data-bs-theme="dark"] [id^="receiptCard"] .border-bottom,
+        html[data-theme="dark"] #receiptCard .border-bottom,
+        html[data-bs-theme="dark"] #receiptCard .border-bottom {
             border-bottom-color: #1e293b !important;
+        }
+        html[data-theme="dark"] [id^="receiptCard"] .bg-primary,
+        html[data-bs-theme="dark"] [id^="receiptCard"] .bg-primary,
+        html[data-theme="dark"] #receiptCard .bg-primary,
+        html[data-bs-theme="dark"] #receiptCard .bg-primary {
+            background-color: #18365D !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] [id^="receiptCard"] .bg-primary *,
+        html[data-bs-theme="dark"] [id^="receiptCard"] .bg-primary *,
+        html[data-theme="dark"] #receiptCard .bg-primary *,
+        html[data-bs-theme="dark"] #receiptCard .bg-primary * {
+            color: #ffffff !important;
         }
 
         /* ── Request Document Specifics ── */

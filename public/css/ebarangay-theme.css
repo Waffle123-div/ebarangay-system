@@ -612,3 +612,27 @@ html[data-bs-theme="dark"] .pipeline-step-item:hover + .pipeline-arrow-connector
   opacity: 1;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.55);
 }
+
+/* ── Global Dark Mode .text-white High-Contrast Fix ── */
+html[data-theme="dark"] .text-white,
+html[data-bs-theme="dark"] .text-white,
+html[data-theme="dark"] .text-white *,
+html[data-bs-theme="dark"] .text-white * {
+  color: #ffffff !important;
+}
+
+/* ── Receipt & Claim Document Dark Mode Visibility ── */
+html[data-theme="dark"] [id^="receiptCard"] .bg-primary,
+html[data-bs-theme="dark"] [id^="receiptCard"] .bg-primary,
+html[data-theme="dark"] #receiptCard .bg-primary,
+html[data-bs-theme="dark"] #receiptCard .bg-primary {
+  background-color: #18365D !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] [id^="receiptCard"] .bg-primary *,
+html[data-bs-theme="dark"] [id^="receiptCard"] .bg-primary *,
+html[data-theme="dark"] #receiptCard .bg-primary *,
+html[data-bs-theme="dark"] #receiptCard .bg-primary * {
+  color: #ffffff !important;
+}
+
