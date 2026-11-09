@@ -400,6 +400,56 @@ html[data-theme="dark"] .payment-notice i,
 html[data-bs-theme="dark"] .payment-notice i {
     color: #60a5fa !important;
 }
+
+/* Step Header Kickers, Titles & Icons in Dark Mode */
+html[data-theme="dark"] .step-header-kicker,
+html[data-bs-theme="dark"] .step-header-kicker,
+html[data-theme="dark"] [style*="color: var(--color-primary)"],
+html[data-bs-theme="dark"] [style*="color: var(--color-primary)"],
+html[data-theme="dark"] [style*="color:var(--color-primary)"],
+html[data-bs-theme="dark"] [style*="color:var(--color-primary)"] {
+    color: #38bdf8 !important;
+}
+html[data-theme="dark"] .step-icon-box,
+html[data-bs-theme="dark"] .step-icon-box,
+html[data-theme="dark"] .icon-box,
+html[data-bs-theme="dark"] .icon-box,
+html[data-theme="dark"] [style*="background:rgba(30,64,175"],
+html[data-bs-theme="dark"] [style*="background:rgba(30,64,175"],
+html[data-theme="dark"] [style*="background: rgba(30,64,175"],
+html[data-bs-theme="dark"] [style*="background: rgba(30,64,175"],
+html[data-theme="dark"] [style*="background:#e8f0fe"],
+html[data-bs-theme="dark"] [style*="background:#e8f0fe"] {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+html[data-theme="dark"] .step-icon-box i,
+html[data-bs-theme="dark"] .step-icon-box i,
+html[data-theme="dark"] .icon-box i,
+html[data-bs-theme="dark"] .icon-box i {
+    color: #38bdf8 !important;
+}
+html[data-theme="dark"] .step-header-title,
+html[data-bs-theme="dark"] .step-header-title,
+html[data-theme="dark"] .req-section h6,
+html[data-bs-theme="dark"] .req-section h6,
+html[data-theme="dark"] .req-section h5,
+html[data-bs-theme="dark"] .req-section h5 {
+    color: #f8fafc !important;
+}
+html[data-theme="dark"] .req-section .text-dark,
+html[data-bs-theme="dark"] .req-section .text-dark,
+html[data-theme="dark"] .modal .text-dark,
+html[data-bs-theme="dark"] .modal .text-dark {
+    color: #f8fafc !important;
+}
+html[data-theme="dark"] .req-section .text-muted,
+html[data-bs-theme="dark"] .req-section .text-muted,
+html[data-theme="dark"] .modal .text-muted,
+html[data-bs-theme="dark"] .modal .text-muted {
+    color: #94a3b8 !important;
+}
 </style>
 
 <div class="container py-4">
@@ -478,11 +528,11 @@ html[data-bs-theme="dark"] .payment-notice i {
             {{-- Bottom: Document Selection Grid (STEP 1) --}}
             <div class="req-section-body py-4">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="icon-box" style="width:36px;height:36px;border-radius:10px;background:rgba(30,64,175,0.08);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">
+                    <div class="icon-box step-icon-box" style="width:36px;height:36px;border-radius:10px;background:rgba(30,64,175,0.08);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">
                         <i class="fa-solid fa-file-lines"></i>
                     </div>
-                    <h6 class="mb-0" style="font-size: 15px; font-weight: 700;">
-                        <span style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 1:</span> Document Selection
+                    <h6 class="mb-0 step-header-title" style="font-size: 15px; font-weight: 700;">
+                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 1:</span> Document Selection
                     </h6>
                 </div>
 
@@ -583,12 +633,12 @@ html[data-bs-theme="dark"] .payment-notice i {
         <div id="sharedUploadSectionTemplate" class="d-none">
             <div id="sharedUploadSection" class="mt-4 pt-3 border-top">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div style="width:32px;height:32px;border-radius:8px;background:rgba(30,64,175,0.08);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                    <div class="step-icon-box" style="width:32px;height:32px;border-radius:8px;background:rgba(30,64,175,0.08);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold text-dark mb-0" style="font-size:15px;">
-                            <span style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 3:</span> Supporting Documents &amp; Upload
+                        <h6 class="fw-bold text-dark mb-0 step-header-title" style="font-size:15px;">
+                            <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 3:</span> Supporting Documents &amp; Upload
                         </h6>
                         <p class="text-muted mb-0" style="font-size:11px;">Upload a valid ID or proof of residence as required.</p>
                     </div>
@@ -713,12 +763,12 @@ html[data-bs-theme="dark"] .payment-notice i {
                         {{-- STEP 2 Header Container inside Modal Body --}}
                         <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="d-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
+                                <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
                                     <i class="fa-solid fa-store"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold text-dark mb-0" id="bpPurposeModalLabel" style="font-size:15px;">
-                                        <span style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
+                                    <h6 class="fw-bold text-dark mb-0 step-header-title" id="bpPurposeModalLabel" style="font-size:15px;">
+                                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
                                     </h6>
                                     <p class="text-muted mb-0" id="bpPurposeModalDocName" style="font-size:12px;">Brgy Clearance for Business Permit</p>
                                 </div>
@@ -797,12 +847,12 @@ html[data-bs-theme="dark"] .payment-notice i {
                         {{-- STEP 2 Header Container inside Modal Body --}}
                         <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="d-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
+                                <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
                                     <i class="fa-solid fa-bullseye"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold text-dark mb-0" id="genericPurposeModalLabel" style="font-size:15px;">
-                                        <span style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
+                                    <h6 class="fw-bold text-dark mb-0 step-header-title" id="genericPurposeModalLabel" style="font-size:15px;">
+                                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
                                     </h6>
                                     <p class="text-muted mb-0" id="genericPurposeModalDocName" style="font-size:12px;">—</p>
                                 </div>
@@ -879,13 +929,13 @@ html[data-bs-theme="dark"] .payment-notice i {
                         {{-- STEP 4 HEADER CONTAINER IN BODY --}}
                         <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="d-flex align-items-center justify-content-center rounded-3"
+                                <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box"
                                      style="width:44px;height:44px;background:#e8f0fe;color:var(--color-primary);font-size:1.2rem;flex-shrink:0;">
                                     <i class="fa-solid fa-file-circle-check"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold text-dark mb-0" id="confirmSubmitLabel" style="font-size:15px;">
-                                        <span style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 4:</span> Review Your Request
+                                    <h6 class="fw-bold text-dark mb-0 step-header-title" id="confirmSubmitLabel" style="font-size:15px;">
+                                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 4:</span> Review Your Request
                                     </h6>
                                     <p class="text-muted mb-0" style="font-size:12px;">Check and edit your details before submitting</p>
                                 </div>

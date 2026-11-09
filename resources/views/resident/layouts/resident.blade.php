@@ -1458,6 +1458,25 @@
         html[data-bs-theme="dark"] .stepper-step.completed .stepper-label {
             color: #34d399 !important;
         }
+
+        html[data-theme="dark"] .step-header-kicker,
+        html[data-bs-theme="dark"] .step-header-kicker {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .step-icon-box,
+        html[data-bs-theme="dark"] .step-icon-box {
+            background: rgba(56, 189, 248, 0.15) !important;
+            color: #38bdf8 !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        }
+        html[data-theme="dark"] .step-icon-box i,
+        html[data-bs-theme="dark"] .step-icon-box i {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .step-header-title,
+        html[data-bs-theme="dark"] .step-header-title {
+            color: #f8fafc !important;
+        }
         html[data-theme="dark"] .file-item,
         html[data-bs-theme="dark"] .file-item {
             background: #182238 !important;
