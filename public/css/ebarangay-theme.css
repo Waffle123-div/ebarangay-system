@@ -636,3 +636,50 @@ html[data-bs-theme="dark"] #receiptCard .bg-primary * {
   color: #ffffff !important;
 }
 
+/* ── Sidebar Nav Loading Spinner ── */
+.sidebar-nav-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  z-index: 5;
+  animation: agy-fadeIn 0.15s ease forwards;
+}
+.sidebar-nav-spinner::before {
+  content: '';
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: #38bdf8;
+  border-right-color: #38bdf8;
+  box-sizing: border-box;
+  animation: sidebar-spin 0.65s linear infinite;
+}
+.r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+.sidebar-nav-item.active .sidebar-nav-spinner::before {
+  border: 2px solid rgba(37, 99, 235, 0.2);
+  border-top-color: #2563eb;
+  border-right-color: #2563eb;
+}
+html[data-theme="dark"] .r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+html[data-bs-theme="dark"] .r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+html[data-theme="dark"] .sidebar-nav-item.active .sidebar-nav-spinner::before,
+html[data-bs-theme="dark"] .sidebar-nav-item.active .sidebar-nav-spinner::before {
+  border: 2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: #38bdf8;
+  border-right-color: #38bdf8;
+}
+@keyframes sidebar-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+body.r-sidebar-collapsed .sidebar-nav-spinner,
+body.sidebar-collapsed .sidebar-nav-spinner {
+  display: none !important;
+}
+
+

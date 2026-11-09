@@ -1960,6 +1960,52 @@
             background-size: 200% 100%;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
         }
+
+        /* ── Sidebar Nav Loading Spinner ── */
+        .sidebar-nav-spinner {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            z-index: 5;
+            animation: agy-fadeIn 0.15s ease forwards;
+        }
+        .sidebar-nav-spinner::before {
+            content: '';
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.25);
+            border-top-color: #38bdf8;
+            border-right-color: #38bdf8;
+            box-sizing: border-box;
+            animation: sidebar-spin 0.65s linear infinite;
+        }
+        .r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+        .sidebar-nav-item.active .sidebar-nav-spinner::before {
+            border: 2px solid rgba(37, 99, 235, 0.2);
+            border-top-color: #2563eb;
+            border-right-color: #2563eb;
+        }
+        html[data-theme="dark"] .r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+        html[data-bs-theme="dark"] .r-sidebar-nav-item.active .sidebar-nav-spinner::before,
+        html[data-theme="dark"] .sidebar-nav-item.active .sidebar-nav-spinner::before,
+        html[data-bs-theme="dark"] .sidebar-nav-item.active .sidebar-nav-spinner::before {
+            border: 2px solid rgba(56, 189, 248, 0.25);
+            border-top-color: #38bdf8;
+            border-right-color: #38bdf8;
+        }
+        @keyframes sidebar-spin {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        body.r-sidebar-collapsed .sidebar-nav-spinner,
+        body.sidebar-collapsed .sidebar-nav-spinner {
+            display: none !important;
+        }
     </style>
     <script>
         (function() {
@@ -2545,34 +2591,64 @@
         var fill = document.getElementById('page-loader-fill');
         var loadTimer = null;
 
-        function startLoader() {
-            if (!bar || !fill) return;
-            clearTimeout(loadTimer);
-            fill.style.transition = 'none';
-            fill.style.width = '0%';
-            bar.classList.add('loading');
-            // rAF trick: allow the browser to register width=0 before animating
-            requestAnimationFrame(function () {
+        function startLoader(link) {
+            if (bar && fill) {
+                clearTimeout(loadTimer);
+                fill.style.transition = 'none';
+                fill.style.width = '0%';
+                bar.classList.add('loading');
                 requestAnimationFrame(function () {
-                    fill.style.transition = 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                    fill.style.width = '75%';
-                    loadTimer = setTimeout(function () {
-                        fill.style.width = '90%';
-                    }, 1500);
+                    requestAnimationFrame(function () {
+                        fill.style.transition = 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        fill.style.width = '75%';
+                        loadTimer = setTimeout(function () {
+                            fill.style.width = '90%';
+                        }, 1500);
+                    });
                 });
-            });
+            }
+
+            // Sidebar loading circle at the right
+            if (link) {
+                var sidebarItem = link.closest('.r-sidebar-nav-item, .sidebar-nav-item');
+                if (sidebarItem) {
+                    document.querySelectorAll('.sidebar-nav-spinner').forEach(function (el) { el.remove(); });
+                    document.querySelectorAll('.sidebar-badge-loading-hidden').forEach(function (el) {
+                        el.classList.remove('sidebar-badge-loading-hidden');
+                        el.style.display = '';
+                    });
+
+                    var badge = sidebarItem.querySelector('.r-sidebar-badge, .sidebar-badge');
+                    if (badge && window.getComputedStyle(badge).display !== 'none') {
+                        badge.classList.add('sidebar-badge-loading-hidden');
+                        badge.style.display = 'none';
+                    }
+
+                    var spinner = document.createElement('span');
+                    spinner.className = 'sidebar-nav-spinner';
+                    spinner.setAttribute('aria-hidden', 'true');
+                    sidebarItem.appendChild(spinner);
+                }
+            }
         }
 
         function finishLoader() {
-            if (!bar || !fill) return;
-            clearTimeout(loadTimer);
-            fill.style.transition = 'width 0.2s ease';
-            fill.style.width = '100%';
-            setTimeout(function () {
-                bar.classList.remove('loading');
-                fill.style.transition = 'none';
-                fill.style.width = '0%';
-            }, 300);
+            if (bar && fill) {
+                clearTimeout(loadTimer);
+                fill.style.transition = 'width 0.2s ease';
+                fill.style.width = '100%';
+                setTimeout(function () {
+                    bar.classList.remove('loading');
+                    fill.style.transition = 'none';
+                    fill.style.width = '0%';
+                }, 300);
+            }
+
+            document.querySelectorAll('.sidebar-nav-spinner').forEach(function (el) { el.remove(); });
+            document.querySelectorAll('.sidebar-badge-loading-hidden').forEach(function (el) {
+                el.classList.remove('sidebar-badge-loading-hidden');
+                el.style.display = '';
+            });
         }
 
         // Intercept navigation clicks
@@ -2589,7 +2665,7 @@
                 if (url.pathname === window.location.pathname &&
                     url.search  === window.location.search) return;
             } catch (err) { return; }
-            startLoader();
+            startLoader(link);
         });
 
         // Finish when new page DOM is ready
