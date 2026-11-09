@@ -1667,9 +1667,38 @@
         html[data-bs-theme="dark"] nav p.small.text-muted .fw-semibold {
             color: #f8fafc !important;
         }
+
+        /* ── Page Transition Loader ── */
+        #page-loader-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 3px;
+            z-index: 99999; pointer-events: none; opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        #page-loader-bar.loading { opacity: 1; }
+        #page-loader-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #2563eb, #38bdf8, #2563eb);
+            background-size: 200% 100%;
+            border-radius: 0 3px 3px 0;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: shimmer-loader 1.5s infinite linear;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.6), 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+        @keyframes shimmer-loader {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        html[data-theme="dark"] #page-loader-fill,
+        html[data-bs-theme="dark"] #page-loader-fill {
+            background: linear-gradient(90deg, #38bdf8, #60a5fa, #38bdf8);
+            background-size: 200% 100%;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        }
     </style>
 </head>
 <body>
+    <!-- Page Transition Loader -->
+    <div id="page-loader-bar" aria-hidden="true"><div id="page-loader-fill"></div></div>
     {{-- Synchronous state check executed before first paint to prevent layout flash --}}
     <script>
         if (window.innerWidth >= 992 && localStorage.getItem('residentSidebarCollapsed') === 'true') {
@@ -2522,6 +2551,65 @@ $notification = $userNotifs[$n];
                 socket.send(JSON.stringify({ type: 'ping' }));
             }
         }, 30000);
+    })();
+    </script>
+
+    <!-- Page Transition Loader Script -->
+    <script>
+    (function () {
+        var bar  = document.getElementById('page-loader-bar');
+        var fill = document.getElementById('page-loader-fill');
+        var loadTimer = null;
+
+        function startLoader() {
+            if (!bar || !fill) return;
+            clearTimeout(loadTimer);
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+            bar.classList.add('loading');
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    fill.style.transition = 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    fill.style.width = '75%';
+                    loadTimer = setTimeout(function () {
+                        fill.style.width = '90%';
+                    }, 1500);
+                });
+            });
+        }
+
+        function finishLoader() {
+            if (!bar || !fill) return;
+            clearTimeout(loadTimer);
+            fill.style.transition = 'width 0.2s ease';
+            fill.style.width = '100%';
+            setTimeout(function () {
+                bar.classList.remove('loading');
+                fill.style.transition = 'none';
+                fill.style.width = '0%';
+            }, 300);
+        }
+
+        // Intercept navigation clicks
+        document.addEventListener('click', function (e) {
+            var link = e.target.closest('a[href]');
+            if (!link) return;
+            var href = link.getAttribute('href');
+            if (!href || href === '' || href.startsWith('#') ||
+                href.startsWith('javascript') || link.target === '_blank' ||
+                e.ctrlKey || e.metaKey || e.shiftKey) return;
+            try {
+                var url = new URL(href, window.location.origin);
+                if (url.origin !== window.location.origin) return;
+                if (url.pathname === window.location.pathname &&
+                    url.search  === window.location.search) return;
+            } catch (err) { return; }
+            startLoader();
+        });
+
+        // Finish when new page DOM is ready
+        window.addEventListener('pageshow', finishLoader);
+        document.addEventListener('DOMContentLoaded', finishLoader);
     })();
     </script>
 
