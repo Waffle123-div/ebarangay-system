@@ -16,29 +16,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed Admin User
-        User::create([
-            'user_id' => 'USR-00001',
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'status' => 'active',
-            'birthdate' => '1990-01-01',
-            'gender' => 'Male',
-        ]);
+        // Seed Admin User (idempotent)
+        User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'user_id' => 'USR-00001',
+                'name' => 'Admin User',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+                'status' => 'active',
+                'birthdate' => '1990-01-01',
+                'gender' => 'Male',
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // Seed Resident User
-        User::create([
-            'user_id' => 'USR-00002',
-            'name' => 'Resident User',
-            'email' => 'resident@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'Resident',
-            'status' => 'active',
-            'birthdate' => '1995-05-05',
-            'gender' => 'Female',
-        ]);
+        // Seed Resident User (idempotent)
+        User::firstOrCreate(
+            ['email' => 'resident@example.com'],
+            [
+                'user_id' => 'USR-00002',
+                'name' => 'Resident User',
+                'password' => Hash::make('password'),
+                'role' => 'Resident',
+                'status' => 'active',
+                'birthdate' => '1995-05-05',
+                'gender' => 'Female',
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Seed Official Document Types and Templates
         $this->call(DocumentTypeSeeder::class);
