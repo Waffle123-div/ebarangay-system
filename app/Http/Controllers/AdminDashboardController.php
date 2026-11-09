@@ -695,10 +695,15 @@ class AdminDashboardController extends Controller
 
         $activeRequestsCount = DocumentRequest::whereIn('status', ['Pending', 'Under Review', 'Processing', 'Ready'])->count();
 
+        $isSqlite = \DB::connection()->getDriverName() === 'sqlite';
+        $diffSql = $isSqlite
+            ? 'AVG(julianday(updated_at) - julianday(created_at)) as avg_days'
+            : 'AVG(DATEDIFF(updated_at, created_at)) as avg_days';
+
         $avgProcessing = round(
             (float) (DocumentRequest::where('status', 'Approved')
                 ->whereNotNull('updated_at')
-                ->selectRaw('AVG(DATEDIFF(updated_at, created_at)) as avg_days')
+                ->selectRaw($diffSql)
                 ->value('avg_days') ?? 0),
             1
         );
