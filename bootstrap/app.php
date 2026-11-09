@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        
+        // Trust all reverse proxies (e.g. Render, Cloudflare, AWS ALB) for SSL/HTTPS termination
+        $middleware->trustProxies(at: '*');
+
         // Your existing guest redirect logic
         $middleware->redirectGuestsTo(function (Illuminate\Http\Request $request) {
             if ($request->is('admin') || $request->is('admin/*')) {

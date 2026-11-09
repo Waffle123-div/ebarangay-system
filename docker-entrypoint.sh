@@ -48,6 +48,15 @@ EOF
     fi
 fi
 
+# Update APP_URL if RENDER_EXTERNAL_URL or APP_URL is provided
+if [ -n "$RENDER_EXTERNAL_URL" ]; then
+    echo "==> Setting APP_URL from RENDER_EXTERNAL_URL: $RENDER_EXTERNAL_URL"
+    sed -i "s|^APP_URL=.*|APP_URL=$RENDER_EXTERNAL_URL|" .env
+elif [ -n "$APP_URL" ]; then
+    echo "==> Setting APP_URL: $APP_URL"
+    sed -i "s|^APP_URL=.*|APP_URL=$APP_URL|" .env
+fi
+
 # Ensure an APP_KEY is available
 if [ -n "$APP_KEY" ]; then
     echo "==> Using APP_KEY from environment..."

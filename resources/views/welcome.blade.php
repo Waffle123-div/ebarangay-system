@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="description" content="E-Barangay: Web-Based Document Request and Tracking System for Barangay Cogon East, Carmen, Cebu. Request barangay documents online, track your requests in real-time, and access community services.">
   <title>E-Barangay — Document Request & Tracking System | Barangay Cogon East, Carmen, Cebu</title>

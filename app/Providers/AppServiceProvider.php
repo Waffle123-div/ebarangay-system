@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -21,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS URL generation behind SSL reverse proxies (Render, Cloudflare, etc.)
+        if (app()->environment('production') || request()->header('x-forwarded-proto') === 'https' || env('FORCE_HTTPS', false)) {
+            URL::forceScheme('https');
+        }
+
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
            return (new MailMessage)
                ->subject('Action Required: Verify Your E-Barangay Account')
