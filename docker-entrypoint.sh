@@ -26,18 +26,17 @@ if [ ! -f .env ]; then
         cat << 'EOF' > .env
 APP_NAME="E-Barangay"
 APP_ENV=production
-APP_KEY=
+APP_KEY=base64:VT6H850mEh4eNu9yS3lx7yJYiSqpcxXqBVg6p4+UYto=
 APP_DEBUG=false
 APP_URL=http://localhost
 
 DB_CONNECTION=sqlite
 DB_DATABASE=/var/www/html/database/database.sqlite
 
-SESSION_DRIVER=database
+SESSION_DRIVER=file
 SESSION_LIFETIME=120
 SESSION_ENCRYPT=false
 SESSION_PATH=/
-SESSION_DOMAIN=null
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=public
@@ -48,6 +47,10 @@ EOF
     fi
 fi
 
+# Sanitize session settings in .env to prevent CSRF / 419 issues
+sed -i "s|^SESSION_DOMAIN=.*|# SESSION_DOMAIN=|" .env
+sed -i "s|^SESSION_DRIVER=database|SESSION_DRIVER=file|" .env
+
 # Update APP_URL if RENDER_EXTERNAL_URL or APP_URL is provided
 if [ -n "$RENDER_EXTERNAL_URL" ]; then
     echo "==> Setting APP_URL from RENDER_EXTERNAL_URL: $RENDER_EXTERNAL_URL"
@@ -57,7 +60,8 @@ elif [ -n "$APP_URL" ]; then
     sed -i "s|^APP_URL=.*|APP_URL=$APP_URL|" .env
 fi
 
-# Ensure an APP_KEY is available
+# Ensure an APP_KEY is available (persistent across container boots)
+DEFAULT_PERSISTENT_KEY="base64:VT6H850mEh4eNu9yS3lx7yJYiSqpcxXqBVg6p4+UYto="
 if [ -n "$APP_KEY" ]; then
     echo "==> Using APP_KEY from environment..."
     if grep -q "^APP_KEY=" .env; then
@@ -67,8 +71,12 @@ if [ -n "$APP_KEY" ]; then
     fi
 else
     if ! grep -q "^APP_KEY=base64:" .env; then
-        echo "==> Generating application encryption key (APP_KEY)..."
-        php artisan key:generate --force
+        echo "==> Using default application encryption key..."
+        if grep -q "^APP_KEY=" .env; then
+            sed -i "s|^APP_KEY=.*|APP_KEY=$DEFAULT_PERSISTENT_KEY|" .env
+        else
+            echo "APP_KEY=$DEFAULT_PERSISTENT_KEY" >> .env
+        fi
     fi
 fi
 
@@ -112,6 +120,7 @@ fi
 # Ensure log file exists and web server has full ownership of all writable directories
 touch storage/logs/laravel.log
 chown -R www-data:www-data storage bootstrap/cache /var/www/html/database
+chmod -R 777 storage/framework/sessions storage/framework/views storage/framework/cache
 chmod -R 775 storage bootstrap/cache /var/www/html/database
 chmod 664 storage/logs/laravel.log
 if [ -f "/var/www/html/database/database.sqlite" ]; then
