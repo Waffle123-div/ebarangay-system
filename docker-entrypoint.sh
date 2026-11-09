@@ -82,16 +82,9 @@ if [ "$CURRENT_DB_CONN" = "sqlite" ]; then
         echo "==> Creating SQLite database file..."
         touch "$SQLITE_PATH"
     fi
-    chown -R www-data:www-data /var/www/html/database
-    chmod -R 775 /var/www/html/database
-    chmod 664 "$SQLITE_PATH"
 else
     echo "==> Using database connection: $CURRENT_DB_CONN ($DB_HOST:$DB_PORT / $DB_DATABASE)"
 fi
-
-# Ensure web server ownership and write permissions
-chown -R www-data:www-data storage bootstrap/cache /var/www/html/database
-chmod -R 775 storage bootstrap/cache /var/www/html/database
 
 # Create storage symlink
 php artisan storage:link --no-interaction || true
@@ -114,6 +107,15 @@ php artisan view:cache || true
 if [ -f "websocket-server.js" ] && [ -d "node_modules/ws" ]; then
     echo "==> Starting background WebSocket server on port 8080..."
     node websocket-server.js &
+fi
+
+# Ensure log file exists and web server has full ownership of all writable directories
+touch storage/logs/laravel.log
+chown -R www-data:www-data storage bootstrap/cache /var/www/html/database
+chmod -R 775 storage bootstrap/cache /var/www/html/database
+chmod 664 storage/logs/laravel.log
+if [ -f "/var/www/html/database/database.sqlite" ]; then
+    chmod 664 /var/www/html/database/database.sqlite
 fi
 
 echo "==> Starting Apache server on port $PORT..."

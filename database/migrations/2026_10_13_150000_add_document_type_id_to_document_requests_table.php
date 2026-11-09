@@ -57,7 +57,7 @@ return new class extends Migration
         });
 
         // 4. Ensure document_type varchar column is nullable for flexible request generation
-        if (Schema::hasColumn('document_requests', 'document_type')) {
+        if (Schema::hasColumn('document_requests', 'document_type') && DB::getDriverName() === 'mysql') {
             DB::statement('ALTER TABLE document_requests MODIFY document_type VARCHAR(100) NULL;');
         }
     }

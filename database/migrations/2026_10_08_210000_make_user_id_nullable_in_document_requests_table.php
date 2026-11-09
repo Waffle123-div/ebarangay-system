@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('ALTER TABLE document_requests MODIFY user_id INT(11) NULL;');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE document_requests MODIFY user_id INT(11) NULL;');
+        }
     }
 
     /**
@@ -18,6 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE document_requests MODIFY user_id INT(11) NOT NULL;');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE document_requests MODIFY user_id INT(11) NOT NULL;');
+        }
     }
 };
