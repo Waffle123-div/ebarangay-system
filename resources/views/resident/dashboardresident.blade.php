@@ -588,6 +588,15 @@ function downloadReceiptAsImage(targetId, receiptNumber) {
 
 // Dynamic Calendar logic
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh dashboard when a document status changes (e.g. approved, ready, or rejected)
+    document.addEventListener('resident:realtime-event', function(e) {
+        if (e.detail && (e.detail.event === 'request.status_changed' || e.detail.event === 'request.created')) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 1200);
+        }
+    });
+
     const calMonthYear = document.getElementById('calMonthYear');
     const calDays = document.getElementById('calDays');
     let currDate = new Date(); 

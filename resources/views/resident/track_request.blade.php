@@ -125,6 +125,7 @@
         <p class="text-muted small">Monitor the progress of all your document requests</p>
     </div>
 
+    <div id="trackRequestsListWrapper">
     @if($allRequests->isEmpty())
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
             <div class="text-muted mb-3"><i class="fa-solid fa-folder-open fs-1"></i></div>
@@ -337,6 +338,7 @@
             </div>
         </div>
     @endif
+    </div>
 
 </div>
 
@@ -470,6 +472,7 @@
     // Real-time polling script
     document.addEventListener("DOMContentLoaded", function() {
         let currentLastUpdate = "{{ \App\Models\DocumentRequest::where('user_id', auth()->user()->id)->max('updated_at') }}";
+        let currentTotalCount = {{ \App\Models\DocumentRequest::where('user_id', auth()->user()->id)->count() }};
 
         function pollForUpdates() {
             if (document.hidden) return;
@@ -488,7 +491,12 @@
                             }
                         }
                     }
-                    if (data.last_update && data.last_update !== currentLastUpdate) {
+
+                    const countChanged = data.total_count !== undefined && data.total_count !== currentTotalCount;
+                    const updateChanged = data.last_update && data.last_update !== currentLastUpdate;
+
+                    if (countChanged || updateChanged) {
+                        currentTotalCount = data.total_count;
                         currentLastUpdate = data.last_update;
                         
                         fetch(window.location.href)
@@ -496,12 +504,12 @@
                             .then(html => {
                                 let parser = new DOMParser();
                                 let doc = parser.parseFromString(html, 'text/html');
-                                let newAccordion = doc.getElementById('requestsAccordion');
-                                let currentAccordion = document.getElementById('requestsAccordion');
+                                let newWrapper = doc.getElementById('trackRequestsListWrapper');
+                                let currentWrapper = document.getElementById('trackRequestsListWrapper');
                                 
-                                if (newAccordion && currentAccordion) {
-                                    currentAccordion.innerHTML = newAccordion.innerHTML;
-                                    console.log("Real-time update applied!");
+                                if (newWrapper && currentWrapper) {
+                                    currentWrapper.innerHTML = newWrapper.innerHTML;
+                                    console.log("Real-time update applied to track requests!");
                                 }
                             });
                     }
@@ -509,7 +517,14 @@
                 .catch(error => console.error("Polling error:", error));
         }
 
-        setInterval(pollForUpdates, 10000);
+        setInterval(pollForUpdates, 6000);
+
+        // Instant refresh on WebSocket broadcast
+        document.addEventListener('resident:realtime-event', function(e) {
+            if (e.detail && (e.detail.event === 'request.status_changed' || e.detail.event === 'request.created')) {
+                pollForUpdates();
+            }
+        });
     });
 </script>
 

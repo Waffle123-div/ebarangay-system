@@ -2071,7 +2071,11 @@ $notification = $userNotifs[$n];
 @endphp
                                             <div class="px-3 py-3 border-bottom r-notif-item {{ $notification->read_at === null ? 'unread' : 'read' }}">
                                                 <div class="fw-bold r-notif-title" style="font-size:14px;">
-                                                    <i class="fa-solid fa-circle-check text-success me-1"></i>
+                                                    @if(($notification->data['status'] ?? '') === 'Rejected')
+                                                        <i class="fa-solid fa-circle-xmark text-danger me-1"></i>
+                                                    @else
+                                                        <i class="fa-solid fa-circle-check text-success me-1"></i>
+                                                    @endif
                                                     {{ $notification->data['document_type'] ?? 'Document Update' }}
                                                 </div>
                                                 <div class="r-notif-msg text-muted mt-1" style="font-size:13px;">

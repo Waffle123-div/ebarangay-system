@@ -339,6 +339,8 @@ class ResidentDashboardController extends Controller
             ->latest()
             ->first(['id', 'status', 'tracking_number', 'updated_at']);
 
+        $totalCount = DocumentRequest::where('user_id', auth()->id())->count();
+
         $activeCount = DocumentRequest::where('user_id', auth()->id())
             ->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled'])
             ->count();
@@ -348,6 +350,7 @@ class ResidentDashboardController extends Controller
             'latest_status'    => $latest?->status,
             'tracking_number'  => $latest?->tracking_number,
             'active_count'     => $activeCount,
+            'total_count'      => $totalCount,
         ]);
     }
 

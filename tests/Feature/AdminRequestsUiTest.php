@@ -140,6 +140,11 @@ class AdminRequestsUiTest extends TestCase
         $this->assertDatabaseMissing('document_requests', [
             'id' => $docRequest->id,
         ]);
+
+        $this->assertCount(1, $resident->fresh()->notifications);
+        $notifData = $resident->fresh()->notifications->first()->data;
+        $this->assertEquals('Rejected', $notifData['status']);
+        $this->assertEquals($docRequest->tracking_number, $notifData['tracking_number']);
     }
 
     public function test_processing_request_allows_word_doc_generation_and_ready_request_shows_attached_file(): void

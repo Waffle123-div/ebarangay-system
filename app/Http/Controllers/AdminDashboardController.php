@@ -1766,17 +1766,42 @@ class AdminDashboardController extends Controller
         $docType = $docRequest->document_type;
         $residentName = $docRequest->resident_name;
 
-        // Broadcast rejection status update before deleting
+        // Find the resident user associated with this request
+        $residentUser = null;
+        if (!empty($docRequest->user_id)) {
+            $residentUser = User::find($docRequest->user_id);
+        }
+        if (!$residentUser && !empty($docRequest->resident_email)) {
+            $residentUser = User::where('email', $docRequest->resident_email)->first();
+        }
+
+        $reason = $request->input('reason') ?: $request->input('rejection_reason');
+        $notificationMessage = "Your document request #{$trackingNumber} ({$docType}) was rejected and removed.";
+        if (!empty($reason)) {
+            $notificationMessage .= " Reason: {$reason}";
+        }
+
+        // 1. Notify the resident user via database notification
+        if ($residentUser) {
+            $residentUser->notify(new \App\Notifications\DocumentRejectedNotification(
+                $trackingNumber,
+                $docType,
+                $reason
+            ));
+        }
+
+        // 2. Broadcast rejection status update before deleting
         \App\Services\WebSocketService::broadcast('request.status_changed', [
             'id'              => $docRequest->id,
             'tracking_number' => $trackingNumber,
             'status'          => 'Rejected',
             'applicant'       => $residentName,
+            'user_id'         => $residentUser?->id,
             'document_type'   => $docType,
-            'message'         => "Request #{$trackingNumber} has been rejected and deleted.",
+            'message'         => $notificationMessage,
         ]);
 
-        // Delete the request record
+        // 3. Delete the request record
         $docRequest->delete();
 
         ActivityLog::record('request_rejected', "Rejected and deleted document request #{$trackingNumber} ({$docType}) for {$residentName}.");
