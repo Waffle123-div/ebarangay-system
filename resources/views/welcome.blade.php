@@ -170,7 +170,7 @@
       transition: opacity 0.4s ease;
       z-index: 1;
       mix-blend-mode: screen;
-      will-change: background;
+      contain: strict;
     }
 
     /* ── Rotating Holographic Accent Rings ── */
@@ -179,6 +179,7 @@
       border-radius: 50%;
       pointer-events: none;
       z-index: 1;
+      contain: layout style paint;
       will-change: transform;
     }
     .hero-bg-ring-1 {
@@ -209,70 +210,62 @@
       to   { transform: translateY(-50%) rotate(-360deg); }
     }
 
-    /* ── Morphing Ambient Aurora Orbs with Tilt Parallax ── */
+    /* ── Ambient Aurora Orbs with Hardware-Accelerated Parallax ── */
     .hero-ambient-orb {
       position: absolute;
       border-radius: 50%;
-      filter: blur(85px);
+      filter: blur(28px);
       pointer-events: none;
-      opacity: 0.6;
-      will-change: transform, border-radius;
+      opacity: 0.52;
+      contain: layout style paint;
+      will-change: transform;
+      transform: translateZ(0);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .orb-gold {
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(245, 158, 11, 0.44) 0%, rgba(217, 119, 6, 0.12) 60%, transparent 100%);
-      top: -80px;
-      left: 14%;
-      animation: orbFloat1 18s ease-in-out infinite alternate, morphBlob 16s ease-in-out infinite alternate;
-      transform: translate(calc(var(--hero-tilt-x, 0) * 25px), calc(var(--hero-tilt-y, 0) * 25px));
-    }
-    .orb-blue {
-      width: 620px;
-      height: 620px;
-      background: radial-gradient(circle, rgba(37, 99, 235, 0.58) 0%, rgba(30, 64, 175, 0.22) 60%, transparent 100%);
-      bottom: -110px;
-      right: -80px;
-      animation: orbFloat2 22s ease-in-out infinite alternate, morphBlob 18s ease-in-out infinite alternate-reverse;
-      transform: translate(calc(var(--hero-tilt-x, 0) * -30px), calc(var(--hero-tilt-y, 0) * -30px));
-    }
-    .orb-cyan {
-      width: 440px;
-      height: 440px;
-      background: radial-gradient(circle, rgba(6, 182, 212, 0.38) 0%, rgba(59, 130, 246, 0.12) 60%, transparent 100%);
-      top: 32%;
-      left: 48%;
-      animation: orbFloat3 24s ease-in-out infinite alternate;
-      transform: translate(calc(var(--hero-tilt-x, 0) * 18px), calc(var(--hero-tilt-y, 0) * 18px));
-    }
-    .orb-indigo {
       width: 480px;
       height: 480px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.32) 0%, rgba(79, 70, 229, 0.08) 65%, transparent 100%);
-      bottom: 8%;
-      left: -110px;
-      animation: orbFloat1 20s ease-in-out infinite alternate-reverse;
-      transform: translate(calc(var(--hero-tilt-x, 0) * -22px), calc(var(--hero-tilt-y, 0) * -22px));
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.42) 0%, rgba(217, 119, 6, 0.1) 60%, transparent 100%);
+      top: -60px;
+      left: 14%;
+      animation: orbFloat1 20s ease-in-out infinite alternate;
     }
-    @keyframes morphBlob {
-      0%   { border-radius: 50%; }
-      33%  { border-radius: 60% 40% 70% 30% / 40% 60% 40% 60%; }
-      66%  { border-radius: 40% 60% 30% 70% / 60% 30% 70% 40%; }
-      100% { border-radius: 52% 48% 42% 58% / 54% 46% 54% 46%; }
+    .orb-blue {
+      width: 560px;
+      height: 560px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.48) 0%, rgba(30, 64, 175, 0.16) 60%, transparent 100%);
+      bottom: -90px;
+      right: -60px;
+      animation: orbFloat2 24s ease-in-out infinite alternate;
+    }
+    .orb-cyan {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.34) 0%, rgba(59, 130, 246, 0.1) 60%, transparent 100%);
+      top: 32%;
+      left: 48%;
+      animation: orbFloat3 26s ease-in-out infinite alternate;
+    }
+    .orb-indigo {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(79, 70, 229, 0.06) 65%, transparent 100%);
+      bottom: 8%;
+      left: -90px;
+      animation: orbFloat1 22s ease-in-out infinite alternate-reverse;
     }
     @keyframes orbFloat1 {
-      0%   { transform: translate(calc(var(--hero-tilt-x, 0) * 25px), calc(var(--hero-tilt-y, 0) * 25px)) scale(1); }
-      100% { transform: translate(calc(var(--hero-tilt-x, 0) * 25px + 70px), calc(var(--hero-tilt-y, 0) * 25px + 50px)) scale(1.12); }
+      0%   { transform: translate3d(calc(var(--hero-tilt-x, 0) * 15px), calc(var(--hero-tilt-y, 0) * 15px), 0) scale(1); }
+      100% { transform: translate3d(calc(var(--hero-tilt-x, 0) * 15px + 45px), calc(var(--hero-tilt-y, 0) * 15px + 35px), 0) scale(1.08); }
     }
     @keyframes orbFloat2 {
-      0%   { transform: translate(calc(var(--hero-tilt-x, 0) * -30px), calc(var(--hero-tilt-y, 0) * -30px)) scale(1); }
-      100% { transform: translate(calc(var(--hero-tilt-x, 0) * -30px - 60px), calc(var(--hero-tilt-y, 0) * -30px - 70px)) scale(1.1); }
+      0%   { transform: translate3d(calc(var(--hero-tilt-x, 0) * -18px), calc(var(--hero-tilt-y, 0) * -18px), 0) scale(1); }
+      100% { transform: translate3d(calc(var(--hero-tilt-x, 0) * -18px - 40px), calc(var(--hero-tilt-y, 0) * -18px - 45px), 0) scale(1.06); }
     }
     @keyframes orbFloat3 {
-      0%   { transform: translate(calc(var(--hero-tilt-x, 0) * 18px), calc(var(--hero-tilt-y, 0) * 18px)) scale(1); }
-      50%  { transform: translate(calc(var(--hero-tilt-x, 0) * 18px - 40px), calc(var(--hero-tilt-y, 0) * 18px + 30px)) scale(1.08); }
-      100% { transform: translate(calc(var(--hero-tilt-x, 0) * 18px + 30px), calc(var(--hero-tilt-y, 0) * 18px - 40px)) scale(0.96); }
+      0%   { transform: translate3d(calc(var(--hero-tilt-x, 0) * 12px), calc(var(--hero-tilt-y, 0) * 12px), 0) scale(1); }
+      50%  { transform: translate3d(calc(var(--hero-tilt-x, 0) * 12px - 25px), calc(var(--hero-tilt-y, 0) * 12px + 20px), 0) scale(1.05); }
+      100% { transform: translate3d(calc(var(--hero-tilt-x, 0) * 12px + 20px), calc(var(--hero-tilt-y, 0) * 12px - 25px), 0) scale(0.96); }
     }
 
     /* ── Cyber Grid Pattern & Beam Light Sweep ── */
@@ -1631,7 +1624,7 @@
       <a href="#" class="logo" id="logo">
         <div class="logo-icon">
           <!-- Image path updated for Laravel -->
-          <img src="{{ asset('images/logo.png') }}" alt="E-Barangay Logo">
+          <img src="{{ asset('images/logo.png') }}" alt="E-Barangay Logo" width="40" height="40" decoding="async">
         </div>
         <div class="logo-text">
           E-Barangay
@@ -1723,7 +1716,7 @@
             <div class="welcome-profile-wrap" id="welcomeProfileWrap">
               <button type="button" class="welcome-profile-btn" id="welcomeProfileBtn" aria-label="Open profile menu">
                 @if($navUser->profile_picture)
-                  <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-avatar">
+                  <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-avatar" width="34" height="34" decoding="async">
                 @else
                   <span class="welcome-profile-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
                 @endif
@@ -1733,7 +1726,7 @@
               <div class="welcome-dropdown welcome-profile-dropdown" id="welcomeProfileDropdown">
                 <div class="welcome-profile-card">
                   @if($navUser->profile_picture)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-card-avatar">
+                    <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-card-avatar" width="48" height="48" decoding="async">
                   @else
                     <span class="welcome-profile-card-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
                   @endif
@@ -1788,7 +1781,10 @@
        ============================ -->
   <section class="hero" id="hero">
     <div class="hero-bg" id="heroBg">
-      <img src="{{ asset('images/hero.png') }}" alt="Barangay Cogon East, Carmen, Cebu community" loading="eager">
+      <picture>
+        <source srcset="{{ asset('images/hero.webp') }}" type="image/webp">
+        <img src="{{ asset('images/hero.png') }}" alt="Barangay Cogon East, Carmen, Cebu community" loading="eager" fetchpriority="high">
+      </picture>
       <div class="hero-bg-vignette"></div>
 
       <!-- Interactive Cursor-Follow Spotlight -->
@@ -2338,7 +2334,7 @@
           <a href="#" class="logo">
             <div class="logo-icon">
               <!-- Image path updated for Laravel -->
-              <img src="{{ asset('images/logo.png') }}" alt="E-Barangay Logo">
+              <img src="{{ asset('images/logo.png') }}" alt="E-Barangay Logo" width="40" height="40" loading="lazy" decoding="async">
             </div>
             <div class="logo-text">
               E-Barangay
@@ -2404,7 +2400,7 @@
     <div class="chat-window" id="chatWindow">
       <div class="chat-header">
         <div class="chat-avatar istong-avatar">
-          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI" class="istong-avatar-img">
+          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI" class="istong-avatar-img" width="42" height="42" loading="lazy" decoding="async">
           <span class="avatar-ai-badge">AI</span>
         </div>
         <div class="chat-header-info">
@@ -2474,7 +2470,7 @@
       </div>
       <button class="chat-toggle" id="chatToggle" aria-label="Open Istong AI Assistant" title="Open Istong AI">
         <span class="chat-icon-avatar">
-          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI Mascot" class="chat-mascot-img">
+          <img src="{{ asset('images/fisherman.png') }}" alt="Istong AI Mascot" class="chat-mascot-img" width="38" height="38" loading="lazy" decoding="async">
         </span>
         <i class="icon-x chat-icon-close"></i>
       </button>

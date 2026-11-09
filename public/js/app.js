@@ -13,15 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const scrollThreshold = 60;
 
   const handleScroll = () => {
+    if (!header) return;
     if (window.scrollY > scrollThreshold) {
       header.classList.add('scrolled');
     } else {
       header.classList.remove('scrolled');
     }
   };
-
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  handleScroll();
 
   // ============================
   // Mobile menu toggle
@@ -50,11 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
             revealVisibleFadeElements();
           }
         }, 150);
-        setTimeout(() => {
-          if (typeof revealVisibleFadeElements === 'function') {
-            revealVisibleFadeElements();
-          }
-        }, 500);
       });
     });
   }
@@ -63,28 +56,50 @@ document.addEventListener('DOMContentLoaded', () => {
   // Active nav link highlighting
   // ============================
   const sections = document.querySelectorAll('section[id]');
-  const navLinksAll = navLinks.querySelectorAll('a');
+  const navLinksAll = navLinks ? navLinks.querySelectorAll('a') : [];
+
+  // Pre-calculate section offsets to avoid layout thrashing during scroll
+  let cachedSectionOffsets = [];
+  const updateSectionOffsets = () => {
+    cachedSectionOffsets = Array.from(sections).map(section => ({
+      id: section.getAttribute('id'),
+      top: section.offsetTop,
+      height: section.offsetHeight
+    }));
+  };
+  updateSectionOffsets();
+  window.addEventListener('resize', updateSectionOffsets, { passive: true });
 
   const highlightNavLink = () => {
+    if (!navLinksAll.length || !cachedSectionOffsets.length) return;
     const scrollPos = window.scrollY + 200;
 
-    sections.forEach(section => {
-      const top = section.offsetTop;
-      const height = section.offsetHeight;
-      const id = section.getAttribute('id');
-
-      if (scrollPos >= top && scrollPos < top + height) {
+    for (let i = 0; i < cachedSectionOffsets.length; i++) {
+      const sec = cachedSectionOffsets[i];
+      if (scrollPos >= sec.top && scrollPos < sec.top + sec.height) {
         navLinksAll.forEach(link => {
-          link.classList.remove('active');
-          if (link.getAttribute('href') === `#${id}`) {
-            link.classList.add('active');
-          }
+          link.classList.toggle('active', link.getAttribute('href') === `#${sec.id}`);
         });
+        break;
       }
-    });
+    }
   };
 
-  window.addEventListener('scroll', highlightNavLink, { passive: true });
+  // Unified high-performance scroll handler (at most 1 tick per animation frame)
+  let scrollTicking = false;
+  const onUnifiedScroll = () => {
+    if (!scrollTicking) {
+      requestAnimationFrame(() => {
+        handleScroll();
+        highlightNavLink();
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  };
+
+  window.addEventListener('scroll', onUnifiedScroll, { passive: true });
+  handleScroll();
 
   // ============================
   // Services Search/Filter
@@ -465,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fadeElements.forEach(el => fadeObserver.observe(el));
 
-  // Reveal elements immediately if they are in view (especially on anchor jump, responsive mode, or resize)
+  // Reveal elements immediately if they are in view (initial load or resize)
   function revealVisibleFadeElements() {
     const vh = window.innerHeight || document.documentElement.clientHeight;
     fadeElements.forEach(el => {
@@ -477,8 +492,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   revealVisibleFadeElements();
-  window.addEventListener('resize', revealVisibleFadeElements, { passive: true });
-  window.addEventListener('scroll', revealVisibleFadeElements, { passive: true });
+  let resizeFadeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeFadeTimer);
+    resizeFadeTimer = setTimeout(revealVisibleFadeElements, 150);
+  }, { passive: true });
+  // NOTE: Redundant scroll listener removed — IntersectionObserver natively observes all elements without forced reflow!
 
   // ============================
   // ISTONG AI CHAT WIDGET
@@ -746,49 +765,62 @@ Unsay ako ikatabang nimo karon? Pwede ka mangutana bahin sa:
     heroObserver.observe(heroSection);
 
     // Hero interactive background mouse tracking with smooth lerp
-    let targetX = 50, targetY = 45;
-    let currentX = 50, currentY = 45;
-    let isMoving = false;
-    let heroRaf = null;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth < 768;
 
-    const updateHeroPos = () => {
-      currentX += (targetX - currentX) * 0.08;
-      currentY += (targetY - currentY) * 0.08;
+    if (!prefersReducedMotion && !isTouchDevice) {
+      let targetX = 50, targetY = 45;
+      let currentX = 50, currentY = 45;
+      let isMoving = false;
+      let heroRaf = null;
+      let heroRect = null;
 
-      heroSection.style.setProperty('--hero-mouse-x', `${currentX.toFixed(2)}%`);
-      heroSection.style.setProperty('--hero-mouse-y', `${currentY.toFixed(2)}%`);
+      const updateHeroRect = () => {
+        if (heroSection) heroRect = heroSection.getBoundingClientRect();
+      };
 
-      // Tilt factor normalized from -1 to 1
-      const tiltX = ((currentX - 50) / 50).toFixed(3);
-      const tiltY = ((currentY - 50) / 50).toFixed(3);
-      heroSection.style.setProperty('--hero-tilt-x', tiltX);
-      heroSection.style.setProperty('--hero-tilt-y', tiltY);
+      const updateHeroPos = () => {
+        currentX += (targetX - currentX) * 0.08;
+        currentY += (targetY - currentY) * 0.08;
 
-      if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
-        heroRaf = requestAnimationFrame(updateHeroPos);
-      } else {
-        isMoving = false;
-      }
-    };
+        heroSection.style.setProperty('--hero-mouse-x', `${currentX.toFixed(2)}%`);
+        heroSection.style.setProperty('--hero-mouse-y', `${currentY.toFixed(2)}%`);
 
-    heroSection.addEventListener('mousemove', (e) => {
-      const rect = heroSection.getBoundingClientRect();
-      targetX = ((e.clientX - rect.left) / rect.width) * 100;
-      targetY = ((e.clientY - rect.top) / rect.height) * 100;
-      if (!isMoving) {
-        isMoving = true;
-        heroRaf = requestAnimationFrame(updateHeroPos);
-      }
-    }, { passive: true });
+        // Tilt factor normalized from -1 to 1
+        const tiltX = ((currentX - 50) / 50).toFixed(3);
+        const tiltY = ((currentY - 50) / 50).toFixed(3);
+        heroSection.style.setProperty('--hero-tilt-x', tiltX);
+        heroSection.style.setProperty('--hero-tilt-y', tiltY);
 
-    heroSection.addEventListener('mouseleave', () => {
-      targetX = 50;
-      targetY = 45;
-      if (!isMoving) {
-        isMoving = true;
-        heroRaf = requestAnimationFrame(updateHeroPos);
-      }
-    });
+        if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
+          heroRaf = requestAnimationFrame(updateHeroPos);
+        } else {
+          isMoving = false;
+        }
+      };
+
+      heroSection.addEventListener('mouseenter', updateHeroRect, { passive: true });
+      window.addEventListener('resize', updateHeroRect, { passive: true });
+
+      heroSection.addEventListener('mousemove', (e) => {
+        if (!heroRect) updateHeroRect();
+        targetX = ((e.clientX - heroRect.left) / heroRect.width) * 100;
+        targetY = ((e.clientY - heroRect.top) / heroRect.height) * 100;
+        if (!isMoving) {
+          isMoving = true;
+          heroRaf = requestAnimationFrame(updateHeroPos);
+        }
+      }, { passive: true });
+
+      heroSection.addEventListener('mouseleave', () => {
+        targetX = 50;
+        targetY = 45;
+        if (!isMoving) {
+          isMoving = true;
+          heroRaf = requestAnimationFrame(updateHeroPos);
+        }
+      });
+    }
   }
 
   // ============================

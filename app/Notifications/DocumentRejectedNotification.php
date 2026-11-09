@@ -47,3 +47,4 @@ class DocumentRejectedNotification extends Notification
         ];
     }
 }
+
