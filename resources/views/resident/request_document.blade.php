@@ -230,8 +230,8 @@
 
 /* ---- Payment Notice ---- */
 .payment-notice {
-    background: linear-gradient(135deg, #fef3c7, #fffbeb);
-    border: 1px solid #fcd34d;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
     border-radius: var(--radius-lg);
     padding: 14px 18px;
 }
@@ -382,15 +382,23 @@ html[data-bs-theme="dark"] .bp-modal-option .text-muted {
 /* Payment Notice in Dark Mode */
 html[data-theme="dark"] .payment-notice,
 html[data-bs-theme="dark"] .payment-notice {
-    background: rgba(245, 158, 11, 0.12) !important;
-    border-color: rgba(245, 158, 11, 0.35) !important;
-    color: #fde68a !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+    color: #bfdbfe !important;
 }
 html[data-theme="dark"] .payment-notice h6,
 html[data-bs-theme="dark"] .payment-notice h6,
 html[data-theme="dark"] .payment-notice .text-dark,
 html[data-bs-theme="dark"] .payment-notice .text-dark {
-    color: #fef08a !important;
+    color: #93c5fa !important;
+}
+html[data-theme="dark"] .payment-notice .text-muted,
+html[data-bs-theme="dark"] .payment-notice .text-muted {
+    color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .payment-notice i,
+html[data-bs-theme="dark"] .payment-notice i {
+    color: #60a5fa !important;
 }
 </style>
 
@@ -425,7 +433,7 @@ html[data-bs-theme="dark"] .payment-notice .text-dark {
 
         {{-- Payment Notice --}}
         <div class="payment-notice d-flex align-items-center gap-3 mb-4">
-            <i class="fa-solid fa-circle-info text-warning fs-5"></i>
+            <i class="fa-solid fa-circle-info text-primary fs-5"></i>
             <div>
                 <div class="fw-bold text-dark" style="font-size:13px;">Important Payment Notice</div>
                 <div class="text-muted" style="font-size:12px;">No online payment is required. Payment will be collected securely at the Barangay Office when you claim your physical document.</div>

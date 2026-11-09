@@ -117,3 +117,4 @@ class ResidentTrackRequestsCounterTest extends TestCase
         $apiResponse->assertJsonFragment(['active_count' => 0]);
     }
 }
+
