@@ -1765,11 +1765,124 @@
         body.sidebar-collapsed .sidebar-nav-spinner {
             display: none !important;
         }
+
+        /* ── Page Transition Blur Overlay & Load Animation ── */
+        #page-blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1025;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            background-color: rgba(248, 250, 251, 0);
+            transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        backdrop-filter 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        -webkit-backdrop-filter 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        visibility 0.22s ease,
+                        background-color 0.22s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 992px) {
+            #page-blur-overlay {
+                left: var(--r-sidebar-width, 260px);
+                width: calc(100vw - var(--r-sidebar-width, 260px));
+            }
+            body.r-sidebar-collapsed #page-blur-overlay {
+                left: 78px;
+                width: calc(100vw - 78px);
+            }
+        }
+
+        #page-blur-overlay.loading {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            background-color: rgba(248, 250, 251, 0.5);
+        }
+
+        html[data-theme="dark"] #page-blur-overlay.loading,
+        html[data-bs-theme="dark"] #page-blur-overlay.loading {
+            background-color: rgba(11, 17, 32, 0.55);
+        }
+
+        .page-blur-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.65rem 1.25rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 9999px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            transform: scale(0.92);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #page-blur-overlay.loading .page-blur-indicator {
+            transform: scale(1);
+        }
+
+        html[data-theme="dark"] .page-blur-indicator,
+        html[data-bs-theme="dark"] .page-blur-indicator {
+            background: rgba(19, 29, 49, 0.9);
+            border-color: rgba(51, 65, 85, 0.7);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+        }
+
+        .page-blur-spinner {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2.5px solid rgba(37, 99, 235, 0.2);
+            border-top-color: #2563eb;
+            border-right-color: #2563eb;
+            box-sizing: border-box;
+            animation: sidebar-spin 0.65s linear infinite;
+            flex-shrink: 0;
+        }
+
+        html[data-theme="dark"] .page-blur-spinner,
+        html[data-bs-theme="dark"] .page-blur-spinner {
+            border-color: rgba(56, 189, 248, 0.25);
+            border-top-color: #38bdf8;
+            border-right-color: #38bdf8;
+        }
+
+        .page-blur-text {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: 0.02em;
+        }
+
+        html[data-theme="dark"] .page-blur-text,
+        html[data-bs-theme="dark"] .page-blur-text {
+            color: #f1f5f9 !important;
+        }
     </style>
 </head>
 <body>
     <!-- Page Transition Loader -->
     <div id="page-loader-bar" aria-hidden="true"><div id="page-loader-fill"></div></div>
+    <!-- Page Transition Blur Overlay -->
+    <div id="page-blur-overlay" aria-hidden="true">
+        <div class="page-blur-indicator">
+            <div class="page-blur-spinner"></div>
+            <span class="page-blur-text">Loading...</span>
+        </div>
+    </div>
     {{-- Synchronous state check executed before first paint to prevent layout flash --}}
     <script>
         if (window.innerWidth >= 992 && localStorage.getItem('residentSidebarCollapsed') === 'true') {
@@ -2628,9 +2741,11 @@ $notification = $userNotifs[$n];
     <!-- Page Transition Loader Script -->
     <script>
     (function () {
-        var bar  = document.getElementById('page-loader-bar');
-        var fill = document.getElementById('page-loader-fill');
-        var loadTimer = null;
+        var bar         = document.getElementById('page-loader-bar');
+        var fill        = document.getElementById('page-loader-fill');
+        var blurOverlay = document.getElementById('page-blur-overlay');
+        var loadTimer   = null;
+        var blurTimer   = null;
 
         function startLoader(link) {
             if (bar && fill) {
@@ -2647,6 +2762,15 @@ $notification = $userNotifs[$n];
                         }, 1500);
                     });
                 });
+            }
+
+            // Screen blur overlay with slight load animation
+            if (blurOverlay) {
+                clearTimeout(blurTimer);
+                blurOverlay.classList.add('loading');
+                blurTimer = setTimeout(function () {
+                    blurOverlay.classList.remove('loading');
+                }, 8000);
             }
 
             // Sidebar loading circle at the right
@@ -2683,6 +2807,11 @@ $notification = $userNotifs[$n];
                     fill.style.transition = 'none';
                     fill.style.width = '0%';
                 }, 300);
+            }
+
+            if (blurOverlay) {
+                clearTimeout(blurTimer);
+                blurOverlay.classList.remove('loading');
             }
 
             document.querySelectorAll('.sidebar-nav-spinner').forEach(function (el) { el.remove(); });
