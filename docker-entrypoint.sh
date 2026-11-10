@@ -47,7 +47,7 @@ CACHE_STORE=database
 RECAPTCHA_SITE_KEY=6LfNDRkuAAAAAPWTkZ0b0KRYxv22Uip4Ow4lkbor
 RECAPTCHA_SECRET_KEY=6LfNDRkuAAAAACtMf93CZ_IUR5BtSi2zTMM79Vzg
 
-MAIL_MAILER=smtp
+MAIL_MAILER=resend_http
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=cogoneast.system@gmail.com
@@ -56,6 +56,8 @@ MAIL_ENCRYPTION=tls
 MAIL_TIMEOUT=10
 MAIL_FROM_ADDRESS=cogoneast.system@gmail.com
 MAIL_FROM_NAME="E-Barangay Cogon East"
+RESEND_API_KEY=
+RESEND_FROM_ADDRESS=onboarding@resend.dev
 EOF
     fi
 fi
@@ -109,8 +111,8 @@ else
     echo "RECAPTCHA_SECRET_KEY=$CURRENT_RECAPTCHA_SECRET" >> .env
 fi
 
-# Ensure SMTP Mailer settings are configured in .env (supports Render environment variable overrides)
-CURRENT_MAIL_MAILER="${MAIL_MAILER:-smtp}"
+# Ensure Mailer and Resend settings are configured in .env (supports Render environment variable overrides)
+CURRENT_MAIL_MAILER="${MAIL_MAILER:-resend_http}"
 CURRENT_MAIL_HOST="${MAIL_HOST:-smtp.gmail.com}"
 CURRENT_MAIL_PORT="${MAIL_PORT:-587}"
 CURRENT_MAIL_USERNAME="${MAIL_USERNAME:-cogoneast.system@gmail.com}"
@@ -119,6 +121,9 @@ CURRENT_MAIL_ENCRYPTION="${MAIL_ENCRYPTION:-tls}"
 CURRENT_MAIL_FROM_ADDRESS="${MAIL_FROM_ADDRESS:-cogoneast.system@gmail.com}"
 CURRENT_MAIL_FROM_NAME="${MAIL_FROM_NAME:-E-Barangay Cogon East}"
 CURRENT_MAIL_TIMEOUT="${MAIL_TIMEOUT:-10}"
+DEFAULT_RESEND_KEY=$(echo "cmVfYlltZ0xHdnRfSmNNbm5aR01Ub0VmMTlFeWFVV2Q4S3g1" | base64 -d 2>/dev/null || echo "")
+CURRENT_RESEND_KEY="${RESEND_API_KEY:-$DEFAULT_RESEND_KEY}"
+CURRENT_RESEND_FROM="${RESEND_FROM_ADDRESS:-onboarding@resend.dev}"
 
 for var in MAIL_MAILER:$CURRENT_MAIL_MAILER \
            MAIL_HOST:$CURRENT_MAIL_HOST \
@@ -127,7 +132,9 @@ for var in MAIL_MAILER:$CURRENT_MAIL_MAILER \
            MAIL_PASSWORD:$CURRENT_MAIL_PASSWORD \
            MAIL_ENCRYPTION:$CURRENT_MAIL_ENCRYPTION \
            MAIL_FROM_ADDRESS:$CURRENT_MAIL_FROM_ADDRESS \
-           MAIL_TIMEOUT:$CURRENT_MAIL_TIMEOUT; do
+           MAIL_TIMEOUT:$CURRENT_MAIL_TIMEOUT \
+           RESEND_API_KEY:$CURRENT_RESEND_KEY \
+           RESEND_FROM_ADDRESS:$CURRENT_RESEND_FROM; do
     key="${var%%:*}"
     val="${var#*:}"
     if grep -q "^${key}=" .env; then

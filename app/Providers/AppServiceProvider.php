@@ -27,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Register custom Resend HTTPS mail transport (works on Render free tier where SMTP ports are blocked)
+        \Illuminate\Support\Facades\Mail::extend('resend_http', function (array $config = []) {
+            $key = $config['key'] ?? config('services.resend.key') ?? env('RESEND_API_KEY');
+            return new \App\Mail\Transports\ResendHttpTransport($key);
+        });
+
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
            return (new MailMessage)
                ->subject('Action Required: Verify Your E-Barangay Account')

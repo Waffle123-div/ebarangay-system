@@ -360,54 +360,30 @@ class ResidentAuthController extends Controller
         if ($targetType === 'email') {
             $name = $request->first_name ?: 'Resident';
             $mailSent = false;
-            $mailError = null;
 
-            // 1. Try Resend HTTP API (Port 443 HTTPS - never blocked by cloud firewalls like Render)
-            $resendKey = config('services.resend.key') ?? env('RESEND_API_KEY');
-            if (filled($resendKey)) {
-                try {
-                    $this->sendViaResend($target, $name, $code, $resendKey);
-                    $mailSent = true;
-                } catch (\Throwable $e) {
-                    $mailError = $e->getMessage();
-                    \Illuminate\Support\Facades\Log::error('Resend API Email Failed: ' . $e->getMessage());
+            try {
+                Mail::to($target)->send(new RegistrationOtpMail($code, $name));
+                $mailSent = true;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Registration OTP Standard Mailer Failed: ' . $e->getMessage());
+
+                // Direct fallback using Resend HTTP API
+                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY');
+                if (filled($resendKey)) {
+                    try {
+                        $this->sendViaResend($target, $name, $code, $resendKey);
+                        $mailSent = true;
+                    } catch (\Throwable $ex) {
+                        \Illuminate\Support\Facades\Log::error('Resend Direct API Fallback Failed: ' . $ex->getMessage());
+                    }
                 }
             }
 
-            // 2. Try Brevo HTTP API (Port 443 HTTPS)
-            $brevoKey = config('services.brevo.key') ?? env('BREVO_API_KEY');
-            if (!$mailSent && filled($brevoKey)) {
-                try {
-                    $this->sendViaBrevo($target, $name, $code, $brevoKey);
-                    $mailSent = true;
-                } catch (\Throwable $e) {
-                    $mailError = $e->getMessage();
-                    \Illuminate\Support\Facades\Log::error('Brevo API Email Failed: ' . $e->getMessage());
-                }
-            }
-
-            // 3. Try standard Laravel Mailer (SMTP on port 587)
-            if (!$mailSent) {
-                try {
-                    Mail::to($target)->send(new RegistrationOtpMail($code, $name));
-                    $mailSent = true;
-                } catch (\Throwable $e) {
-                    $mailError = $e->getMessage();
-                    \Illuminate\Support\Facades\Log::error('Registration OTP Email Failed: ' . $e->getMessage());
-                }
-            }
-
-            // 4. Fallback if outbound SMTP is blocked by cloud provider (e.g. Render free tier firewall on port 587)
             if (!$mailSent) {
                 return response()->json([
-                    'success'        => true,
-                    'warning'        => 'Email delivery timed out (Render free tier blocks SMTP port 587).',
-                    'message'        => "Render free tier blocks outbound SMTP port 587. Your verification code is: {$code}",
-                    'demo_code'      => $code,
-                    'target'         => $target,
-                    'target_type'    => $targetType,
-                    'display_target' => $target
-                ]);
+                    'success' => false,
+                    'message' => 'Failed to send verification email. Please check your email address and try again.'
+                ], 422);
             }
         } else {
             $message = "E-Barangay: {$code} is your verification code to continue registration. Valid for 15 minutes.";
@@ -887,7 +863,7 @@ class ResidentAuthController extends Controller
             'name' => $name,
         ])->render();
 
-        $fromAddress = env('RESEND_FROM_ADDRESS', 'onboarding@resend.dev');
+        $fromAddress = config('services.resend.from_address') ?: env('RESEND_FROM_ADDRESS', 'onboarding@resend.dev');
         $fromName = config('mail.from.name', 'E-Barangay Cogon East');
 
         $response = Http::withToken($apiKey)
