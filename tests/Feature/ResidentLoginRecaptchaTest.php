@@ -52,5 +52,25 @@ class ResidentLoginRecaptchaTest extends TestCase
         // Should not have recaptcha error (only credential error)
         $response->assertSessionDoesntHaveErrors(['g-recaptcha-response']);
     }
+
+    public function test_resident_login_validation_passes_when_enterprise_token_submitted(): void
+    {
+        Config::set('services.recaptcha.secret_key', 'test_secret_key');
+
+        Http::fake([
+            'https://www.google.com/recaptcha/api/siteverify' => Http::response([
+                'success' => false,
+                'error-codes' => ['invalid-input-response'],
+            ], 200),
+        ]);
+
+        $response = $this->post(route('resident.login.submit'), [
+            'email' => 'nonexistent@example.com',
+            'password' => 'wrongpass',
+            'g-recaptcha-response' => str_repeat('A', 50),
+        ]);
+
+        $response->assertSessionDoesntHaveErrors(['g-recaptcha-response']);
+    }
 }
 
