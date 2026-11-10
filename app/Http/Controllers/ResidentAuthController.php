@@ -411,7 +411,8 @@ class ResidentAuthController extends Controller
             'message'        => 'Verification code sent successfully.',
             'target'         => $target,
             'target_type'    => $targetType,
-            'display_target' => $targetType === 'email' ? $target : preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $target)
+            'display_target' => $targetType === 'email' ? $target : preg_replace('/(\d{3})\d{4}(\d{4})/', '$1****$2', $target),
+            'csrf_token'     => csrf_token(),
         ]);
     }
 
@@ -482,6 +483,7 @@ class ResidentAuthController extends Controller
             'success'         => true,
             'message'         => 'Identity verified successfully!',
             'verified_target' => $target,
+            'csrf_token'      => csrf_token(),
         ]);
     }
 

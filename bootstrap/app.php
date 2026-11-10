@@ -22,10 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('resident.login');
         });
 
-        // Exclude logout routes from CSRF to avoid 419 page expired when sessions time out
+        // Exclude logout, public OTP verification, and stateless routes from CSRF to avoid 419 token mismatch across deploys
         $middleware->validateCsrfTokens(except: [
             'resident/logout',
             'admin/logout',
+            'resident/register/send-otp',
+            'resident/register/verify-otp',
+            'resident/settings/send-otp',
+            'resident/settings/verify-otp',
         ]);
 
         // NEW: Registering our custom PIN security middleware alias!

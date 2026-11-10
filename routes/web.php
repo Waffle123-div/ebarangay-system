@@ -35,6 +35,11 @@ Route::get('/home', function () {
     return view('welcome');
 });
 
+// CSRF Token refresh endpoint
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->name('csrf_token');
+
 // ==========================================
 // GOOGLE AUTHENTICATION ROUTES
 // ==========================================
