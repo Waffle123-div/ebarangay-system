@@ -46,6 +46,16 @@ CACHE_STORE=database
 
 RECAPTCHA_SITE_KEY=6LfNDRkuAAAAAPWTkZ0b0KRYxv22Uip4Ow4lkbor
 RECAPTCHA_SECRET_KEY=6LfNDRkuAAAAACtMf93CZ_IUR5BtSi2zTMM79Vzg
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=cogoneast.system@gmail.com
+MAIL_PASSWORD=jydkmltxbnpnbfkx
+MAIL_ENCRYPTION=tls
+MAIL_TIMEOUT=10
+MAIL_FROM_ADDRESS=cogoneast.system@gmail.com
+MAIL_FROM_NAME="E-Barangay Cogon East"
 EOF
     fi
 fi
@@ -97,6 +107,40 @@ if grep -q "^RECAPTCHA_SECRET_KEY=" .env; then
     sed -i "s|^RECAPTCHA_SECRET_KEY=.*|RECAPTCHA_SECRET_KEY=$CURRENT_RECAPTCHA_SECRET|" .env
 else
     echo "RECAPTCHA_SECRET_KEY=$CURRENT_RECAPTCHA_SECRET" >> .env
+fi
+
+# Ensure SMTP Mailer settings are configured in .env (supports Render environment variable overrides)
+CURRENT_MAIL_MAILER="${MAIL_MAILER:-smtp}"
+CURRENT_MAIL_HOST="${MAIL_HOST:-smtp.gmail.com}"
+CURRENT_MAIL_PORT="${MAIL_PORT:-587}"
+CURRENT_MAIL_USERNAME="${MAIL_USERNAME:-cogoneast.system@gmail.com}"
+CURRENT_MAIL_PASSWORD="${MAIL_PASSWORD:-jydkmltxbnpnbfkx}"
+CURRENT_MAIL_ENCRYPTION="${MAIL_ENCRYPTION:-tls}"
+CURRENT_MAIL_FROM_ADDRESS="${MAIL_FROM_ADDRESS:-cogoneast.system@gmail.com}"
+CURRENT_MAIL_FROM_NAME="${MAIL_FROM_NAME:-E-Barangay Cogon East}"
+CURRENT_MAIL_TIMEOUT="${MAIL_TIMEOUT:-10}"
+
+for var in MAIL_MAILER:$CURRENT_MAIL_MAILER \
+           MAIL_HOST:$CURRENT_MAIL_HOST \
+           MAIL_PORT:$CURRENT_MAIL_PORT \
+           MAIL_USERNAME:$CURRENT_MAIL_USERNAME \
+           MAIL_PASSWORD:$CURRENT_MAIL_PASSWORD \
+           MAIL_ENCRYPTION:$CURRENT_MAIL_ENCRYPTION \
+           MAIL_FROM_ADDRESS:$CURRENT_MAIL_FROM_ADDRESS \
+           MAIL_TIMEOUT:$CURRENT_MAIL_TIMEOUT; do
+    key="${var%%:*}"
+    val="${var#*:}"
+    if grep -q "^${key}=" .env; then
+        sed -i "s|^${key}=.*|${key}=${val}|" .env
+    else
+        echo "${key}=${val}" >> .env
+    fi
+done
+
+if grep -q "^MAIL_FROM_NAME=" .env; then
+    sed -i "s|^MAIL_FROM_NAME=.*|MAIL_FROM_NAME=\"${CURRENT_MAIL_FROM_NAME}\"|" .env
+else
+    echo "MAIL_FROM_NAME=\"${CURRENT_MAIL_FROM_NAME}\"" >> .env
 fi
 
 # Determine database connection (defaults to sqlite for frictionless zero-config deploy)
