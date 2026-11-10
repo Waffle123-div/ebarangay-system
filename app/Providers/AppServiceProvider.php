@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register custom Resend HTTPS mail transport (works on Render free tier where SMTP ports are blocked)
         \Illuminate\Support\Facades\Mail::extend('resend_http', function (array $config = []) {
-            $key = $config['key'] ?? config('services.resend.key') ?? env('RESEND_API_KEY');
+            $key = $config['key'] ?? config('services.resend.key') ?? env('RESEND_API_KEY') ?? env('RESEND_KEY');
             return new \App\Mail\Transports\ResendHttpTransport($key);
         });
 

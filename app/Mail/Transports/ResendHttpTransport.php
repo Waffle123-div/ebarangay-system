@@ -17,7 +17,7 @@ class ResendHttpTransport extends AbstractTransport
     public function __construct(?string $apiKey = null)
     {
         parent::__construct();
-        $this->apiKey = $apiKey ?: (string) (config('services.resend.key') ?? env('RESEND_API_KEY'));
+        $this->apiKey = $apiKey ?: (string) (config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY') ?: env('RESEND_TOKEN'));
     }
 
     /**

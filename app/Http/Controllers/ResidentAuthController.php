@@ -355,7 +355,7 @@ class ResidentAuthController extends Controller
                 \Illuminate\Support\Facades\Log::error('Registration OTP Standard Mailer Failed: ' . $e->getMessage());
 
                 // Direct fallback using Resend HTTP API
-                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY');
+                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
                 if (filled($resendKey)) {
                     try {
                         $this->sendViaResend($target, $name, $code, $resendKey);
@@ -368,14 +368,20 @@ class ResidentAuthController extends Controller
             }
 
             if (!$mailSent) {
-                $errorMessage = 'Failed to send verification email. Please check your email address and try again.';
+                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
+                $keyHint = blank($resendKey) ? 'RESEND_API_KEY is not set in Render environment.' : 'Configured Key: ' . substr($resendKey, 0, 7) . '...';
+
+                $errorMessage = 'Failed to send verification email: ' . ($mailError ?: $keyHint);
                 if (str_contains((string)$mailError, '401') || str_contains((string)$mailError, 'API key')) {
-                    $errorMessage = 'Email service authorization error: Resend API key is invalid or revoked. Please set a new RESEND_API_KEY in Render environment variables.';
+                    $errorMessage = "Email delivery error: Resend API key is invalid or revoked ({$keyHint}). Please verify your key at resend.com/api-keys and update RESEND_API_KEY in Render.";
+                } elseif (str_contains((string)$mailError, '403') || str_contains((string)$mailError, 'only send testing emails')) {
+                    $errorMessage = "Resend Free Tier notice: You can only send to the email address registered on your Resend account. ({$mailError})";
                 }
 
                 return response()->json([
                     'success' => false,
-                    'message' => $errorMessage
+                    'message' => $errorMessage,
+                    'mail_error' => $mailError,
                 ], 422);
             }
         } else {
