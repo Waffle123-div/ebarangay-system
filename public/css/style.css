@@ -2664,6 +2664,28 @@ section[id] {
 }
 
 @media (max-width: 768px) {
+  /* Mobile performance: freeze background blobs & disable heavy backdrop blurs */
+  .bg-blobs .blob {
+    animation: none !important;
+    filter: blur(16px) !important;
+    opacity: 0.08 !important;
+    will-change: auto !important;
+    transform: none !important;
+  }
+  .header.scrolled {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+  }
+  [data-theme="dark"] .header.scrolled {
+    background: rgba(15, 23, 42, 0.96) !important;
+  }
+  .emergency-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+
   .nav-links {
     position: fixed;
     inset: 0;

@@ -1008,6 +1008,98 @@
         width: 100%;
         height: 1px;
       }
+
+      /* ── Mobile Performance & 60 FPS Scrolling Optimizations ── */
+      /* 1. Eliminate heavy offscreen rotating rings, particle drift, and light beam */
+      .hero-bg-ring,
+      .hero-particles,
+      .hero-grid-beam {
+        display: none !important;
+      }
+
+      /* 2. Freeze moving orbs & background blobs into static cached layers */
+      .hero-ambient-orb {
+        animation: none !important;
+        filter: blur(14px) !important;
+        opacity: 0.35 !important;
+        will-change: auto !important;
+        transform: none !important;
+      }
+      .bg-blobs .blob {
+        animation: none !important;
+        filter: blur(16px) !important;
+        opacity: 0.08 !important;
+        will-change: auto !important;
+        transform: none !important;
+      }
+
+      /* 3. Eliminate expensive multi-pass Gaussian backdrop-filter blurs on mobile.
+            Replace with crisp frosted color fills with zero GPU shader overhead. */
+      .hero-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(15, 23, 42, 0.78) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+      }
+      .hero-card:hover {
+        background: rgba(15, 23, 42, 0.92) !important;
+      }
+      .hero-stats-dock {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(15, 23, 42, 0.82) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      }
+      .hero-quick-track-bar {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+      }
+      .hero-badge {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(15, 23, 42, 0.75) !important;
+      }
+      .btn-hero-glass {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.16) !important;
+      }
+      .chat-pill {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+      }
+      .chat-toggle {
+        animation: none !important;
+      }
+      .header.scrolled {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.96) !important;
+      }
+      [data-theme="dark"] .header.scrolled {
+        background: rgba(15, 23, 42, 0.96) !important;
+      }
+      .emergency-card {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-bg-ring,
+      .hero-particles,
+      .hero-grid-beam {
+        display: none !important;
+      }
+      .hero-ambient-orb,
+      .blob,
+      .chat-toggle,
+      .chat-pill-sparkle {
+        animation: none !important;
+      }
     }
 
     /* Small Mobile (<= 640px) */
