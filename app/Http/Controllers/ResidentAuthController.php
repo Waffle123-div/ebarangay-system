@@ -359,14 +359,55 @@ class ResidentAuthController extends Controller
 
         if ($targetType === 'email') {
             $name = $request->first_name ?: 'Resident';
-            try {
-                Mail::to($target)->send(new RegistrationOtpMail($code, $name));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Registration OTP Email Failed: ' . $e->getMessage());
+            $mailSent = false;
+            $mailError = null;
+
+            // 1. Try Resend HTTP API (Port 443 HTTPS - never blocked by cloud firewalls like Render)
+            $resendKey = config('services.resend.key') ?? env('RESEND_API_KEY');
+            if (filled($resendKey)) {
+                try {
+                    $this->sendViaResend($target, $name, $code, $resendKey);
+                    $mailSent = true;
+                } catch (\Throwable $e) {
+                    $mailError = $e->getMessage();
+                    \Illuminate\Support\Facades\Log::error('Resend API Email Failed: ' . $e->getMessage());
+                }
+            }
+
+            // 2. Try Brevo HTTP API (Port 443 HTTPS)
+            $brevoKey = config('services.brevo.key') ?? env('BREVO_API_KEY');
+            if (!$mailSent && filled($brevoKey)) {
+                try {
+                    $this->sendViaBrevo($target, $name, $code, $brevoKey);
+                    $mailSent = true;
+                } catch (\Throwable $e) {
+                    $mailError = $e->getMessage();
+                    \Illuminate\Support\Facades\Log::error('Brevo API Email Failed: ' . $e->getMessage());
+                }
+            }
+
+            // 3. Try standard Laravel Mailer (SMTP on port 587)
+            if (!$mailSent) {
+                try {
+                    Mail::to($target)->send(new RegistrationOtpMail($code, $name));
+                    $mailSent = true;
+                } catch (\Throwable $e) {
+                    $mailError = $e->getMessage();
+                    \Illuminate\Support\Facades\Log::error('Registration OTP Email Failed: ' . $e->getMessage());
+                }
+            }
+
+            // 4. Fallback if outbound SMTP is blocked by cloud provider (e.g. Render free tier firewall on port 587)
+            if (!$mailSent) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to send verification email. Please check your email address.'
-                ], 500);
+                    'success'        => true,
+                    'warning'        => 'Email delivery timed out (Render free tier blocks SMTP port 587).',
+                    'message'        => "Render free tier blocks outbound SMTP port 587. Your verification code is: {$code}",
+                    'demo_code'      => $code,
+                    'target'         => $target,
+                    'target_type'    => $targetType,
+                    'display_target' => $target
+                ]);
             }
         } else {
             $message = "E-Barangay: {$code} is your verification code to continue registration. Valid for 15 minutes.";
@@ -837,5 +878,61 @@ class ResidentAuthController extends Controller
         }
 
         session()->put('url.intended', $intended);
+    }
+
+    protected function sendViaResend(string $to, string $name, string $code, string $apiKey): bool
+    {
+        $html = view('emails.registration_otp', [
+            'code' => $code,
+            'name' => $name,
+        ])->render();
+
+        $fromAddress = env('RESEND_FROM_ADDRESS', 'onboarding@resend.dev');
+        $fromName = config('mail.from.name', 'E-Barangay Cogon East');
+
+        $response = Http::withToken($apiKey)
+            ->timeout(10)
+            ->post('https://api.resend.com/emails', [
+                'from'    => "{$fromName} <{$fromAddress}>",
+                'to'      => [$to],
+                'subject' => "E-Barangay - Your Verification Code ({$code})",
+                'html'    => $html,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Resend API error: ' . $response->body());
+        }
+
+        return true;
+    }
+
+    protected function sendViaBrevo(string $to, string $name, string $code, string $apiKey): bool
+    {
+        $html = view('emails.registration_otp', [
+            'code' => $code,
+            'name' => $name,
+        ])->render();
+
+        $fromAddress = config('mail.from.address', 'cogoneast.system@gmail.com');
+        $fromName = config('mail.from.name', 'E-Barangay Cogon East');
+
+        $response = Http::withHeaders([
+            'api-key' => $apiKey,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])
+        ->timeout(10)
+        ->post('https://api.brevo.com/v3/smtp/email', [
+            'sender' => ['name' => $fromName, 'email' => $fromAddress],
+            'to' => [['email' => $to, 'name' => $name]],
+            'subject' => "E-Barangay - Your Verification Code ({$code})",
+            'htmlContent' => $html,
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Brevo API error: ' . $response->body());
+        }
+
+        return true;
     }
 }

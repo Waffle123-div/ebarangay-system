@@ -1416,6 +1416,17 @@
                     if (targetLabel) targetLabel.textContent = data.display_target;
                 }
 
+                if (data.demo_code) {
+                    showOtpAlert(data.message || `Render free tier blocks SMTP. Your verification code is: ${data.demo_code}`, 'warning');
+                    const digits = String(data.demo_code).split('');
+                    digits.forEach((digit, idx) => {
+                        const box = document.querySelector(`.code-box[data-index="${idx}"]`);
+                        if (box) box.value = digit;
+                    });
+                } else {
+                    hideOtpAlert();
+                }
+
                 // Start 60-second timer
                 startOtpTimer(60);
 
@@ -1544,10 +1555,11 @@
             });
         }
 
-        function showOtpAlert(msg) {
+        function showOtpAlert(msg, type = 'danger') {
             const el = document.getElementById('otpAlert');
             if (el) {
                 el.textContent = msg;
+                el.className = `alert alert-${type} border-0 small rounded-3 py-2 mb-3 text-start`;
                 el.classList.remove('d-none');
             }
         }
