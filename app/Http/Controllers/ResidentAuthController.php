@@ -345,10 +345,13 @@ class ResidentAuthController extends Controller
             $name = $request->first_name ?: 'Resident';
             $mailSent = false;
 
+            $mailError = null;
+
             try {
                 Mail::to($target)->send(new RegistrationOtpMail($code, $name));
                 $mailSent = true;
             } catch (\Throwable $e) {
+                $mailError = $e->getMessage();
                 \Illuminate\Support\Facades\Log::error('Registration OTP Standard Mailer Failed: ' . $e->getMessage());
 
                 // Direct fallback using Resend HTTP API
@@ -358,15 +361,21 @@ class ResidentAuthController extends Controller
                         $this->sendViaResend($target, $name, $code, $resendKey);
                         $mailSent = true;
                     } catch (\Throwable $ex) {
+                        $mailError = $ex->getMessage();
                         \Illuminate\Support\Facades\Log::error('Resend Direct API Fallback Failed: ' . $ex->getMessage());
                     }
                 }
             }
 
             if (!$mailSent) {
+                $errorMessage = 'Failed to send verification email. Please check your email address and try again.';
+                if (str_contains((string)$mailError, '401') || str_contains((string)$mailError, 'API key')) {
+                    $errorMessage = 'Email service authorization error: Resend API key is invalid or revoked. Please set a new RESEND_API_KEY in Render environment variables.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to send verification email. Please check your email address and try again.'
+                    'message' => $errorMessage
                 ], 422);
             }
         } else {
