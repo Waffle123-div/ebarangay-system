@@ -59,7 +59,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}" data-callback="hideRecaptchaWarning"></div>
+                            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}" data-callback="hideRecaptchaWarning"></div>
                             
                             <div id="recaptchaWarning" class="text-danger small mt-2 d-none fw-semibold">
                                 <i class="fa-solid fa-triangle-exclamation me-1"></i> Please check the "I'm not a robot" box first.

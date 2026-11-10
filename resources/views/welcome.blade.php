@@ -1586,7 +1586,7 @@
       }
     }
   </style>
-  @if(env('RECAPTCHA_SITE_KEY'))
+  @if(config('services.recaptcha.site_key'))
   <script>
     window.welcomeRecaptchaReady = false;
     window.onWelcomeRecaptchaLoad = function () {

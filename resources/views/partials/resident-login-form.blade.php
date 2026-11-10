@@ -59,7 +59,7 @@
         @endif
     </div>
 
-    @php $recaptchaSiteKey = env('RECAPTCHA_SITE_KEY'); @endphp
+    @php $recaptchaSiteKey = config('services.recaptcha.site_key'); @endphp
     @if($recaptchaSiteKey)
         <div class="{{ $ajaxMode ? 'form-group' : 'mb-3 d-flex justify-content-center' }}">
             @if($ajaxMode)

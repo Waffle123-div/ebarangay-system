@@ -46,4 +46,9 @@ return [
         'device_id' => env('TEXTBEE_DEVICE_ID'),
     ],
 
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY', '6LfIvBgtAAAAADIcB_P7allPurHqezHZc1LAuTne'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY', '6LfIvBgtAAAAAPq-y3yYO84snWTdKAd4mrpFaKuZ'),
+    ],
+
 ];

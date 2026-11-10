@@ -36,14 +36,18 @@ class ResidentAuthController extends Controller
             'password' => ['required'],
         ];
 
-        if (filled(env('RECAPTCHA_SECRET_KEY'))) {
+        if (filled(config('services.recaptcha.secret_key'))) {
             $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) {
-                $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                    'secret' => env('RECAPTCHA_SECRET_KEY'),
-                    'response' => $value,
-                ]);
-                if (! $response->json('success')) {
-                    $fail('Please complete the reCAPTCHA verification.');
+                try {
+                    $response = Http::asForm()->timeout(5)->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => config('services.recaptcha.secret_key'),
+                        'response' => $value,
+                    ]);
+                    if (! $response->json('success')) {
+                        $fail('Please complete the reCAPTCHA verification.');
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('reCAPTCHA verification connection issue: ' . $e->getMessage());
                 }
             }];
         }
@@ -110,14 +114,18 @@ class ResidentAuthController extends Controller
             'login_id' => ['required'],
         ];
 
-        if (!app()->environment('local')) {
+        if (!app()->environment(['local', 'testing']) && filled(config('services.recaptcha.secret_key'))) {
             $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) {
-                $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                    'secret' => env('RECAPTCHA_SECRET_KEY'),
-                    'response' => $value,
-                ]);
-                if (! $response->json('success')) {
-                    $fail('Please complete the CAPTCHA to prove you are a human.');
+                try {
+                    $response = Http::asForm()->timeout(5)->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => config('services.recaptcha.secret_key'),
+                        'response' => $value,
+                    ]);
+                    if (! $response->json('success')) {
+                        $fail('Please complete the CAPTCHA to prove you are a human.');
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('reCAPTCHA verification connection issue: ' . $e->getMessage());
                 }
             }];
         }

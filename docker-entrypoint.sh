@@ -43,6 +43,9 @@ FILESYSTEM_DISK=public
 QUEUE_CONNECTION=database
 
 CACHE_STORE=database
+
+RECAPTCHA_SITE_KEY=6LfIvBgtAAAAADIcB_P7allPurHqezHZc1LAuTne
+RECAPTCHA_SECRET_KEY=6LfIvBgtAAAAAPq-y3yYO84snWTdKAd4mrpFaKuZ
 EOF
     fi
 fi
@@ -78,6 +81,22 @@ else
             echo "APP_KEY=$DEFAULT_PERSISTENT_KEY" >> .env
         fi
     fi
+fi
+
+# Ensure reCAPTCHA keys are configured in .env (supports Render environment variable overrides)
+CURRENT_RECAPTCHA_SITE="${RECAPTCHA_SITE_KEY:-6LfIvBgtAAAAADIcB_P7allPurHqezHZc1LAuTne}"
+CURRENT_RECAPTCHA_SECRET="${RECAPTCHA_SECRET_KEY:-6LfIvBgtAAAAAPq-y3yYO84snWTdKAd4mrpFaKuZ}"
+
+if grep -q "^RECAPTCHA_SITE_KEY=" .env; then
+    sed -i "s|^RECAPTCHA_SITE_KEY=.*|RECAPTCHA_SITE_KEY=$CURRENT_RECAPTCHA_SITE|" .env
+else
+    echo "RECAPTCHA_SITE_KEY=$CURRENT_RECAPTCHA_SITE" >> .env
+fi
+
+if grep -q "^RECAPTCHA_SECRET_KEY=" .env; then
+    sed -i "s|^RECAPTCHA_SECRET_KEY=.*|RECAPTCHA_SECRET_KEY=$CURRENT_RECAPTCHA_SECRET|" .env
+else
+    echo "RECAPTCHA_SECRET_KEY=$CURRENT_RECAPTCHA_SECRET" >> .env
 fi
 
 # Determine database connection (defaults to sqlite for frictionless zero-config deploy)
