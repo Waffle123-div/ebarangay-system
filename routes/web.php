@@ -69,9 +69,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
 
-    // Secure Resident Selfie & ID Document Routes for Staff
+    // Secure Resident Selfie, ID Document, & Attachment Routes for Staff
     Route::get('/resident-selfie/{filename}', [AdminDashboardController::class, 'showSelfie'])->name('resident.selfie');
     Route::get('/resident-id-document/{user}/{filename?}', [AdminDashboardController::class, 'showIdDocument'])->name('resident.id_document');
+    Route::get('/requests/{documentRequest}/attachment/{index}/{filename?}', [AdminDashboardController::class, 'showRequestAttachment'])
+        ->whereNumber('index')
+        ->name('requests.attachment');
 
     // Document Generation Route
     Route::get('/requests/generate/{id}', [AdminDashboardController::class, 'generateWord'])->name('requests.generate');
@@ -111,6 +114,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 
     // Community Concerns
     Route::get('/concerns', [AdminDashboardController::class, 'concerns'])->name('concerns');
+    Route::get('/concerns/{concern}/photo/{filename?}', [AdminDashboardController::class, 'showConcernPhoto'])->name('concerns.photo');
     Route::patch('/concerns/{id}', [AdminDashboardController::class, 'updateConcern'])->name('concerns.update');
 
     // Document Types Catalog / Document Management (CRUD)
@@ -270,6 +274,7 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
 
     // Community Concerns
     Route::get('/community-concerns', [ResidentDashboardController::class, 'communityConcerns'])->name('concerns');
+    Route::get('/community-concerns/{concern}/photo/{filename?}', [ResidentDashboardController::class, 'showConcernPhoto'])->name('concerns.photo');
     Route::post('/community-concerns', [ResidentDashboardController::class, 'storeConcern'])->name('concern.store');
     
     // Form Submission Route
@@ -296,6 +301,9 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     // RESIDENT SETTINGS ROUTES
     // ==========================================
     Route::get('/settings', [ResidentSettingsController::class, 'index'])->name('settings');
+    Route::get('/settings/file/{type}/{filename?}', [ResidentSettingsController::class, 'showFile'])
+        ->whereIn('type', ['profile_picture', 'id_photo'])
+        ->name('settings.file');
     Route::post('/settings/send-otp', [ResidentSettingsController::class, 'sendOtp'])->name('settings.send_otp');
     Route::post('/settings/verify-otp', [ResidentSettingsController::class, 'verifyOtp'])->name('settings.verify_otp');
     Route::post('/settings/profile', [ResidentSettingsController::class, 'updateProfile'])->name('settings.profile');

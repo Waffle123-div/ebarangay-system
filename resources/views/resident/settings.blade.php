@@ -463,7 +463,12 @@
                             <div class="settings-card-body d-flex align-items-center gap-4">
                                 <div class="avatar-wrap">
                                     @if($user->profile_picture)
-                                        <img src="{{ Storage::url($user->profile_picture) }}"
+                                        @php
+                                            $profilePictureUrl = filter_var($user->profile_picture, FILTER_VALIDATE_URL)
+                                                ? $user->profile_picture
+                                                : route('resident.settings.file', ['type' => 'profile_picture', 'filename' => basename(str_replace('\\', '/', $user->profile_picture))]);
+                                        @endphp
+                                        <img src="{{ $profilePictureUrl }}"
                                              alt="Profile Picture" class="avatar-circle" id="avatarPreview">
                                     @else
                                         <div class="avatar-placeholder" id="avatarPlaceholder">
@@ -1028,7 +1033,12 @@
                                 <div class="p-3 rounded-3 mb-4" style="background:#f9fafb;border:1.5px solid #e5e7eb;">
                                     <div class="row align-items-center">
                                         <div class="col-md-3 text-center mb-3 mb-md-0">
-                                            <img src="{{ Storage::url($user->id_photo) }}"
+                                            @php
+                                                $residentIdPhotoUrl = filter_var($user->id_photo, FILTER_VALIDATE_URL)
+                                                    ? $user->id_photo
+                                                    : route('resident.settings.file', ['type' => 'id_photo', 'filename' => basename(str_replace('\\', '/', $user->id_photo))]);
+                                            @endphp
+                                            <img src="{{ $residentIdPhotoUrl }}"
                                                  alt="Valid ID" class="rounded-3 shadow-sm"
                                                  style="max-width:100%;max-height:140px;object-fit:cover;border:2px solid #e5e7eb;">
                                         </div>

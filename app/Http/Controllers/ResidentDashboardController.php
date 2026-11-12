@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
 use App\Models\BarangaySetting;
+use App\Models\CommunityConcern;
+use App\Services\StoredFileService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -478,5 +480,23 @@ class ResidentDashboardController extends Controller
         $log->save();
 
         return back()->with('success', 'Your community concern has been submitted successfully!');
+    }
+
+    /**
+     * Stream the authenticated resident's own community concern attachment without relying on public/storage symlinks.
+     */
+    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, StoredFileService $storedFileService = null)
+    {
+        if ((int) $concern->user_id !== (int) Auth::id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+
+        return $storedFileService->serve(
+            $concern->photo_path,
+            ['concerns'],
+            'Concern photo not found.'
+        );
     }
 }

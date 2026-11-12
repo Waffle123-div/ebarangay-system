@@ -14,6 +14,7 @@ use Illuminate\Validation\Rules\Password;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Mail\RegistrationOtpMail;
+use App\Services\StoredFileService;
 
 class ResidentSettingsController extends Controller
 {
@@ -537,5 +538,29 @@ class ResidentSettingsController extends Controller
 
         return redirect()->route('resident.login')
             ->with('info', 'Your account has been permanently deleted.');
+    }
+
+    /**
+     * Stream the authenticated resident's profile picture or uploaded ID photo without relying on public/storage symlinks.
+     */
+    public function showFile(string $type, ?string $filename = null, StoredFileService $storedFileService = null)
+    {
+        $user = Auth::user();
+        $map = [
+            'profile_picture' => ['path' => $user->profile_picture, 'hints' => ['profile_pictures']],
+            'id_photo'        => ['path' => $user->id_photo, 'hints' => ['valid_ids']],
+        ];
+
+        if (!isset($map[$type])) {
+            abort(404, 'File not found.');
+        }
+
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+
+        return $storedFileService->serve(
+            $map[$type]['path'],
+            $map[$type]['hints'],
+            'File not found.'
+        );
     }
 }

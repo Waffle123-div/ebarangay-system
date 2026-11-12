@@ -660,16 +660,24 @@
 
                     {{-- Section 4: Uploaded Photo Attachment --}}
                     @if($concern->photo_path)
+                        @php
+                            $concernPhotoUrl = filter_var($concern->photo_path, FILTER_VALIDATE_URL)
+                                ? $concern->photo_path
+                                : route('admin.concerns.photo', [
+                                    'concern' => $concern->id,
+                                    'filename' => basename(str_replace('\\', '/', $concern->photo_path)),
+                                ]);
+                        @endphp
                         <div class="mb-4">
                             <div class="text-uppercase text-secondary fw-bold small mb-2 d-flex align-items-center justify-content-between" style="letter-spacing: 0.05em; font-size: 11px;">
                                 <span><i class="fa-solid fa-image text-primary me-1"></i> Uploaded Photo</span>
-                                <a href="{{ asset('storage/' . $concern->photo_path) }}" target="_blank" rel="noopener" class="text-primary text-decoration-none fw-semibold">
+                                <a href="{{ $concernPhotoUrl }}" target="_blank" rel="noopener" class="text-primary text-decoration-none fw-semibold">
                                     <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Full Image
                                 </a>
                             </div>
                             <div class="p-2 border rounded-3 bg-light text-center">
-                                <a href="{{ asset('storage/' . $concern->photo_path) }}" target="_blank" rel="noopener">
-                                    <img src="{{ asset('storage/' . $concern->photo_path) }}" 
+                                <a href="{{ $concernPhotoUrl }}" target="_blank" rel="noopener">
+                                    <img src="{{ $concernPhotoUrl }}" 
                                          alt="Community concern evidence photo" 
                                          class="img-fluid rounded-3 border shadow-xs" 
                                          style="max-height: 260px; object-fit: cover;">

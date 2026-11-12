@@ -156,10 +156,18 @@
                     </div>
 
                     @if($concern->photo_path)
+                        @php
+                            $concernPhotoUrl = filter_var($concern->photo_path, FILTER_VALIDATE_URL)
+                                ? $concern->photo_path
+                                : route('resident.concerns.photo', [
+                                    'concern' => $concern->id,
+                                    'filename' => basename(str_replace('\\', '/', $concern->photo_path)),
+                                ]);
+                        @endphp
                         <div>
                             <div class="text-muted small mb-2">Attached Photo</div>
-                            <a href="{{ asset('storage/' . $concern->photo_path) }}" target="_blank" rel="noopener">
-                                <img src="{{ asset('storage/' . $concern->photo_path) }}" alt="Concern attachment" class="img-fluid rounded-3 border" style="max-height: 280px; object-fit: cover;">
+                            <a href="{{ $concernPhotoUrl }}" target="_blank" rel="noopener">
+                                <img src="{{ $concernPhotoUrl }}" alt="Concern attachment" class="img-fluid rounded-3 border" style="max-height: 280px; object-fit: cover;">
                             </a>
                         </div>
                     @endif

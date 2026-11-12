@@ -2610,7 +2610,23 @@
                                     @foreach($request->attachments_list as $attIndex => $att)
                                         @php
                                             $isImage = in_array(strtolower($att['file_type']), ['image', 'png', 'jpg', 'jpeg', 'webp', 'gif']);
-                                            $fileUrl = asset('storage/' . $att['file_path']);
+                                            $isDirectUri = filter_var($att['file_path'], FILTER_VALIDATE_URL) || str_starts_with($att['file_path'], 'data:image/');
+                                            $attFilename = basename(str_replace('\\', '/', $att['file_path']));
+                                            $fileUrl = $isDirectUri
+                                                ? $att['file_path']
+                                                : route('admin.requests.attachment', [
+                                                    'documentRequest' => $request->id,
+                                                    'index' => $attIndex,
+                                                    'filename' => $attFilename,
+                                                ]);
+                                            $downloadUrl = $isDirectUri
+                                                ? $att['file_path']
+                                                : route('admin.requests.attachment', [
+                                                    'documentRequest' => $request->id,
+                                                    'index' => $attIndex,
+                                                    'filename' => $attFilename,
+                                                    'download' => 1,
+                                                ]);
                                             $jsFileUrl = e($fileUrl, false);
                                             $jsFileName = e($att['file_name'], false);
                                             $jsDocType = e($att['doc_type'], false);
@@ -2658,7 +2674,7 @@
                                                             onclick="previewAdminAttachment('{{ $jsFileUrl }}', '{{ addslashes($jsFileName) }}', '{{ addslashes($jsDocType) }}', {{ $isImage ? 'true' : 'false' }})">
                                                         <i class="fa-solid fa-eye me-1"></i> View
                                                     </button>
-                                                    <a href="{{ $fileUrl }}" target="_blank" download="{{ $att['file_name'] }}" 
+                                                    <a href="{{ $downloadUrl }}" target="_blank" download="{{ $att['file_name'] }}" 
                                                        class="btn btn-sm btn-outline-secondary rounded-3 px-2 py-1" 
                                                        style="font-size: 11px;"
                                                        title="Open in new tab / download">
@@ -3097,7 +3113,10 @@
         if (docTypeBadge) docTypeBadge.innerHTML = '<i class="fa-solid fa-tag me-1"></i> ' + (docType || 'Supporting Document');
         if (fileNameEl) fileNameEl.textContent = fileName || 'Attachment';
         if (downloadBtn) {
-            downloadBtn.href = url;
+            const isAttachmentRoute = typeof url === 'string' && url.includes('/admin/requests/') && url.includes('/attachment/');
+            downloadBtn.href = isAttachmentRoute
+                ? url + (url.includes('?') ? '&' : '?') + 'download=1'
+                : url;
             downloadBtn.setAttribute('download', fileName || 'attachment');
         }
 

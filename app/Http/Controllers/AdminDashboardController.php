@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Models\BarangaySetting;
+use App\Services\StoredFileService;
 use Illuminate\Support\Str;
 
 class AdminDashboardController extends Controller
@@ -901,14 +902,11 @@ class AdminDashboardController extends Controller
      * Securely stream private resident selfies to authorized administrators.
      * Supports both local (private) and public storage disks for robust backward compatibility.
      */
-    public function showSelfie($filename)
+    public function showSelfie($filename, StoredFileService $storedFileService)
     {
-        $safeFilename = basename($filename);
-        $path = 'selfies/' . $safeFilename;
-
-        return $this->serveStoredFile(
-            [$path, $safeFilename],
-            [storage_path('app/private/' . $path), storage_path('app/public/' . $path)],
+        return $storedFileService->serve(
+            'selfies/' . basename((string) $filename),
+            ['selfies'],
             'Selfie not found.'
         );
     }
@@ -917,68 +915,57 @@ class AdminDashboardController extends Controller
      * Stream a resident's uploaded ID document (proof of residency / valid ID) to authorized administrators
      * without relying on a public/storage symlink.
      */
-    public function showIdDocument(User $user, ?string $filename = null)
+    public function showIdDocument(User $user, ?string $filename = null, StoredFileService $storedFileService = null)
     {
-        $rawPath = trim((string) $user->id_front_path);
-        if ($rawPath === '') {
-            abort(404, 'ID document not found.');
-        }
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
 
-        if (filter_var($rawPath, FILTER_VALIDATE_URL)) {
-            return redirect()->away($rawPath);
-        }
-
-        $normalized = ltrim(str_replace('\\', '/', $rawPath), '/');
-        if (str_contains($normalized, '..')) {
-            abort(404, 'ID document not found.');
-        }
-
-        $stripped = preg_replace('#^(?:storage|public)/#', '', $normalized);
-        $safeBase = basename($stripped);
-
-        $candidatePaths = array_values(array_unique(array_filter([
-            $normalized,
-            $stripped,
-            'residency_proofs/' . $safeBase,
-            'valid_ids/' . $safeBase,
-            $safeBase,
-        ])));
-
-        $directPaths = [];
-        foreach ($candidatePaths as $candidate) {
-            $directPaths[] = storage_path('app/public/' . $candidate);
-            $directPaths[] = storage_path('app/private/' . $candidate);
-            $directPaths[] = public_path('storage/' . $candidate);
-        }
-        $directPaths[] = public_path($normalized);
-
-        return $this->serveStoredFile($candidatePaths, array_values(array_unique($directPaths)), 'ID document not found.');
+        return $storedFileService->serve(
+            $user->id_front_path,
+            ['residency_proofs', 'valid_ids'],
+            'ID document not found.'
+        );
     }
 
     /**
-     * Locate and stream a stored file across local/public disks and fallback paths with inline disposition.
+     * Stream or download an attachment listed on a document request for authorized administrators.
      */
-    private function serveStoredFile(array $candidatePaths, array $directPaths, string $notFoundMessage)
+    public function showRequestAttachment(
+        Request $request,
+        DocumentRequest $documentRequest,
+        int $index,
+        ?string $filename = null,
+        StoredFileService $storedFileService = null
+    ) {
+        $attachments = $documentRequest->attachments_list;
+        $attachment = $attachments[$index] ?? null;
+
+        if (!is_array($attachment) || empty($attachment['file_path'])) {
+            abort(404, 'Attachment not found.');
+        }
+
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+
+        return $storedFileService->serve(
+            $attachment['file_path'],
+            ['attachments', 'residency_proofs', 'valid_ids'],
+            'Attachment not found.',
+            $request->boolean('download'),
+            $attachment['file_name'] ?? null
+        );
+    }
+
+    /**
+     * Stream an uploaded community concern photo to authorized administrators.
+     */
+    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, StoredFileService $storedFileService = null)
     {
-        foreach (['local', 'public'] as $disk) {
-            foreach ($candidatePaths as $candidate) {
-                if (Storage::disk($disk)->exists($candidate)) {
-                    return Storage::disk($disk)->response($candidate, null, [
-                        'Content-Disposition' => 'inline',
-                    ]);
-                }
-            }
-        }
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
 
-        foreach ($directPaths as $directPath) {
-            if (is_file($directPath)) {
-                return response()->file($directPath, [
-                    'Content-Disposition' => 'inline',
-                ]);
-            }
-        }
-
-        abort(404, $notFoundMessage);
+        return $storedFileService->serve(
+            $concern->photo_path,
+            ['concerns'],
+            'Concern photo not found.'
+        );
     }
 
     public function updateProfile(Request $request)
