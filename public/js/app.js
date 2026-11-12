@@ -776,20 +776,26 @@ Unsay ako ikatabang nimo karon? Pwede ka mangutana bahin sa:
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth < 768;
 
-    if (!prefersReducedMotion && !isTouchDevice) {
+    // Skip the parallax on low-power devices to keep hover paint cheap
+    const isLowPowerDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) ||
+      (navigator.connection && navigator.connection.saveData);
+
+    if (!prefersReducedMotion && !isTouchDevice && !isLowPowerDevice) {
       let targetX = 50, targetY = 45;
       let currentX = 50, currentY = 45;
       let isMoving = false;
       let heroRaf = null;
       let heroRect = null;
+      let lastMoveTime = 0;
 
       const updateHeroRect = () => {
         if (heroSection) heroRect = heroSection.getBoundingClientRect();
       };
 
       const updateHeroPos = () => {
-        currentX += (targetX - currentX) * 0.08;
-        currentY += (targetY - currentY) * 0.08;
+        // Slower lerp -> fewer frames, less paint churn while keeping the effect
+        currentX += (targetX - currentX) * 0.04;
+        currentY += (targetY - currentY) * 0.04;
 
         heroSection.style.setProperty('--hero-mouse-x', `${currentX.toFixed(2)}%`);
         heroSection.style.setProperty('--hero-mouse-y', `${currentY.toFixed(2)}%`);
@@ -800,7 +806,7 @@ Unsay ako ikatabang nimo karon? Pwede ka mangutana bahin sa:
         heroSection.style.setProperty('--hero-tilt-x', tiltX);
         heroSection.style.setProperty('--hero-tilt-y', tiltY);
 
-        if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
+        if (Math.abs(targetX - currentX) > 0.02 || Math.abs(targetY - currentY) > 0.02) {
           heroRaf = requestAnimationFrame(updateHeroPos);
         } else {
           isMoving = false;
@@ -810,7 +816,11 @@ Unsay ako ikatabang nimo karon? Pwede ka mangutana bahin sa:
       heroSection.addEventListener('mouseenter', updateHeroRect, { passive: true });
       window.addEventListener('resize', updateHeroRect, { passive: true });
 
+      // Throttle mousemove to at most once per 80ms to cut variable updates
       heroSection.addEventListener('mousemove', (e) => {
+        const now = performance.now();
+        if (now - lastMoveTime < 80) return;
+        lastMoveTime = now;
         if (!heroRect) updateHeroRect();
         targetX = ((e.clientX - heroRect.left) / heroRect.width) * 100;
         targetY = ((e.clientY - heroRect.top) / heroRect.height) * 100;
