@@ -69,8 +69,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('profile');
     Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
 
-    // Secure Resident Selfie Route for Staff
+    // Secure Resident Selfie & ID Document Routes for Staff
     Route::get('/resident-selfie/{filename}', [AdminDashboardController::class, 'showSelfie'])->name('resident.selfie');
+    Route::get('/resident-id-document/{user}/{filename?}', [AdminDashboardController::class, 'showIdDocument'])->name('resident.id_document');
 
     // Document Generation Route
     Route::get('/requests/generate/{id}', [AdminDashboardController::class, 'generateWord'])->name('requests.generate');

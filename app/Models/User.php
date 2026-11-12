@@ -147,7 +147,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the public URL to view the ID document.
+     * Get the URL to view the ID document.
      */
     public function getIdDocumentUrlAttribute(): ?string
     {
@@ -156,8 +156,15 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        if (filter_var($path, FILTER_VALIDATE_URL)) {
+        if (filter_var($path, FILTER_VALIDATE_URL) || str_starts_with($path, 'data:image/')) {
             return $path;
+        }
+
+        if ($this->exists && \Illuminate\Support\Facades\Route::has('admin.resident.id_document')) {
+            return route('admin.resident.id_document', [
+                'user' => $this->getKey(),
+                'filename' => basename(str_replace('\\', '/', $path)),
+            ]);
         }
 
         return \Illuminate\Support\Facades\Storage::url($path);

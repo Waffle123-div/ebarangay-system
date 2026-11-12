@@ -906,37 +906,79 @@ class AdminDashboardController extends Controller
         $safeFilename = basename($filename);
         $path = 'selfies/' . $safeFilename;
 
-        // 1. Check local (private) disk
-        if (Storage::disk('local')->exists($path)) {
-            return Storage::disk('local')->response($path);
+        return $this->serveStoredFile(
+            [$path, $safeFilename],
+            [storage_path('app/private/' . $path), storage_path('app/public/' . $path)],
+            'Selfie not found.'
+        );
+    }
+
+    /**
+     * Stream a resident's uploaded ID document (proof of residency / valid ID) to authorized administrators
+     * without relying on a public/storage symlink.
+     */
+    public function showIdDocument(User $user, ?string $filename = null)
+    {
+        $rawPath = trim((string) $user->id_front_path);
+        if ($rawPath === '') {
+            abort(404, 'ID document not found.');
         }
 
-        // 2. Check public disk
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->response($path);
+        if (filter_var($rawPath, FILTER_VALIDATE_URL)) {
+            return redirect()->away($rawPath);
         }
 
-        // 3. Check disk root in case stored without prefix
-        if (Storage::disk('local')->exists($safeFilename)) {
-            return Storage::disk('local')->response($safeFilename);
+        $normalized = ltrim(str_replace('\\', '/', $rawPath), '/');
+        if (str_contains($normalized, '..')) {
+            abort(404, 'ID document not found.');
         }
 
-        if (Storage::disk('public')->exists($safeFilename)) {
-            return Storage::disk('public')->response($safeFilename);
+        $stripped = preg_replace('#^(?:storage|public)/#', '', $normalized);
+        $safeBase = basename($stripped);
+
+        $candidatePaths = array_values(array_unique(array_filter([
+            $normalized,
+            $stripped,
+            'residency_proofs/' . $safeBase,
+            'valid_ids/' . $safeBase,
+            $safeBase,
+        ])));
+
+        $directPaths = [];
+        foreach ($candidatePaths as $candidate) {
+            $directPaths[] = storage_path('app/public/' . $candidate);
+            $directPaths[] = storage_path('app/private/' . $candidate);
+            $directPaths[] = public_path('storage/' . $candidate);
+        }
+        $directPaths[] = public_path($normalized);
+
+        return $this->serveStoredFile($candidatePaths, array_values(array_unique($directPaths)), 'ID document not found.');
+    }
+
+    /**
+     * Locate and stream a stored file across local/public disks and fallback paths with inline disposition.
+     */
+    private function serveStoredFile(array $candidatePaths, array $directPaths, string $notFoundMessage)
+    {
+        foreach (['local', 'public'] as $disk) {
+            foreach ($candidatePaths as $candidate) {
+                if (Storage::disk($disk)->exists($candidate)) {
+                    return Storage::disk($disk)->response($candidate, null, [
+                        'Content-Disposition' => 'inline',
+                    ]);
+                }
+            }
         }
 
-        // 4. Fallback: check raw files directly in storage directory
-        $directLocal = storage_path('app/private/' . $path);
-        if (file_exists($directLocal)) {
-            return response()->file($directLocal);
+        foreach ($directPaths as $directPath) {
+            if (is_file($directPath)) {
+                return response()->file($directPath, [
+                    'Content-Disposition' => 'inline',
+                ]);
+            }
         }
 
-        $directPublic = storage_path('app/public/' . $path);
-        if (file_exists($directPublic)) {
-            return response()->file($directPublic);
-        }
-
-        abort(404, 'Selfie not found.');
+        abort(404, $notFoundMessage);
     }
 
     public function updateProfile(Request $request)
