@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AppServiceProvider;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,7 +12,7 @@ return new class extends Migration
         Schema::create('community_concern_remarks', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('community_concern_id')->index();
-            $table->integer('admin_id')->index();
+            AppServiceProvider::userForeignKeyColumn($table, 'admin_id')->index();
             $table->text('remark');
             $table->timestamps();
 

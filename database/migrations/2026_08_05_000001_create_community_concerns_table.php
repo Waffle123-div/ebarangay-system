@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AppServiceProvider;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,7 +12,7 @@ return new class extends Migration
         Schema::create('community_concerns', function (Blueprint $table) {
             $table->id();
             $table->string('concern_id', 30)->unique();
-            $table->integer('user_id')->index();
+            AppServiceProvider::userForeignKeyColumn($table, 'user_id')->index();
             $table->string('resident_name', 150);
             $table->string('resident_email')->nullable();
             $table->string('contact_number', 30)->nullable();
@@ -24,7 +25,7 @@ return new class extends Migration
             $table->string('photo_path')->nullable();
             $table->string('status', 30)->default('Pending')->index();
             $table->text('admin_remarks')->nullable();
-            $table->integer('updated_by')->nullable();
+            AppServiceProvider::userForeignKeyColumn($table, 'updated_by', true);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

@@ -2,23 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AdminAuthController extends Controller
 {
     // 1. Show the Login Page
     public function showLoginForm()
     {
-        // If they are already logged in, check who they are before redirecting
-        if (Auth::check()) {
-            // THE FIX: Ignore capitalization
-            if (strtolower(Auth::user()->role) === 'admin') {
-                return redirect()->route('admin.dashboard');
+        try {
+            // If they are already logged in, check who they are before redirecting
+            if (Auth::check()) {
+                // THE FIX: Ignore capitalization
+                if (trim(strtolower((string) Auth::user()->role)) === 'admin') {
+                    return redirect()->route('admin.dashboard');
+                }
+                return redirect()->route('resident.dashboard');
             }
-            return redirect()->route('resident.dashboard');
+        } catch (\Throwable $e) {
+            Log::warning('Admin login form auth check failed: ' . $e->getMessage());
         }
-        
+
         return view('admin.auth.login');
     }
 
@@ -31,16 +37,30 @@ class AdminAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Attempt to log in
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            
-            // THE FIX: Ignore capitalization
-            if (strtolower(Auth::user()->role) === 'admin') {
-                return redirect()->route('admin.dashboard'); 
-            } 
-            
-            return redirect()->route('resident.dashboard'); 
+        try {
+            // Attempt to log in
+            if (Auth::attempt($credentials, $request->boolean('remember'))) {
+                $request->session()->regenerate();
+
+                // THE FIX: Ignore capitalization
+                if (trim(strtolower((string) Auth::user()->role)) === 'admin') {
+                    return redirect()->route('admin.dashboard');
+                }
+
+                return redirect()->route('resident.dashboard');
+            }
+        } catch (QueryException|\PDOException $e) {
+            Log::error('Admin login database error: ' . $e->getMessage(), ['exception' => $e]);
+
+            return back()->withErrors([
+                'email' => 'Unable to sign in because the database is unavailable or not migrated yet.',
+            ])->onlyInput('email');
+        } catch (\Throwable $e) {
+            Log::error('Admin login unexpected error: ' . $e->getMessage(), ['exception' => $e]);
+
+            return back()->withErrors([
+                'email' => 'Unable to complete admin sign in right now. Please check the server logs.',
+            ])->onlyInput('email');
         }
 
         // Failed! Send back with an error

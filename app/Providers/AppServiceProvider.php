@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -27,6 +31,35 @@ class AppServiceProvider extends ServiceProvider
         $version = is_file($fullPath) ? (string) (@filemtime($fullPath) ?: '1') : '1';
 
         return asset($cleanPath) . '?v=' . $version;
+    }
+
+    /**
+     * Define a foreign key column matching users.id on both fresh installs and legacy SQL dumps.
+     */
+    public static function userForeignKeyColumn(Blueprint $table, string $column, bool $nullable = false): ColumnDefinition
+    {
+        $definition = null;
+
+        if (DB::getDriverName() === 'mysql' && Schema::hasTable('users')) {
+            $columnInfo = DB::selectOne("SHOW COLUMNS FROM `users` WHERE Field = 'id'");
+            $type = strtolower((string) ($columnInfo->Type ?? ''));
+
+            if ($type !== '') {
+                if (str_contains($type, 'bigint')) {
+                    $definition = str_contains($type, 'unsigned')
+                        ? $table->unsignedBigInteger($column)
+                        : $table->bigInteger($column);
+                } elseif (str_contains($type, 'int')) {
+                    $definition = str_contains($type, 'unsigned')
+                        ? $table->unsignedInteger($column)
+                        : $table->integer($column);
+                }
+            }
+        }
+
+        $definition ??= $table->unsignedBigInteger($column);
+
+        return $nullable ? $definition->nullable() : $definition;
     }
 
     /**
