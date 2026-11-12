@@ -480,18 +480,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fadeElements.forEach(el => fadeObserver.observe(el));
 
-  // Reveal elements immediately if they are in view (initial load or resize)
+  // Reveal elements immediately if they are in or above view (initial load, anchor jump, or resize)
   function revealVisibleFadeElements() {
     const vh = window.innerHeight || document.documentElement.clientHeight;
     fadeElements.forEach(el => {
       const rect = el.getBoundingClientRect();
-      if (rect.top <= vh + 60 && rect.bottom >= 0) {
+      if (rect.top <= vh + 120) {
         el.classList.add('visible');
+        fadeObserver.unobserve(el);
       }
     });
   }
 
   revealVisibleFadeElements();
+  window.addEventListener('hashchange', () => setTimeout(revealVisibleFadeElements, 120), { passive: true });
+  setTimeout(revealVisibleFadeElements, 600);
+  // Safety fallback: ensure all fade sections are visible even if IntersectionObserver skips on slow/mobile loads
+  setTimeout(() => {
+    fadeElements.forEach(el => el.classList.add('visible'));
+  }, 1800);
+
   let resizeFadeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(resizeFadeTimer);

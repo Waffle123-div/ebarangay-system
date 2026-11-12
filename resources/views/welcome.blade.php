@@ -18,7 +18,17 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Styles (Updated for Laravel) -->
-  <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+  <link id="mainStylesheet" rel="stylesheet" href="{{ \App\Providers\AppServiceProvider::versionedAsset('css/style.css') }}" onerror="if(!this.dataset.retried){this.dataset.retried='1';this.href='{{ asset('css/style.css') }}?retry='+Date.now();}">
+  <script>
+    window.addEventListener('load', function () {
+      var token = getComputedStyle(document.documentElement).getPropertyValue('--radius-full').trim();
+      var link = document.getElementById('mainStylesheet');
+      if (!token && link && !link.dataset.retried) {
+        link.dataset.retried = '1';
+        link.href = '{{ asset('css/style.css') }}?retry=' + Date.now();
+      }
+    });
+  </script>
 
   <style>
     /* ========================================================
@@ -849,12 +859,12 @@
 
     /* ── Responsive adjustments & Mobile Menu ── */
     html {
-      overflow-x: hidden;
-      max-width: 100vw;
+      overflow-x: clip;
+      max-width: 100%;
     }
     body {
-      overflow-x: hidden;
-      max-width: 100vw;
+      overflow-x: clip;
+      max-width: 100%;
       position: relative;
     }
 
@@ -2634,7 +2644,7 @@
   </div>
 
   <!-- JavaScript (Updated for Laravel) -->
-  <script src="{{ asset('js/app.js') }}"></script>
+  <script src="{{ \App\Providers\AppServiceProvider::versionedAsset('js/app.js') }}"></script>
   @if(session('success'))
   <script>
     document.addEventListener('DOMContentLoaded', function () {

@@ -18,12 +18,30 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
+     * Generate a cache-busted asset URL so CDN/browser caches always fetch the latest file after deploys.
+     */
+    public static function versionedAsset(string $path): string
+    {
+        $cleanPath = ltrim($path, '/');
+        $fullPath = public_path($cleanPath);
+        $version = is_file($fullPath) ? (string) (@filemtime($fullPath) ?: '1') : '1';
+
+        return asset($cleanPath) . '?v=' . $version;
+    }
+
+    /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-        // Force HTTPS URL generation behind SSL reverse proxies (Render, Cloudflare, etc.)
-        if (app()->environment('production') || request()->header('x-forwarded-proto') === 'https' || env('FORCE_HTTPS', false)) {
+        // Force HTTPS URL generation behind SSL reverse proxies (Laravel Cloud, Render, Cloudflare, etc.)
+        $isHttpsProxy = request()->isSecure()
+            || request()->header('x-forwarded-proto') === 'https'
+            || str_contains((string) request()->header('cf-visitor'), '"https"')
+            || str_starts_with((string) config('app.url'), 'https://')
+            || (bool) config('app.force_https', false);
+
+        if (app()->environment('production') || $isHttpsProxy) {
             URL::forceScheme('https');
         }
 

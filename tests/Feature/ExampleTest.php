@@ -116,5 +116,15 @@ class ExampleTest extends TestCase
         $response->assertDontSee('href="#news"', false);
         $response->assertDontSee('href="#concerns"', false);
     }
+
+    public function test_landing_page_includes_cache_busted_assets_and_stylesheet_fallback(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('css/style.css?v=', false);
+        $response->assertSee('js/app.js?v=', false);
+        $response->assertSee('mainStylesheet', false);
+    }
 }
 

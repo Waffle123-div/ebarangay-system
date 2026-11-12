@@ -7,7 +7,7 @@
     <title>Register - E-Barangay</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/ebarangay-theme.css') }}">
+    <link rel="stylesheet" href="{{ \App\Providers\AppServiceProvider::versionedAsset('css/ebarangay-theme.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         /* Lock body viewport to prevent structural layout breaks during step expansions */

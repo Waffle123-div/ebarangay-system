@@ -7,7 +7,7 @@
     <title>Account Pending | E-Barangay</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/ebarangay-theme.css') }}">
+    <link rel="stylesheet" href="{{ \App\Providers\AppServiceProvider::versionedAsset('css/ebarangay-theme.css') }}">
     <style>
         body {
             background-color: var(--color-bg);
