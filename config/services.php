@@ -48,8 +48,8 @@ return [
     ],
 
     'recaptcha' => [
-        'site_key' => env('RECAPTCHA_SITE_KEY', '6LfNDRkuAAAAAPWTkZ0b0KRYxv22Uip4Ow4lkbor'),
-        'secret_key' => env('RECAPTCHA_SECRET_KEY', '6LfNDRkuAAAAACtMf93CZ_IUR5BtSi2zTMM79Vzg'),
+        'site_key' => env('RECAPTCHA_SITE_KEY', '6LemLRwuAAAAAPYzrDdOn-na4zxddesHAzhUl_Fe'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY', '6LemLRwuAAAAAJh0oU5U_cUzPXw0Mo1lUxJGuiVc'),
     ],
 
 ];

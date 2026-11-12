@@ -13,13 +13,13 @@ class ResidentLoginRecaptchaTest extends TestCase
 
     public function test_resident_login_page_renders_recaptcha_when_site_key_configured(): void
     {
-        Config::set('services.recaptcha.site_key', '6LfNDRkuAAAAAPWTkZ0b0KRYxv22Uip4Ow4lkbor');
+        Config::set('services.recaptcha.site_key', '6LemLRwuAAAAAPYzrDdOn-na4zxddesHAzhUl_Fe');
 
         $response = $this->get(route('resident.login'));
 
         $response->assertStatus(200);
         $response->assertSee('class="g-recaptcha"', false);
-        $response->assertSee('data-sitekey="6LfNDRkuAAAAAPWTkZ0b0KRYxv22Uip4Ow4lkbor"', false);
+        $response->assertSee('data-sitekey="6LemLRwuAAAAAPYzrDdOn-na4zxddesHAzhUl_Fe"', false);
         $response->assertSee('https://www.google.com/recaptcha/api.js', false);
     }
 
