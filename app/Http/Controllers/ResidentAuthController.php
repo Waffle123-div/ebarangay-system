@@ -346,6 +346,7 @@ class ResidentAuthController extends Controller
             $mailSent = false;
 
             $mailError = null;
+            $usesResendMailer = in_array(config('mail.default'), ['resend', 'resend_http'], true);
 
             try {
                 Mail::to($target)->send(new RegistrationOtpMail($code, $name));
@@ -354,28 +355,37 @@ class ResidentAuthController extends Controller
                 $mailError = $e->getMessage();
                 \Illuminate\Support\Facades\Log::error('Registration OTP Standard Mailer Failed: ' . $e->getMessage());
 
-                // Direct fallback using Resend HTTP API
-                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
-                if (filled($resendKey)) {
-                    try {
-                        $this->sendViaResend($target, $name, $code, $resendKey);
-                        $mailSent = true;
-                    } catch (\Throwable $ex) {
-                        $mailError = $ex->getMessage();
-                        \Illuminate\Support\Facades\Log::error('Resend Direct API Fallback Failed: ' . $ex->getMessage());
+                // Only fall back to direct Resend API when Resend is the active mailer
+                if ($usesResendMailer) {
+                    $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
+                    if (filled($resendKey)) {
+                        try {
+                            $this->sendViaResend($target, $name, $code, $resendKey);
+                            $mailSent = true;
+                        } catch (\Throwable $ex) {
+                            $mailError = $ex->getMessage();
+                            \Illuminate\Support\Facades\Log::error('Resend Direct API Fallback Failed: ' . $ex->getMessage());
+                        }
                     }
                 }
             }
 
             if (!$mailSent) {
-                $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
-                $keyHint = blank($resendKey) ? 'RESEND_API_KEY is not set in Render environment.' : 'Configured Key: ' . substr($resendKey, 0, 7) . '...';
+                if ($usesResendMailer) {
+                    $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY') ?: env('RESEND_KEY');
+                    $keyHint = blank($resendKey) ? 'RESEND_API_KEY is not set in environment.' : 'Configured Key: ' . substr($resendKey, 0, 7) . '...';
 
-                $errorMessage = 'Failed to send verification email: ' . ($mailError ?: $keyHint);
-                if (str_contains((string)$mailError, '401') || str_contains((string)$mailError, 'API key')) {
-                    $errorMessage = "Email delivery error: Resend API key is invalid or revoked ({$keyHint}). Please verify your key at resend.com/api-keys and update RESEND_API_KEY in Render.";
-                } elseif (str_contains((string)$mailError, '403') || str_contains((string)$mailError, 'only send testing emails')) {
-                    $errorMessage = "Resend Free Tier notice: You can only send to the email address registered on your Resend account. ({$mailError})";
+                    $errorMessage = 'Failed to send verification email: ' . ($mailError ?: $keyHint);
+                    if (str_contains((string)$mailError, '401') || str_contains((string)$mailError, 'API key')) {
+                        $errorMessage = "Email delivery error: Resend API key is invalid or revoked ({$keyHint}). Please verify your key at resend.com/api-keys and update RESEND_API_KEY.";
+                    } elseif (str_contains((string)$mailError, '403') || str_contains((string)$mailError, 'only send testing emails')) {
+                        $errorMessage = "Resend Free Tier notice: You can only send to the email address registered on your Resend account. ({$mailError})";
+                    }
+                } else {
+                    $missingCreds = blank(config('mail.mailers.smtp.username')) || blank(config('mail.mailers.smtp.password'));
+                    $errorMessage = $missingCreds
+                        ? 'Email delivery error: SMTP credentials (MAIL_USERNAME / MAIL_PASSWORD) are not configured.'
+                        : 'Failed to send verification email: ' . ($mailError ?: 'Please check your SMTP configuration.');
                 }
 
                 return response()->json([

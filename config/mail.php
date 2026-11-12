@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'resend_http'),
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -41,10 +41,10 @@ return [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
             'url' => env('MAIL_URL'),
-            'host' => env('MAIL_HOST', 'smtp.gmail.com'),
+            'host' => env('MAIL_HOST', 'in-v3.mailjet.com'),
             'port' => env('MAIL_PORT', 587),
-            'username' => env('MAIL_USERNAME', 'cogoneast.system@gmail.com'),
-            'password' => env('MAIL_PASSWORD', 'jydkmltxbnpnbfkx'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
             'timeout' => env('MAIL_TIMEOUT', 10),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
@@ -117,7 +117,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'cogoneast.system@gmail.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'susontroy5@gmail.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'E-Barangay Cogon East')),
     ],
 
