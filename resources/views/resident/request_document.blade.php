@@ -631,7 +631,7 @@ html[data-bs-theme="dark"] .modal .text-muted {
         {{-- SHARED REUSABLE UPLOAD SECTION (STEP 3) --}}
         {{-- ============================================ --}}
         <div id="sharedUploadSectionTemplate" class="d-none">
-            <div id="sharedUploadSection" class="mt-4 pt-3 border-top">
+            <div id="sharedUploadSection" class="pt-1">
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <div class="step-icon-box" style="width:32px;height:32px;border-radius:8px;background:rgba(30,64,175,0.08);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -760,55 +760,67 @@ html[data-bs-theme="dark"] .modal .text-muted {
 
                     {{-- MODAL BODY CONTAINER: Step 2 Header + Options --}}
                     <div class="modal-body px-4 pt-4 pb-2">
-                        {{-- STEP 2 Header Container inside Modal Body --}}
-                        <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
-                                    <i class="fa-solid fa-store"></i>
+                        {{-- STEP 2 PANEL: Purpose & Documents --}}
+                        <div id="bpStep2Panel">
+                            {{-- STEP 2 Header Container inside Modal Body --}}
+                            <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
+                                        <i class="fa-solid fa-store"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0 step-header-title" id="bpPurposeModalLabel" style="font-size:15px;">
+                                            <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
+                                        </h6>
+                                        <p class="text-muted mb-0" id="bpPurposeModalDocName" style="font-size:12px;">Brgy Clearance for Business Permit</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-0 step-header-title" id="bpPurposeModalLabel" style="font-size:15px;">
-                                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
-                                    </h6>
-                                    <p class="text-muted mb-0" id="bpPurposeModalDocName" style="font-size:12px;">Brgy Clearance for Business Permit</p>
-                                </div>
+                                <span id="bpStep2StatusBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1.5 ms-2 d-none" style="font-size:11px;">
+                                    <i class="fa-solid fa-circle-check me-1"></i>Purpose Added
+                                </span>
                             </div>
-                            <span id="bpStep2StatusBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1.5 ms-2 d-none" style="font-size:11px;">
-                                <i class="fa-solid fa-circle-check me-1"></i>Purpose Added
-                            </span>
+
+                            <p class="text-muted small mb-3" style="font-size:12.5px;">Choose the primary purpose for this clearance and upload required files below.</p>
+                            <div class="d-flex flex-column gap-2 mb-3" id="bpModalOptions">
+                                <label class="bp-modal-option d-flex align-items-center gap-3 p-3 border rounded-3" style="cursor:pointer;">
+                                    <input type="radio" name="bp_modal_radio" value="FOR LOAN PURPOSES" class="bp-modal-radio form-check-input mt-0 flex-shrink-0" style="width:18px;height:18px;">
+                                    <span>
+                                        <span class="fw-semibold d-block" style="font-size:13px;">For Loan Purposes</span>
+                                        <span class="text-muted" style="font-size:11.5px;">Certification required for loan applications.</span>
+                                    </span>
+                                </label>
+                                <label class="bp-modal-option d-flex align-items-center gap-3 p-3 border rounded-3" style="cursor:pointer;">
+                                    <input type="radio" name="bp_modal_radio" value="BUSINESS PERMIT" class="bp-modal-radio form-check-input mt-0 flex-shrink-0" style="width:18px;height:18px;">
+                                    <span>
+                                        <span class="fw-semibold d-block" style="font-size:13px;">Business Permit</span>
+                                        <span class="text-muted" style="font-size:11.5px;">For obtaining a new business permit from the municipality.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold text-muted mb-1">Other / Further Specify <span class="fw-normal">(optional)</span></label>
+                                <textarea id="bpPurposeOther" class="form-control rounded-3" rows="2" placeholder="Add any additional details or a different purpose..." style="font-size:13px;text-transform:uppercase;"></textarea>
+                            </div>
+                            <div id="bpPurposeError" class="text-danger small mt-1" style="display:none;font-size:12px;">
+                                <i class="fa-solid fa-circle-exclamation me-1"></i>Please select a purpose or specify one below.
+                            </div>
                         </div>
 
-                        <p class="text-muted small mb-3" style="font-size:12.5px;">Choose the primary purpose for this clearance and upload required files below.</p>
-                        <div class="d-flex flex-column gap-2 mb-3" id="bpModalOptions">
-                            <label class="bp-modal-option d-flex align-items-center gap-3 p-3 border rounded-3" style="cursor:pointer;">
-                                <input type="radio" name="bp_modal_radio" value="FOR LOAN PURPOSES" class="bp-modal-radio form-check-input mt-0 flex-shrink-0" style="width:18px;height:18px;">
-                                <span>
-                                    <span class="fw-semibold d-block" style="font-size:13px;">For Loan Purposes</span>
-                                    <span class="text-muted" style="font-size:11.5px;">Certification required for loan applications.</span>
-                                </span>
-                            </label>
-                            <label class="bp-modal-option d-flex align-items-center gap-3 p-3 border rounded-3" style="cursor:pointer;">
-                                <input type="radio" name="bp_modal_radio" value="BUSINESS PERMIT" class="bp-modal-radio form-check-input mt-0 flex-shrink-0" style="width:18px;height:18px;">
-                                <span>
-                                    <span class="fw-semibold d-block" style="font-size:13px;">Business Permit</span>
-                                    <span class="text-muted" style="font-size:11.5px;">For obtaining a new business permit from the municipality.</span>
-                                </span>
-                            </label>
+                        {{-- STEP 3 PANEL: Supporting Documents & Upload --}}
+                        <div id="bpStep3Panel" class="d-none">
+                            {{-- Slot for Shared Upload Section --}}
+                            <div id="bpUploadSlot"></div>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small fw-semibold text-muted mb-1">Other / Further Specify <span class="fw-normal">(optional)</span></label>
-                            <textarea id="bpPurposeOther" class="form-control rounded-3" rows="2" placeholder="Add any additional details or a different purpose..." style="font-size:13px;text-transform:uppercase;"></textarea>
-                        </div>
-                        <div id="bpPurposeError" class="text-danger small mt-1" style="display:none;font-size:12px;">
-                            <i class="fa-solid fa-circle-exclamation me-1"></i>Please select a purpose or specify one below.
-                        </div>
-
-                        {{-- Slot for Shared Upload Section --}}
-                        <div id="bpUploadSlot"></div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2">
+                    <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2" id="bpModalFooter">
                         <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" id="bpModalCancel" style="font-size:13px;">Cancel</button>
-                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1" id="bpModalConfirm" style="font-size:13px;">
+                        <button type="button" class="btn btn-light rounded-3 px-3 fw-semibold d-none" id="bpBtnBackToStep2" style="font-size:13px;">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Back
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1" id="bpBtnToStep3" style="font-size:13px;">
+                            Confirm Details &amp; Continue <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1 d-none" id="bpModalConfirm" style="font-size:13px;">
                             <i class="fa-solid fa-check me-1"></i> Confirm &amp; Save Details
                         </button>
                     </div>
@@ -844,52 +856,64 @@ html[data-bs-theme="dark"] .modal .text-muted {
 
                     {{-- MODAL BODY CONTAINER: Step 2 Header + Chips --}}
                     <div class="modal-body px-4 pt-4 pb-2">
-                        {{-- STEP 2 Header Container inside Modal Body --}}
-                        <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
-                                    <i class="fa-solid fa-bullseye"></i>
+                        {{-- STEP 2 PANEL: Purpose & Documents --}}
+                        <div id="genericStep2Panel">
+                            {{-- STEP 2 Header Container inside Modal Body --}}
+                            <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="d-flex align-items-center justify-content-center rounded-3 step-icon-box" style="width:42px;height:42px;background:rgba(30,64,175,0.1);color:var(--color-primary);font-size:1.1rem;flex-shrink:0;">
+                                        <i class="fa-solid fa-bullseye"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0 step-header-title" id="genericPurposeModalLabel" style="font-size:15px;">
+                                            <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
+                                        </h6>
+                                        <p class="text-muted mb-0" id="genericPurposeModalDocName" style="font-size:12px;">—</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-0 step-header-title" id="genericPurposeModalLabel" style="font-size:15px;">
-                                        <span class="step-header-kicker" style="color: var(--color-primary); font-weight: 800; font-size: 20px; margin-right: 6px;">STEP 2:</span> Purpose &amp; Documents
-                                    </h6>
-                                    <p class="text-muted mb-0" id="genericPurposeModalDocName" style="font-size:12px;">—</p>
-                                </div>
+                                <span id="genericStep2StatusBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1.5 ms-2 d-none" style="font-size:11px;">
+                                    <i class="fa-solid fa-circle-check me-1"></i>Purpose Added
+                                </span>
                             </div>
-                            <span id="genericStep2StatusBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1.5 ms-2 d-none" style="font-size:11px;">
-                                <i class="fa-solid fa-circle-check me-1"></i>Purpose Added
-                            </span>
+
+                            <p class="text-muted small mb-3" style="font-size:12.5px;">Select a quick purpose or type your own below, then attach your required documents.</p>
+                            <div class="d-flex flex-wrap gap-2 mb-3" id="genericPurposeChips">
+                                <span class="gp-chip" data-purpose="Employment" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Employment</span>
+                                <span class="gp-chip" data-purpose="School" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">School</span>
+                                <span class="gp-chip" data-purpose="Scholarship" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Scholarship</span>
+                                <span class="gp-chip" data-purpose="Business" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Business</span>
+                                <span class="gp-chip" data-purpose="Government Requirement" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Government Requirement</span>
+                                <span class="gp-chip" data-purpose="Travel" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Travel</span>
+                                <span class="gp-chip" data-purpose="Medical" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Medical</span>
+                                <span class="gp-chip" data-purpose="Senior Citizen Benefits" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Senior Citizen Benefits</span>
+                                <span class="gp-chip" data-purpose="Burial Assistance" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Burial Assistance</span>
+                                <span class="gp-chip" data-purpose="Electric Meter Connection" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Electric Meter Connection</span>
+                                <span class="gp-chip" data-purpose="First Time Jobseeker" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">First Time Jobseeker</span>
+                                <span class="gp-chip" data-purpose="Cohabitation Proof" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Cohabitation Proof</span>
+                                <span class="gp-chip" data-purpose="Probation & Bail Application" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Probation &amp; Bail</span>
+                                <span class="gp-chip" data-purpose="" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Other</span>
+                            </div>
+                            <textarea id="genericPurposeText" class="form-control rounded-3" rows="2" placeholder="TYPE THE PURPOSE OF YOUR REQUEST..." style="font-size:13px;text-transform:uppercase;"></textarea>
+                            <div id="genericPurposeError" class="text-danger small mt-2" style="display:none;font-size:12px;">
+                                <i class="fa-solid fa-circle-exclamation me-1"></i>Please enter the purpose of your request.
+                            </div>
                         </div>
 
-                        <p class="text-muted small mb-3" style="font-size:12.5px;">Select a quick purpose or type your own below, then attach your required documents.</p>
-                        <div class="d-flex flex-wrap gap-2 mb-3" id="genericPurposeChips">
-                            <span class="gp-chip" data-purpose="Employment" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Employment</span>
-                            <span class="gp-chip" data-purpose="School" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">School</span>
-                            <span class="gp-chip" data-purpose="Scholarship" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Scholarship</span>
-                            <span class="gp-chip" data-purpose="Business" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Business</span>
-                            <span class="gp-chip" data-purpose="Government Requirement" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Government Requirement</span>
-                            <span class="gp-chip" data-purpose="Travel" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Travel</span>
-                            <span class="gp-chip" data-purpose="Medical" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Medical</span>
-                            <span class="gp-chip" data-purpose="Senior Citizen Benefits" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Senior Citizen Benefits</span>
-                            <span class="gp-chip" data-purpose="Burial Assistance" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Burial Assistance</span>
-                            <span class="gp-chip" data-purpose="Electric Meter Connection" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Electric Meter Connection</span>
-                            <span class="gp-chip" data-purpose="First Time Jobseeker" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">First Time Jobseeker</span>
-                            <span class="gp-chip" data-purpose="Cohabitation Proof" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Cohabitation Proof</span>
-                            <span class="gp-chip" data-purpose="Probation & Bail Application" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Probation &amp; Bail</span>
-                            <span class="gp-chip" data-purpose="" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:12.5px;font-weight:600;background:#fff;color:#374151;transition:all 0.15s;">Other</span>
+                        {{-- STEP 3 PANEL: Supporting Documents & Upload --}}
+                        <div id="genericStep3Panel" class="d-none">
+                            {{-- Slot for Shared Upload Section --}}
+                            <div id="genericUploadSlot"></div>
                         </div>
-                        <textarea id="genericPurposeText" class="form-control rounded-3" rows="2" placeholder="TYPE THE PURPOSE OF YOUR REQUEST..." style="font-size:13px;text-transform:uppercase;"></textarea>
-                        <div id="genericPurposeError" class="text-danger small mt-2" style="display:none;font-size:12px;">
-                            <i class="fa-solid fa-circle-exclamation me-1"></i>Please enter the purpose of your request.
-                        </div>
-
-                        {{-- Slot for Shared Upload Section --}}
-                        <div id="genericUploadSlot"></div>
                     </div>
-                    <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2">
+                    <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2" id="genericModalFooter">
                         <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" id="genericModalCancel" style="font-size:13px;">Cancel</button>
-                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1" id="genericModalConfirm" style="font-size:13px;">
+                        <button type="button" class="btn btn-light rounded-3 px-3 fw-semibold d-none" id="genericBtnBackToStep2" style="font-size:13px;">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Back
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1" id="genericBtnToStep3" style="font-size:13px;">
+                            Confirm Details &amp; Continue <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary rounded-3 px-4 fw-semibold flex-grow-1 d-none" id="genericModalConfirm" style="font-size:13px;">
                             <i class="fa-solid fa-check me-1"></i> Confirm &amp; Save Details
                         </button>
                     </div>
@@ -984,7 +1008,7 @@ html[data-bs-theme="dark"] .modal .text-muted {
                                 <span class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
                                     <i class="fa-solid fa-file-lines text-primary me-1"></i> Requested Document
                                 </span>
-                                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold" onclick="const modalEl = document.getElementById('confirmSubmitModal'); bootstrap.Modal.getInstance(modalEl)?.hide(); document.getElementById('docTypeGrid')?.scrollIntoView({behavior:'smooth', block:'center'});" style="font-size:12px;">
+                                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold" onclick="changeDocumentFromReview()" style="font-size:12px;">
                                     <i class="fa-solid fa-pen me-1"></i>Change
                                 </button>
                             </div>
@@ -1085,7 +1109,7 @@ html[data-bs-theme="dark"] .modal .text-muted {
                                 <span class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
                                     <i class="fa-solid fa-paperclip text-primary me-1"></i> Uploaded Documents &amp; Type (<span id="modalAttachmentCount">0</span>)
                                 </span>
-                                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold" onclick="const modalEl = document.getElementById('confirmSubmitModal'); bootstrap.Modal.getInstance(modalEl)?.hide(); document.getElementById('docTypeGrid')?.scrollIntoView({behavior:'smooth', block:'center'});" style="font-size:12px;">
+                                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold" onclick="reopenUploadStep()" style="font-size:12px;">
                                     <i class="fa-solid fa-pen me-1"></i>Edit Attachments
                                 </button>
                             </div>
@@ -1298,7 +1322,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // REAL-TIME STEP 2 PURPOSE EVALUATOR
+    // REAL-TIME STEP 2 PURPOSE EVALUATOR (Updates purpose-added badge)
     function evaluateStep2Completion() {
         let hasPurpose = false;
         const isBusiness = pendingDocType === BP_DOC || pendingDocType === 'Barangay Business Clearance';
@@ -1316,12 +1340,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const badge = document.getElementById('genericStep2StatusBadge');
             if (badge) badge.classList.toggle('d-none', !hasPurpose);
-        }
-
-        if (hasPurpose) {
-            setGuideStep(3); // Purpose satisfied -> advance highlight to Step 3
-        } else {
-            setGuideStep(2); // Stay at Step 2
         }
     }
 
@@ -1350,8 +1368,6 @@ document.addEventListener('DOMContentLoaded', function() {
         docTypeNoResults.style.display = visibleCount === 0 ? 'block' : 'none';
     });
 
-
-
     const sharedUploadSection = document.getElementById('sharedUploadSection');
     const bpUploadSlot = document.getElementById('bpUploadSlot');
     const genericUploadSlot = document.getElementById('genericUploadSlot');
@@ -1367,6 +1383,64 @@ document.addEventListener('DOMContentLoaded', function() {
         if (requestIdTypeSelect) requestIdTypeSelect.classList.remove('is-invalid');
         if (bpPurposeError) bpPurposeError.style.display = 'none';
         if (genericPurposeError) genericPurposeError.style.display = 'none';
+    }
+
+    // MULTI-STEP MODAL PANEL CONTROLLER (Step 2: Purpose <-> Step 3: Supporting Docs & Upload)
+    function showModalStep(modalEl, step) {
+        if (!modalEl) return;
+        const isBp = modalEl.id === 'bpPurposeModal';
+
+        const step2Panel = document.getElementById(isBp ? 'bpStep2Panel' : 'genericStep2Panel');
+        const step3Panel = document.getElementById(isBp ? 'bpStep3Panel' : 'genericStep3Panel');
+        const btnToStep3 = document.getElementById(isBp ? 'bpBtnToStep3' : 'genericBtnToStep3');
+        const btnConfirm = document.getElementById(isBp ? 'bpModalConfirm' : 'genericModalConfirm');
+        const btnBack    = document.getElementById(isBp ? 'bpBtnBackToStep2' : 'genericBtnBackToStep2');
+        const btnCancel  = document.getElementById(isBp ? 'bpModalCancel' : 'genericModalCancel');
+
+        if (step === 2) {
+            if (step2Panel) step2Panel.classList.remove('d-none');
+            if (step3Panel) step3Panel.classList.add('d-none');
+            if (btnToStep3) btnToStep3.classList.remove('d-none');
+            if (btnConfirm) btnConfirm.classList.add('d-none');
+            if (btnBack)    btnBack.classList.add('d-none');
+            if (btnCancel)  btnCancel.classList.remove('d-none');
+            setGuideStep(2);
+        } else if (step === 3) {
+            const targetSlot = document.getElementById(isBp ? 'bpUploadSlot' : 'genericUploadSlot');
+            mountUploadSection(targetSlot);
+
+            if (step2Panel) step2Panel.classList.add('d-none');
+            if (step3Panel) step3Panel.classList.remove('d-none');
+            if (btnToStep3) btnToStep3.classList.add('d-none');
+            if (btnConfirm) btnConfirm.classList.remove('d-none');
+            if (btnBack)    btnBack.classList.remove('d-none');
+            if (btnCancel)  btnCancel.classList.remove('d-none');
+            setGuideStep(3);
+        }
+
+        const modalBody = modalEl.querySelector('.modal-body');
+        if (modalBody) {
+            modalBody.scrollTop = 0;
+        }
+    }
+
+    // SAFE TRANSITION FROM PURPOSE MODAL TO STEP 4 (REVIEW MODAL)
+    function proceedToReviewFromModal(modalInstance, modalElement) {
+        if (modalInstance && modalElement && modalElement.classList.contains('show')) {
+            const onHidden = function() {
+                modalElement.removeEventListener('hidden.bs.modal', onHidden);
+                if (typeof window.openConfirmModal === 'function') {
+                    window.openConfirmModal();
+                }
+            };
+            modalElement.addEventListener('hidden.bs.modal', onHidden);
+            modalInstance.hide();
+        } else {
+            if (modalInstance) modalInstance.hide();
+            if (typeof window.openConfirmModal === 'function') {
+                window.openConfirmModal();
+            }
+        }
     }
 
     const BP_DOC = 'Brgy Clearance for Business Permit';
@@ -1399,6 +1473,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (badge) badge.classList.add('d-none');
         clearUploadedFiles();
         clearModalValidationErrors();
+        showModalStep(bpModalEl, 2);
+    }
+
+    // BP Step 2 -> Step 3
+    const bpBtnToStep3 = document.getElementById('bpBtnToStep3');
+    if (bpBtnToStep3) {
+        bpBtnToStep3.addEventListener('click', function() {
+            const checkedRadio = document.querySelector('.bp-modal-radio:checked');
+            const otherVal     = bpPurposeOther ? bpPurposeOther.value.trim().toUpperCase() : '';
+
+            if (!checkedRadio && !otherVal) {
+                if (bpPurposeError) bpPurposeError.style.display = 'block';
+                return;
+            }
+            if (bpPurposeError) bpPurposeError.style.display = 'none';
+
+            const radioVal = checkedRadio ? checkedRadio.value : '';
+            selectedPurpose = otherVal ? (radioVal ? radioVal + ' — ' + otherVal : otherVal) : radioVal;
+            if (purposeField) purposeField.value = selectedPurpose;
+
+            showModalStep(bpModalEl, 3);
+        });
+    }
+
+    // BP Step 3 -> Step 2
+    const bpBtnBackToStep2 = document.getElementById('bpBtnBackToStep2');
+    if (bpBtnBackToStep2) {
+        bpBtnBackToStep2.addEventListener('click', function() {
+            showModalStep(bpModalEl, 2);
+        });
     }
 
     const bpConfirmBtn = document.getElementById('bpModalConfirm');
@@ -1411,12 +1515,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let hasErrors = false;
             let errMsgs   = [];
 
-            // Step 2 Purpose Validation
+            // Step 2 Purpose Validation Check
             if (!checkedRadio && !otherVal) {
+                showModalStep(bpModalEl, 2);
                 if (bpPurposeError) bpPurposeError.style.display = 'block';
-                hasErrors = true;
-            } else {
-                if (bpPurposeError) bpPurposeError.style.display = 'none';
+                return;
             }
 
             // Step 3 ID Type Validation
@@ -1458,9 +1561,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (docHiddenInput) docHiddenInput.value = selectedDoc;
             if (docsJsonInput) docsJsonInput.value = JSON.stringify([{ type: selectedDoc, purpose: selectedPurpose }]);
 
-            if (bpModal) bpModal.hide();
             updateSelectedDocUI();
-            setGuideStep(4);
+            proceedToReviewFromModal(bpModal, bpModalEl);
         });
     }
 
@@ -1469,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bpCancelBtn.addEventListener('click', function() {
             resetBpModal();
             if (bpModal) bpModal.hide();
-            setGuideStep(1);
+            setGuideStep(selectedDoc ? 4 : 1);
         });
     }
 
@@ -1512,6 +1614,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (badge) badge.classList.add('d-none');
         clearUploadedFiles();
         clearModalValidationErrors();
+        showModalStep(genericModalEl, 2);
+    }
+
+    // Generic Step 2 -> Step 3
+    const genericBtnToStep3 = document.getElementById('genericBtnToStep3');
+    if (genericBtnToStep3) {
+        genericBtnToStep3.addEventListener('click', function() {
+            const val = genericPurposeText ? genericPurposeText.value.trim() : '';
+
+            if (!val) {
+                if (genericPurposeError) genericPurposeError.style.display = 'block';
+                return;
+            }
+            if (genericPurposeError) genericPurposeError.style.display = 'none';
+
+            selectedPurpose = val.toUpperCase();
+            if (purposeField) purposeField.value = selectedPurpose;
+
+            showModalStep(genericModalEl, 3);
+        });
+    }
+
+    // Generic Step 3 -> Step 2
+    const genericBtnBackToStep2 = document.getElementById('genericBtnBackToStep2');
+    if (genericBtnBackToStep2) {
+        genericBtnBackToStep2.addEventListener('click', function() {
+            showModalStep(genericModalEl, 2);
+        });
     }
 
     const genericConfirmBtn = document.getElementById('genericModalConfirm');
@@ -1523,12 +1653,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let hasErrors = false;
             let errMsgs   = [];
 
-            // Step 2 Purpose Validation
+            // Step 2 Purpose Validation Check
             if (!val) {
+                showModalStep(genericModalEl, 2);
                 if (genericPurposeError) genericPurposeError.style.display = 'block';
-                hasErrors = true;
-            } else {
-                if (genericPurposeError) genericPurposeError.style.display = 'none';
+                return;
             }
 
             // Step 3 ID Type Validation
@@ -1568,9 +1697,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (docHiddenInput) docHiddenInput.value = selectedDoc;
             if (docsJsonInput) docsJsonInput.value = JSON.stringify([{ type: selectedDoc, purpose: selectedPurpose }]);
 
-            if (genericModal) genericModal.hide();
             updateSelectedDocUI();
-            setGuideStep(4);
+            proceedToReviewFromModal(genericModal, genericModalEl);
         });
     }
 
@@ -1579,9 +1707,81 @@ document.addEventListener('DOMContentLoaded', function() {
         genericCancelBtn.addEventListener('click', function() {
             resetGenericModal();
             if (genericModal) genericModal.hide();
-            setGuideStep(1);
+            setGuideStep(selectedDoc ? 4 : 1);
         });
     }
+
+    // Click handlers for stepper circles inside modals
+    document.querySelectorAll('#bpPurposeModal .stepper-step, #genericPurposeModal .stepper-step').forEach(stepEl => {
+        stepEl.style.cursor = 'pointer';
+        stepEl.addEventListener('click', function() {
+            const targetStep = parseInt(this.dataset.step, 10);
+            const modalEl = this.closest('.modal');
+            if (!modalEl) return;
+
+            if (targetStep === 1) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+                setGuideStep(1);
+                document.getElementById('docTypeGrid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (targetStep === 2) {
+                showModalStep(modalEl, 2);
+            } else if (targetStep === 3) {
+                const isBp = modalEl.id === 'bpPurposeModal';
+                if (isBp) {
+                    const checkedRadio = document.querySelector('.bp-modal-radio:checked');
+                    const otherVal = bpPurposeOther ? bpPurposeOther.value.trim() : '';
+                    if (!checkedRadio && !otherVal) {
+                        if (bpPurposeError) bpPurposeError.style.display = 'block';
+                        showModalStep(modalEl, 2);
+                        return;
+                    }
+                } else {
+                    const val = genericPurposeText ? genericPurposeText.value.trim() : '';
+                    if (!val) {
+                        if (genericPurposeError) genericPurposeError.style.display = 'block';
+                        showModalStep(modalEl, 2);
+                        return;
+                    }
+                }
+                showModalStep(modalEl, 3);
+            }
+        });
+    });
+
+    // Re-open upload step from review modal
+    window.reopenUploadStep = function() {
+        const isBusiness = selectedDoc === BP_DOC || selectedDoc === 'Barangay Business Clearance';
+        const targetModal = isBusiness ? bpModal : genericModal;
+        const targetEl    = isBusiness ? bpModalEl : genericModalEl;
+
+        if (!targetModal || !targetEl) return;
+
+        showModalStep(targetEl, 3);
+
+        if (confirmModal && confirmModalEl && confirmModalEl.classList.contains('show')) {
+            const onReviewHidden = function() {
+                confirmModalEl.removeEventListener('hidden.bs.modal', onReviewHidden);
+                targetModal.show();
+            };
+            confirmModalEl.addEventListener('hidden.bs.modal', onReviewHidden);
+            confirmModal.hide();
+        } else {
+            targetModal.show();
+        }
+    };
+
+    // Change document from review modal
+    window.changeDocumentFromReview = function() {
+        if (confirmModal) confirmModal.hide();
+        const grid = document.getElementById('docTypeGrid');
+        if (grid) {
+            setTimeout(() => {
+                grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 150);
+        }
+        setGuideStep(1);
+    };
 
     function executeDocTypeSwitch(docType) {
         pendingDocType = docType;
@@ -1589,19 +1789,19 @@ document.addEventListener('DOMContentLoaded', function() {
         docTypeItems.forEach(item => item.style.display = '');
         docTypeNoResults.style.display = 'none';
 
-        setGuideStep(2);
-
         const isBusiness = docType === BP_DOC || docType === 'Barangay Business Clearance';
         if (isBusiness) {
             mountUploadSection(bpUploadSlot);
             const bpSubtitle = document.getElementById('bpPurposeModalDocName');
             if (bpSubtitle) bpSubtitle.textContent = docType;
             resetBpModal();
+            showModalStep(bpModalEl, 2);
             if (bpModal) bpModal.show();
         } else {
             mountUploadSection(genericUploadSlot);
             resetGenericModal();
             if (genericModalDocName) genericModalDocName.textContent = docType;
+            showModalStep(genericModalEl, 2);
             if (genericModal) genericModal.show();
         }
 
@@ -1934,7 +2134,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    document.getElementById('btnOpenConfirmModal').addEventListener('click', function() {
+    function openConfirmModal() {
         let valid = true;
 
         const docTypeGrid = document.getElementById('docTypeGrid');
@@ -1995,7 +2195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 modalAttachmentsContainer.innerHTML = `
                     <div class="p-2 px-3 rounded-3 border bg-light text-muted small d-flex align-items-center justify-content-between">
                         <span><i class="fa-solid fa-circle-info me-1 text-secondary"></i> No supporting documents uploaded.</span>
-                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" onclick="const modalEl = document.getElementById('confirmSubmitModal'); bootstrap.Modal.getInstance(modalEl)?.hide(); document.getElementById('docTypeGrid')?.scrollIntoView({behavior:'smooth', block:'center'});" style="font-size:11px;">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" onclick="reopenUploadStep()" style="font-size:11px;">
                             <i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Files
                         </button>
                     </div>
@@ -2069,7 +2269,13 @@ document.addEventListener('DOMContentLoaded', function() {
             setGuideStep(5);
             document.getElementById('docRequestForm').submit();
         }
-    });
+    }
+    window.openConfirmModal = openConfirmModal;
+
+    const btnOpenConfirmModal = document.getElementById('btnOpenConfirmModal');
+    if (btnOpenConfirmModal) {
+        btnOpenConfirmModal.addEventListener('click', openConfirmModal);
+    }
 
     const reviewFieldMap = {
         reviewName:    { display: 'modalResidentName', editBox: 'reviewNameEdit',    input: 'reviewNameInput',    formField: () => piFullName },
