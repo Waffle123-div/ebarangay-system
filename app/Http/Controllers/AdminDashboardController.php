@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\AccountApproved;    
 use App\Mail\DocumentReady;        
 use App\Mail\DocumentRequestAccepted;
+use App\Mail\DocumentRequestRejected;
 use Carbon\Carbon;
 use App\Mail\AccountRejectedMail;
 use Illuminate\Support\Facades\Hash;
@@ -1860,9 +1861,11 @@ class AdminDashboardController extends Controller
         $trackingNumber = $docRequest->tracking_number;
         $docType = $docRequest->document_type;
         $residentName = $docRequest->resident_name;
+        $purpose = $docRequest->purpose;
 
         // Find the resident user associated with this request
         $residentUser = $this->resolveResidentUser($docRequest);
+        $recipientEmail = trim((string) ($docRequest->resident_email ?: ($residentUser?->email ?? '')));
 
         $reason = $request->input('reason') ?: $request->input('rejection_reason');
         $notificationMessage = "Your document request #{$trackingNumber} ({$docType}) was rejected and removed.";
@@ -1870,16 +1873,39 @@ class AdminDashboardController extends Controller
             $notificationMessage .= " Reason: {$reason}";
         }
 
-        // 1. Notify the resident user via database notification
-        if ($residentUser) {
-            $residentUser->notify(new \App\Notifications\DocumentRejectedNotification(
-                $trackingNumber,
-                $docType,
-                $reason
-            ));
+        // 1. Send rejection email to the resident if an email address is available
+        $emailSent = false;
+        if ($recipientEmail !== '') {
+            try {
+                Mail::to($recipientEmail)->send(new DocumentRequestRejected(
+                    $trackingNumber,
+                    $docType,
+                    $residentName,
+                    $purpose,
+                    $reason
+                ));
+                $emailSent = true;
+            } catch (\Throwable $e) {
+                Log::error('Request rejected email error for #' . $trackingNumber . ': ' . $e->getMessage());
+            }
         }
 
-        // 2. Broadcast rejection status update before deleting
+        // 2. Notify the resident user via database notification
+        $portalNotified = false;
+        if ($residentUser) {
+            try {
+                $residentUser->notify(new \App\Notifications\DocumentRejectedNotification(
+                    $trackingNumber,
+                    $docType,
+                    $reason
+                ));
+                $portalNotified = true;
+            } catch (\Throwable $e) {
+                Log::error('Request rejected portal notification error for #' . $trackingNumber . ': ' . $e->getMessage());
+            }
+        }
+
+        // 3. Broadcast rejection status update before deleting
         \App\Services\WebSocketService::broadcast('request.status_changed', [
             'id'              => $docRequest->id,
             'tracking_number' => $trackingNumber,
@@ -1890,19 +1916,30 @@ class AdminDashboardController extends Controller
             'message'         => $notificationMessage,
         ]);
 
-        // 3. Delete the request record
+        // 4. Delete the request record
         $docRequest->delete();
 
         ActivityLog::record('request_rejected', "Rejected and deleted document request #{$trackingNumber} ({$docType}) for {$residentName}.");
 
+        $statusMessage = "Request #{$trackingNumber} has been rejected and deleted.";
+        if ($emailSent && $portalNotified) {
+            $statusMessage = "Request #{$trackingNumber} has been rejected and deleted. Resident notified via email and portal.";
+        } elseif ($emailSent) {
+            $statusMessage = "Request #{$trackingNumber} has been rejected and deleted. Email notification sent to resident.";
+        } elseif ($portalNotified) {
+            $statusMessage = "Request #{$trackingNumber} has been rejected and deleted. Resident notified in portal.";
+        }
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
-                'success' => true,
-                'message' => "Request #{$trackingNumber} has been rejected and deleted.",
+                'success'         => true,
+                'email_sent'      => $emailSent,
+                'portal_notified' => $portalNotified,
+                'message'         => $statusMessage,
             ]);
         }
 
-        return back()->with('success', "Request #{$trackingNumber} has been rejected and deleted.");
+        return back()->with('success', $statusMessage);
     }
 
     private function numberToWords(float $number): string

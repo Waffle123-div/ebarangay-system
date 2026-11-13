@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use App\Mail\DocumentRequestRejected;
 use App\Models\User;
 use App\Models\DocumentRequest;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Mail;
 
 class AdminRequestsUiTest extends TestCase
 {
@@ -132,6 +134,8 @@ class AdminRequestsUiTest extends TestCase
             'status' => 'Pending',
         ]);
 
+        Mail::fake();
+
         $response = $this->actingAs($this->admin)->patch(route('admin.requests.reject', $docRequest->id));
 
         $response->assertRedirect();
@@ -140,6 +144,20 @@ class AdminRequestsUiTest extends TestCase
         $this->assertDatabaseMissing('document_requests', [
             'id' => $docRequest->id,
         ]);
+
+        Mail::assertSent(DocumentRequestRejected::class, function (DocumentRequestRejected $mail) use ($resident, $docRequest) {
+            return $mail->hasTo($resident->email)
+                && $mail->trackingNumber === $docRequest->tracking_number
+                && $mail->documentType === 'Barangay Clearance';
+        });
+
+        $renderedHtml = (new DocumentRequestRejected(
+            $docRequest->tracking_number,
+            'Barangay Clearance',
+            'Reject Resident'
+        ))->render();
+        $this->assertStringContainsString($docRequest->tracking_number, $renderedHtml);
+        $this->assertStringContainsString('Barangay Clearance', $renderedHtml);
 
         $this->assertCount(1, $resident->fresh()->notifications);
         $notifData = $resident->fresh()->notifications->first()->data;
@@ -259,5 +277,103 @@ class AdminRequestsUiTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($trackingNumber);
+    }
+
+    public function test_rejecting_request_falls_back_to_user_email_and_includes_reason_in_email_and_json(): void
+    {
+        Mail::fake();
+
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Fallback Reject Resident',
+            'first_name' => 'Fallback',
+            'last_name' => 'Resident',
+            'email' => 'fallback_reject_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-REJFB-' . rand(1000, 9999),
+            'first_name' => 'Fallback',
+            'last_name' => 'Resident',
+            'resident_email' => null,
+            'document_type' => 'Certificate of Indigency',
+            'purpose' => 'Medical Assistance',
+            'status' => 'Pending',
+        ]);
+
+        $response = $this->actingAs($this->admin)->patchJson(
+            route('admin.requests.reject', $docRequest->id),
+            ['reason' => 'Incomplete valid ID attachment']
+        );
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'email_sent' => true,
+                'portal_notified' => true,
+            ]);
+
+        Mail::assertSent(DocumentRequestRejected::class, function (DocumentRequestRejected $mail) use ($resident, $docRequest) {
+            return $mail->hasTo($resident->email)
+                && $mail->trackingNumber === $docRequest->tracking_number
+                && $mail->reason === 'Incomplete valid ID attachment';
+        });
+
+        $renderedHtml = (new DocumentRequestRejected(
+            $docRequest->tracking_number,
+            'Certificate of Indigency',
+            'Fallback Resident',
+            'Medical Assistance',
+            'Incomplete valid ID attachment'
+        ))->render();
+        $this->assertStringContainsString('Incomplete valid ID attachment', $renderedHtml);
+        $this->assertStringContainsString('Medical Assistance', $renderedHtml);
+    }
+
+    public function test_rejecting_request_still_succeeds_and_notifies_portal_when_mail_throws(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . rand(10000, 99999),
+            'name' => 'Mail Fail Reject Resident',
+            'email' => 'mail_fail_rej_' . uniqid() . '@example.com',
+            'role' => 'Resident',
+            'status' => 'active',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-REJERR-' . rand(1000, 9999),
+            'first_name' => 'MailFail',
+            'last_name' => 'Resident',
+            'resident_email' => $resident->email,
+            'document_type' => 'Barangay Clearance',
+            'status' => 'Pending',
+        ]);
+
+        Mail::shouldReceive('to')
+            ->once()
+            ->with($resident->email)
+            ->andThrow(new \RuntimeException('SMTP connection refused'));
+
+        $response = $this->actingAs($this->admin)->patchJson(
+            route('admin.requests.reject', $docRequest->id)
+        );
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'email_sent' => false,
+                'portal_notified' => true,
+            ]);
+
+        $this->assertDatabaseMissing('document_requests', [
+            'id' => $docRequest->id,
+        ]);
+        $this->assertCount(1, $resident->fresh()->unreadNotifications);
     }
 }
