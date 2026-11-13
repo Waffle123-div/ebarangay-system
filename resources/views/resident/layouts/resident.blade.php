@@ -2403,7 +2403,12 @@ if (auth()->check()) {
                         <small style="opacity:0.9;">Barangay Fisherman Assistant</small>
                     </div>
                 </div>
-                <button id="close-chat-btn">&times;</button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="reset-chat-btn" title="New conversation" aria-label="Reset conversation">
+                        <i class="fa-solid fa-rotate-left" style="font-size:13px;"></i>
+                    </button>
+                    <button type="button" id="close-chat-btn" title="Close" aria-label="Close chat">&times;</button>
+                </div>
             </div>
             <div class="chat-disclaimer">
                 <small><i class="fa-solid fa-circle-info me-1"></i> Information only. No official documents issued here.</small>
@@ -2473,13 +2478,15 @@ if (auth()->check()) {
         }
         .header-titles h5 { font-size:16px;color:#fff;margin-bottom:2px; }
         .header-titles small { color:#fff;font-size:12px; }
-        #close-chat-btn {
+        #close-chat-btn,
+        #reset-chat-btn {
             background:rgba(255,255,255,0.2);border:none;color:#fff;
             font-size:20px;width:32px;height:32px;border-radius:50%;cursor:pointer;
             display:flex;align-items:center;justify-content:center;transition:background 0.2s;
             flex-shrink:0;
         }
-        #close-chat-btn:hover { background:rgba(255,255,255,0.4); }
+        #close-chat-btn:hover,
+        #reset-chat-btn:hover { background:rgba(255,255,255,0.4); }
         .chat-disclaimer {
             background:#fff;color:var(--color-text-light);font-size:11px;
             padding:8px 20px;border-bottom:1px solid #E2E8F0;text-align:center;
@@ -2526,11 +2533,66 @@ if (auth()->check()) {
         document.addEventListener('DOMContentLoaded', function () {
             const toggleBtn    = document.getElementById('ai-toggle-btn');
             const closeBtn     = document.getElementById('close-chat-btn');
+            const resetBtn     = document.getElementById('reset-chat-btn');
             const chatWindow   = document.getElementById('ai-chat-window');
             const sendBtn      = document.getElementById('send-chat-btn');
             const chatInput    = document.getElementById('chat-input');
             const chatBody     = document.getElementById('chat-body');
             const chatContainer= document.getElementById('ai-chat-container');
+
+            const chatUserId = @json(auth()->check() ? (string) auth()->id() : 'guest');
+            const CHAT_STORAGE_KEY = 'ebarangay_resident_istong_v1_' + chatUserId;
+            const DEFAULT_GREETING = 'Kumusta! Ako ang inyong Fisherman Assistant nga si Istong. Unsa may matabang nako nimo karon kabahin sa atong barangay?';
+
+            let conversationHistory = [];
+            let savedMessages = [];
+            let isChatOpen = false;
+            let isSending = false;
+
+            function readStoredChat() {
+                const raw = (function () {
+                    try {
+                        return localStorage.getItem(CHAT_STORAGE_KEY);
+                    } catch (e) {
+                        try {
+                            return sessionStorage.getItem(CHAT_STORAGE_KEY);
+                        } catch (err) {
+                            return null;
+                        }
+                    }
+                })();
+
+                if (!raw) return null;
+                try {
+                    const parsed = JSON.parse(raw);
+                    return parsed && typeof parsed === 'object' ? parsed : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function saveChatState() {
+                const payload = JSON.stringify({
+                    messages: savedMessages.slice(-50),
+                    history: conversationHistory.slice(-10),
+                    isOpen: isChatOpen
+                });
+                try {
+                    localStorage.setItem(CHAT_STORAGE_KEY, payload);
+                } catch (e) {
+                    try {
+                        sessionStorage.setItem(CHAT_STORAGE_KEY, payload);
+                    } catch (err) {}
+                }
+            }
+
+            function clearChatState() {
+                conversationHistory = [];
+                savedMessages = [];
+                chatBody.innerHTML = '';
+                appendMessage(DEFAULT_GREETING, 'bot-message', false);
+                saveChatState();
+            }
 
             let isDragging = false, hasDragged = false;
             let startX, startY, initialLeft, initialTop;
@@ -2573,9 +2635,11 @@ if (auth()->check()) {
             document.addEventListener('mouseup', dragEnd);
             document.addEventListener('touchend', dragEnd);
 
-            function openChat() {
+            function openChat(skipFocus) {
+                isChatOpen = true;
                 chatWindow.style.display = 'flex';
                 toggleBtn.style.display  = 'none';
+                saveChatState();
 
                 requestAnimationFrame(() => {
                     const vw = window.innerWidth;
@@ -2599,31 +2663,74 @@ if (auth()->check()) {
                             chatContainer.style.top    = '10px';
                         }
                     }
-                    chatInput.focus();
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    if (!skipFocus) chatInput.focus();
                 });
             }
 
             toggleBtn.addEventListener('click', e => {
                 if (hasDragged) { e.preventDefault(); return; }
-                openChat();
+                openChat(false);
             });
             closeBtn.addEventListener('click', () => {
+                isChatOpen = false;
                 chatWindow.style.display = 'none';
                 toggleBtn.style.display  = 'flex';
                 chatContainer.style.left   = 'auto';
                 chatContainer.style.top    = 'auto';
                 chatContainer.style.bottom = '25px';
                 chatContainer.style.right  = '25px';
+                saveChatState();
             });
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    clearChatState();
+                    chatInput.focus();
+                });
+            }
 
-            let conversationHistory = [];
+            function restoreStoredChat() {
+                const stored = readStoredChat();
+                if (!stored) return;
+
+                if (Array.isArray(stored.messages) && stored.messages.length > 0) {
+                    savedMessages = stored.messages
+                        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+                        .slice(-50);
+
+                    if (savedMessages.length > 0) {
+                        chatBody.innerHTML = '';
+                        appendMessage(DEFAULT_GREETING, 'bot-message', false);
+                        savedMessages.forEach(msg => {
+                            appendMessage(msg.content, msg.role === 'user' ? 'user-message' : 'bot-message', false);
+                        });
+                    }
+                }
+
+                if (Array.isArray(stored.history)) {
+                    conversationHistory = stored.history
+                        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+                        .slice(-10);
+                }
+
+                if (stored.isOpen === true) {
+                    openChat(true);
+                }
+            }
+
             async function sendMessage() {
+                if (isSending) return;
                 const text = chatInput.value.trim();
                 if (!text) return;
-                appendMessage(text, 'user-message');
+
+                isSending = true;
+                sendBtn.disabled = true;
+                appendMessage(text, 'user-message', true);
                 chatInput.value = '';
                 conversationHistory.push({role:'user',content:text});
                 if (conversationHistory.length > 10) conversationHistory = conversationHistory.slice(-10);
+                saveChatState();
+
                 const loadingId = appendLoading();
                 try {
                     const resp = await fetch("{{ route('chatbot.message') }}", {
@@ -2632,22 +2739,45 @@ if (auth()->check()) {
                         body: JSON.stringify({history:conversationHistory})
                     });
                     const data = await resp.json();
-                    document.getElementById(loadingId).remove();
-                    appendMessage(data.reply, 'bot-message');
-                    if (!data.reply.includes('Pasensya')) conversationHistory.push({role:'assistant',content:data.reply});
+                    const loadingEl = document.getElementById(loadingId);
+                    if (loadingEl) loadingEl.remove();
+
+                    const replyText = (data && typeof data.reply === 'string' && data.reply.trim() !== '')
+                        ? data.reply
+                        : 'Pasensya, naputol ang koneksyon. Palihug sulayi usab.';
+
+                    appendMessage(replyText, 'bot-message', true);
+                    if (!replyText.includes('Pasensya')) {
+                        conversationHistory.push({role:'assistant',content:replyText});
+                        if (conversationHistory.length > 10) conversationHistory = conversationHistory.slice(-10);
+                    }
+                    saveChatState();
                 } catch(err) {
-                    document.getElementById(loadingId).remove();
-                    appendMessage('Pasensya, naputol ang koneksyon. Palihug sulayi usab.', 'bot-message');
+                    const loadingEl = document.getElementById(loadingId);
+                    if (loadingEl) loadingEl.remove();
+                    appendMessage('Pasensya, naputol ang koneksyon. Palihug sulayi usab.', 'bot-message', true);
                     conversationHistory.pop();
+                    saveChatState();
+                } finally {
+                    isSending = false;
+                    sendBtn.disabled = false;
+                    chatInput.focus();
                 }
             }
             sendBtn.addEventListener('click', sendMessage);
             chatInput.addEventListener('keypress', e => { if (e.key==='Enter') sendMessage(); });
 
-            function appendMessage(text, cls) {
+            function appendMessage(text, cls, shouldPersist) {
                 const d = document.createElement('div');
                 d.className = 'message '+cls; d.innerText = text;
                 chatBody.appendChild(d); chatBody.scrollTop = chatBody.scrollHeight;
+                if (shouldPersist) {
+                    savedMessages.push({
+                        role: cls === 'user-message' ? 'user' : 'assistant',
+                        content: text
+                    });
+                    if (savedMessages.length > 50) savedMessages = savedMessages.slice(-50);
+                }
             }
             function appendLoading() {
                 const d = document.createElement('div');
@@ -2656,6 +2786,8 @@ if (auth()->check()) {
                 chatBody.appendChild(d); chatBody.scrollTop = chatBody.scrollHeight;
                 return d.id;
             }
+
+            restoreStoredChat();
         });
     </script>
     @endif

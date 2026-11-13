@@ -116,5 +116,39 @@ class ResidentTrackRequestsCounterTest extends TestCase
         $apiResponse->assertStatus(200);
         $apiResponse->assertJsonFragment(['active_count' => 0]);
     }
+
+    public function test_resident_portal_sections_render_user_scoped_persistent_istong_chat(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . substr(uniqid(), -6) . rand(10, 99),
+            'name' => 'Chat Persist Resident',
+            'first_name' => 'Chat',
+            'last_name' => 'Resident',
+            'email' => 'chat_persist_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'security_pin' => bcrypt('1234'),
+            'password' => bcrypt('Password123!'),
+            'role' => 'resident',
+            'status' => 'active',
+        ]);
+
+        $expectedKeyFragment = "'ebarangay_resident_istong_v1_' + chatUserId";
+
+        foreach ([
+            route('resident.dashboard'),
+            route('resident.request.create'),
+            route('resident.request.track'),
+            route('resident.concerns'),
+            route('resident.activity-logs'),
+            route('resident.settings'),
+        ] as $sectionUrl) {
+            $response = $this->actingAs($resident)->get($sectionUrl);
+            $response->assertStatus(200);
+            $response->assertSee('id="reset-chat-btn"', false);
+            $response->assertSee($expectedKeyFragment, false);
+            $response->assertSee('const chatUserId = "' . $resident->id . '"', false);
+            $response->assertSee('restoreStoredChat()', false);
+        }
+    }
 }
 
