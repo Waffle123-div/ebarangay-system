@@ -10,11 +10,14 @@ use App\Models\CommunityConcernRemark;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Notifications\ConcernStatusUpdatedNotification;
+use App\Notifications\DocumentAcceptedNotification;
 use PhpOffice\PhpWord\TemplateProcessor; 
 use Illuminate\Support\Facades\Mail;    
 use Illuminate\Support\Facades\Http;    
+use Illuminate\Support\Facades\Log;
 use App\Mail\AccountApproved;    
 use App\Mail\DocumentReady;        
+use App\Mail\DocumentRequestAccepted;
 use Carbon\Carbon;
 use App\Mail\AccountRejectedMail;
 use Illuminate\Support\Facades\Hash;
@@ -1748,10 +1751,30 @@ class AdminDashboardController extends Controller
     // THE PIPELINE: ACTION METHODS
     // ==========================================
 
+    /**
+     * Resolve the resident User model linked to a DocumentRequest via user_id or fallback email.
+     */
+    private function resolveResidentUser(DocumentRequest $docRequest): ?User
+    {
+        if (!empty($docRequest->user_id)) {
+            $user = User::find($docRequest->user_id);
+            if ($user) {
+                return $user;
+            }
+        }
+
+        if (!empty($docRequest->resident_email)) {
+            return User::where('email', $docRequest->resident_email)->first();
+        }
+
+        return null;
+    }
+
     public function acceptRequest(Request $request, $id)
     {
         $docRequest = DocumentRequest::findOrFail($id);
-        
+        $wasAcceptableStatus = in_array($docRequest->status, ['Pending', 'Under Review'], true);
+
         if ($request->filled('fee')) {
             $fee = (float)$request->fee;
             $docRequest->fee = $fee;
@@ -1765,11 +1788,36 @@ class AdminDashboardController extends Controller
             }
         }
 
-        if (in_array($docRequest->status, ['Pending', 'Under Review'])) {
+        if ($wasAcceptableStatus) {
             $docRequest->status = 'Processing';
         }
 
         $docRequest->save();
+
+        $residentUser = $this->resolveResidentUser($docRequest);
+        $recipientEmail = trim((string) ($docRequest->resident_email ?: ($residentUser?->email ?? '')));
+        $emailSent = false;
+        $portalNotified = false;
+
+        if ($wasAcceptableStatus) {
+            if ($recipientEmail !== '') {
+                try {
+                    Mail::to($recipientEmail)->send(new DocumentRequestAccepted($docRequest));
+                    $emailSent = true;
+                } catch (\Throwable $e) {
+                    Log::error('Request accepted email error for #' . $docRequest->tracking_number . ': ' . $e->getMessage());
+                }
+            }
+
+            if ($residentUser) {
+                try {
+                    $residentUser->notify(new DocumentAcceptedNotification($docRequest));
+                    $portalNotified = true;
+                } catch (\Throwable $e) {
+                    Log::error('Request accepted portal notification error for #' . $docRequest->tracking_number . ': ' . $e->getMessage());
+                }
+            }
+        }
 
         ActivityLog::record('request_accepted', "Accepted document request #{$docRequest->tracking_number} ({$docRequest->document_type}) for {$docRequest->resident_name}.");
 
@@ -1778,14 +1826,32 @@ class AdminDashboardController extends Controller
             'tracking_number' => $docRequest->tracking_number,
             'status'          => $docRequest->status,
             'applicant'       => $docRequest->resident_name,
+            'user_id'         => $residentUser?->id,
             'document_type'   => $docRequest->document_type,
-            'message'         => "Request #{$docRequest->tracking_number} moved to Processing.",
+            'message'         => "Your request #{$docRequest->tracking_number} ({$docRequest->document_type}) has been accepted and is now Processing.",
         ]);
 
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'status' => 'Processing', 'message' => 'Request accepted and moved to Processing.']);
+        $statusMessage = 'Request accepted and moved to Processing.';
+        if ($wasAcceptableStatus) {
+            if ($emailSent && $portalNotified) {
+                $statusMessage = 'Request accepted and moved to Processing. Resident notified via email and portal.';
+            } elseif ($portalNotified) {
+                $statusMessage = 'Request accepted and moved to Processing. Resident notified in portal.';
+            } elseif ($emailSent) {
+                $statusMessage = 'Request accepted and moved to Processing. Email notification sent to resident.';
+            }
         }
-        return back()->with('success', 'Request accepted and moved to Processing.');
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'         => true,
+                'status'          => 'Processing',
+                'email_sent'      => $emailSent,
+                'portal_notified' => $portalNotified,
+                'message'         => $statusMessage,
+            ]);
+        }
+        return back()->with('success', $statusMessage);
     }
 
     public function rejectRequest(Request $request, $id)
@@ -1796,13 +1862,7 @@ class AdminDashboardController extends Controller
         $residentName = $docRequest->resident_name;
 
         // Find the resident user associated with this request
-        $residentUser = null;
-        if (!empty($docRequest->user_id)) {
-            $residentUser = User::find($docRequest->user_id);
-        }
-        if (!$residentUser && !empty($docRequest->resident_email)) {
-            $residentUser = User::where('email', $docRequest->resident_email)->first();
-        }
+        $residentUser = $this->resolveResidentUser($docRequest);
 
         $reason = $request->input('reason') ?: $request->input('rejection_reason');
         $notificationMessage = "Your document request #{$trackingNumber} ({$docType}) was rejected and removed.";

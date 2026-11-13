@@ -2039,17 +2039,19 @@ if (auth()->check()) {
                     </button>
 
                     {{-- Notification Bell --}}
+                    @php
+                        $unreadNotifCount = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+                        $userNotifs = auth()->check() && auth()->user()->notifications ? auth()->user()->notifications->take(15)->values() : collect();
+                    @endphp
                     <div class="dropdown">
                         <a class="r-notif-bell-btn text-decoration-none"
                            href="#" id="rNotifDropdown" role="button"
                            data-bs-toggle="dropdown" aria-expanded="false"
                            onclick="markResidentNotificationsRead()">
                             <i class="fa-solid fa-bell" style="font-size:16px;"></i>
-                            @if(auth()->check() && auth()->user()->unreadNotifications->count() > 0)
-                                <span class="r-notif-badge" id="r-notif-badge">
-                                    {{ auth()->user()->unreadNotifications->count() }}
-                                </span>
-                            @endif
+                            <span class="r-notif-badge {{ $unreadNotifCount > 0 ? '' : 'd-none' }}" id="r-notif-badge">
+                                {{ $unreadNotifCount }}
+                            </span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow p-0 mt-2"
                             style="width:330px; border-radius:14px; overflow:hidden;">
@@ -2059,32 +2061,33 @@ if (auth()->check()) {
                                     <i class="fa-solid fa-bell me-2"></i>Notifications
                                 </span>
                             </div>
-                            <div style="max-height:300px; overflow-y:auto;">
+                            <div id="r-notif-list" style="max-height:300px; overflow-y:auto;">
                                 @if(auth()->check())
-@php
-$userNotifs = auth()->user()->notifications ? auth()->user()->notifications->values() : collect();
-@endphp
                                     @if($userNotifs->count() > 0)
                                         @for($n = 0; $n < $userNotifs->count(); $n++)
-@php
-$notification = $userNotifs[$n];
-@endphp
-                                            <div class="px-3 py-3 border-bottom r-notif-item {{ $notification->read_at === null ? 'unread' : 'read' }}">
+                                            @php
+                                                $notification = $userNotifs[$n];
+                                                $notifStatus = $notification->data['status'] ?? '';
+                                                $notifLink = $notification->data['link'] ?? route('resident.request.track');
+                                            @endphp
+                                            <a href="{{ $notifLink }}" class="d-block text-decoration-none px-3 py-3 border-bottom r-notif-item {{ $notification->read_at === null ? 'unread' : 'read' }}">
                                                 <div class="fw-bold r-notif-title" style="font-size:14px;">
-                                                    @if(($notification->data['status'] ?? '') === 'Rejected')
+                                                    @if($notifStatus === 'Rejected')
                                                         <i class="fa-solid fa-circle-xmark text-danger me-1"></i>
+                                                    @elseif($notifStatus === 'Processing')
+                                                        <i class="fa-solid fa-circle-check text-primary me-1"></i>
                                                     @else
                                                         <i class="fa-solid fa-circle-check text-success me-1"></i>
                                                     @endif
-                                                    {{ $notification->data['document_type'] ?? 'Document Update' }}
+                                                    {{ $notification->data['document_type'] ?? ($notification->data['title'] ?? 'Document Update') }}
                                                 </div>
                                                 <div class="r-notif-msg text-muted mt-1" style="font-size:13px;">
                                                     {{ $notification->data['message'] ?? 'The status of your document has been updated.' }}
                                                 </div>
                                                 <div class="r-notif-trk mt-1" style="font-size:11px; font-weight:600;">
-                                                    TRK: {{ $notification->data['tracking_number'] ?? 'N/A' }} • {{ $notification->created_at->diffForHumans() }}
+                                                    TRK: {{ $notification->data['tracking_number'] ?? ($notification->data['concern_id'] ?? 'N/A') }} • {{ $notification->created_at->diffForHumans() }}
                                                 </div>
-                                            </div>
+                                            </a>
                                         @endfor
                                     @else
                                         <div class="px-3 py-4 text-center text-muted small">
@@ -2211,18 +2214,130 @@ $notification = $userNotifs[$n];
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function markResidentNotificationsRead() {
-            const badge = document.getElementById('r-notif-badge');
-            if (badge) badge.style.display = 'none';
-            fetch('{{ route("resident.notifications.read") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+        (function initResidentNotifications() {
+            let latestNotifId = @json(auth()->check() && auth()->user()->notifications ? optional(auth()->user()->notifications->first())->id : null);
+            let currentUnreadCount = {{ auth()->check() ? (int) auth()->user()->unreadNotifications()->count() : 0 }};
+
+            function escapeNotifHtml(str) {
+                if (str === null || str === undefined) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function renderResidentNotificationIcon(status) {
+                if (status === 'Rejected') {
+                    return '<i class="fa-solid fa-circle-xmark text-danger me-1"></i>';
                 }
-            }).catch(() => {});
-        }
+                if (status === 'Processing') {
+                    return '<i class="fa-solid fa-circle-check text-primary me-1"></i>';
+                }
+                return '<i class="fa-solid fa-circle-check text-success me-1"></i>';
+            }
+
+            function renderResidentNotifications(data, silentToast) {
+                const badge = document.getElementById('r-notif-badge');
+                const list  = document.getElementById('r-notif-list');
+                const unread = Number(data.unread_count || 0);
+
+                if (badge) {
+                    badge.textContent = unread;
+                    badge.classList.toggle('d-none', unread <= 0);
+                }
+
+                const items = Array.isArray(data.notifications) ? data.notifications : [];
+                if (list) {
+                    if (items.length === 0) {
+                        list.innerHTML =
+                            '<div class="px-3 py-4 text-center text-muted small">' +
+                            '<i class="fa-regular fa-bell-slash fa-2x mb-2 d-block" style="color:#CBD5E0;"></i>' +
+                            'No new notifications</div>';
+                    } else {
+                        list.innerHTML = items.map(function (n) {
+                            const unreadCls = n.read ? 'read' : 'unread';
+                            const linkHref  = escapeNotifHtml(n.link || '{{ route("resident.request.track") }}');
+                            return '<a href="' + linkHref + '" class="d-block text-decoration-none px-3 py-3 border-bottom r-notif-item ' + unreadCls + '">' +
+                                '<div class="fw-bold r-notif-title" style="font-size:14px;">' +
+                                    renderResidentNotificationIcon(n.status) +
+                                    escapeNotifHtml(n.document_type || 'Document Update') +
+                                '</div>' +
+                                '<div class="r-notif-msg text-muted mt-1" style="font-size:13px;">' +
+                                    escapeNotifHtml(n.message || 'The status of your document has been updated.') +
+                                '</div>' +
+                                '<div class="r-notif-trk mt-1" style="font-size:11px; font-weight:600;">' +
+                                    'TRK: ' + escapeNotifHtml(n.tracking_number || 'N/A') + ' • ' + escapeNotifHtml(n.created_at || '') +
+                                '</div>' +
+                            '</a>';
+                        }).join('');
+                    }
+                }
+
+                // Trigger a live toast if a newer unread notification arrived
+                if (items.length > 0 && !items[0].read && items[0].id && items[0].id !== latestNotifId) {
+                    const newest = items[0];
+                    latestNotifId = newest.id;
+                    if (!silentToast && (unread > currentUnreadCount || unread > 0)) {
+                        const toastType = newest.status === 'Rejected' ? 'danger' : (newest.status === 'Ready' || newest.status === 'Completed' ? 'success' : 'info');
+                        if (typeof window.agToast === 'function') {
+                            window.agToast(newest.document_type || 'Request Update', newest.message || 'Your request status was updated.', toastType, 6000);
+                        }
+                    }
+                } else if (items.length > 0 && items[0].id) {
+                    latestNotifId = items[0].id;
+                }
+
+                currentUnreadCount = unread;
+            }
+
+            window.fetchResidentNotifications = function (silentToast) {
+                @if(auth()->check() && !session('is_locked'))
+                fetch('{{ route("resident.notifications.get") }}', {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (data) renderResidentNotifications(data, Boolean(silentToast));
+                })
+                .catch(function () {});
+                @endif
+            };
+
+            window.markResidentNotificationsRead = function () {
+                const badge = document.getElementById('r-notif-badge');
+                if (badge) {
+                    badge.textContent = '0';
+                    badge.classList.add('d-none');
+                }
+                currentUnreadCount = 0;
+
+                fetch('{{ route("resident.notifications.read") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(function () {
+                    document.querySelectorAll('#r-notif-list .r-notif-item.unread').forEach(function (el) {
+                        el.classList.remove('unread');
+                        el.classList.add('read');
+                    });
+                })
+                .catch(function () {});
+            };
+
+            @if(auth()->check() && !session('is_locked'))
+            setInterval(function () {
+                if (!document.hidden) {
+                    window.fetchResidentNotifications();
+                }
+            }, 12000);
+            @endif
+        })();
     </script>
 
     {{-- ═══ RESIDENT SIDEBAR TOGGLE JS ═══ --}}
@@ -2649,7 +2764,14 @@ $notification = $userNotifs[$n];
     {{-- Real-Time WebSocket Client Connection --}}
     <script>
     (function initResidentWebSocket() {
+        const currentUserId = {{ auth()->check() ? (int) auth()->id() : 'null' }};
         const host = window.location.hostname || '127.0.0.1';
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+        // Avoid Mixed Content ws:// connections when served over HTTPS in production
+        if (window.location.protocol === 'https:' && !isLocalHost) {
+            return;
+        }
+
         const wsUrl = `ws://${host}:8080`;
         let socket = null;
         let reconnectDelay = 2000;
@@ -2676,8 +2798,12 @@ $notification = $userNotifs[$n];
 
                         if (payload.event === 'request.status_changed') {
                             const d = payload.data || {};
+                            if (d.user_id && currentUserId && Number(d.user_id) !== currentUserId) {
+                                return;
+                            }
+
                             const type = d.status === 'Rejected' ? 'danger' : (d.status === 'Ready' || d.status === 'Completed' ? 'success' : 'info');
-                            
+
                             // Toast notification for status change
                             if (window.agToast) {
                                 window.agToast(
@@ -2688,12 +2814,8 @@ $notification = $userNotifs[$n];
                                 );
                             }
 
-                            // Bump notification badge if element exists
-                            const badge = document.getElementById('r-notif-badge');
-                            if (badge) {
-                                const currentCount = parseInt(badge.textContent.trim(), 10) || 0;
-                                badge.textContent = currentCount + 1;
-                                badge.style.display = 'flex';
+                            if (typeof window.fetchResidentNotifications === 'function') {
+                                window.fetchResidentNotifications(true);
                             }
 
                             // Refresh Track Requests counter badge

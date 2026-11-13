@@ -72,6 +72,31 @@ class ResidentDashboardController extends Controller
         ));
     }
 
+    public function getNotifications()
+    {
+        $user = auth()->user();
+        $unreadCount = $user->unreadNotifications()->count();
+        $notifications = $user->notifications()->latest()->take(15)->get()->map(function ($n) {
+            $data = is_array($n->data) ? $n->data : [];
+
+            return [
+                'id'              => $n->id,
+                'document_type'   => $data['document_type'] ?? ($data['title'] ?? 'Document Update'),
+                'status'          => $data['status'] ?? '',
+                'tracking_number' => $data['tracking_number'] ?? ($data['concern_id'] ?? 'N/A'),
+                'message'         => $data['message'] ?? 'The status of your document has been updated.',
+                'link'            => $data['link'] ?? route('resident.request.track', [], false),
+                'read'            => !is_null($n->read_at),
+                'created_at'      => $n->created_at ? $n->created_at->diffForHumans() : '',
+            ];
+        });
+
+        return response()->json([
+            'unread_count'  => $unreadCount,
+            'notifications' => $notifications,
+        ]);
+    }
+
     public function markNotificationsRead()
     {
         auth()->user()->unreadNotifications()->update(['read_at' => now()]);

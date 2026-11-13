@@ -3406,9 +3406,9 @@
         })
         .then(response => {
             if (!response.ok) throw new Error('Server returned ' + response.status);
-            return response;
+            return response.json().catch(() => ({}));
         })
-        .then(() => {
+        .then((data) => {
             window._modalStatusChanged = true;
 
             // 1. Update status badge inside the modal
@@ -3458,7 +3458,12 @@
             }
 
             if (typeof window.agToast === 'function') {
-                window.agToast('Request Accepted', 'Request moved to Processing. Word document generation is now available.', 'success', 4000);
+                window.agToast(
+                    'Request Accepted',
+                    (data && data.message) ? data.message : 'Request moved to Processing. Word document generation is now available.',
+                    'success',
+                    4500
+                );
             }
 
             silentUpdateCounts();

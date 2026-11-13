@@ -287,7 +287,8 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     Route::post('/session/lock', [ResidentAuthController::class, 'lockSession'])->name('session.lock');
     Route::post('/session/unlock', [ResidentAuthController::class, 'unlockSession'])->name('session.unlock');
 
-    // Mark notifications read
+    // Resident Notifications
+    Route::get('/notifications', [ResidentDashboardController::class, 'getNotifications'])->name('notifications.get');
     Route::post('/notifications/mark-read', [ResidentDashboardController::class, 'markNotificationsRead'])->name('notifications.read');
 
     // ==========================================
