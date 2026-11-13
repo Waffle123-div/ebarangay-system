@@ -106,4 +106,40 @@ class AdminAccountApprovalsTest extends TestCase
         $response->assertSee('id="docPreviewModal"', false);
         $response->assertSee('id="modalActionButtons"', false);
     }
+
+    public function test_reject_action_uses_confirmation_modal_form_instead_of_browser_confirm()
+    {
+        $admin = User::where('role', 'Admin')->first() ?? User::create([
+            'user_id' => 'USR-' . rand(10000, 99999),
+            'name' => 'Admin Modal Test',
+            'email' => 'admin_modal_' . uniqid() . '@example.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'Admin',
+            'status' => 'active',
+        ]);
+
+        $pendingUser = User::create([
+            'user_id' => 'USR-' . rand(10000, 99999),
+            'name' => 'Pending Reject Modal Resident',
+            'email' => 'pending_reject_' . uniqid() . '@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'Resident',
+            'status' => 'pending_approval',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.approvals'));
+
+        $response->assertStatus(200);
+        $response->assertSee('id="rejectAccountConfirmModal"', false);
+        $response->assertSee('id="rejectAccountConfirmForm"', false);
+        $response->assertSee('id="openRejectAccountModalBtn"', false);
+        $response->assertDontSee("confirm('Reject this account?')", false);
+
+        \Illuminate\Support\Facades\Mail::fake();
+        $rejectResponse = $this->actingAs($admin)->patch(route('admin.approvals.reject', $pendingUser->id));
+        $rejectResponse->assertRedirect();
+
+        $pendingUser->refresh();
+        $this->assertSame('rejected', $pendingUser->status);
+    }
 }

@@ -87,6 +87,22 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
 
+        /* Dark Mode for Single Account Reject Confirmation Modal */
+        html[data-theme="dark"] #rejectAccountConfirmModal .modal-content,
+        html[data-bs-theme="dark"] #rejectAccountConfirmModal .modal-content {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+        html[data-theme="dark"] #rejectAccountConfirmModal .text-dark,
+        html[data-bs-theme="dark"] #rejectAccountConfirmModal .text-dark {
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #rejectAccountConfirmModal .text-muted,
+        html[data-bs-theme="dark"] #rejectAccountConfirmModal .text-muted {
+            color: #94a3b8 !important;
+        }
+
         /* Mobile Status Pills Scroll & Card Layout */
         @media (max-width: 767.98px) {
             .approvals-nav-pills {
@@ -595,13 +611,9 @@
         if (actionButtons) {
             if (status === 'pending_approval' && userId) {
                 actionButtons.innerHTML = `
-                    <form action="/admin/account-approvals/${userId}/reject" method="POST" class="m-0" onsubmit="return confirm('Reject this account?');">
-                        <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'}">
-                        <input type="hidden" name="_method" value="PATCH">
-                        <button type="submit" class="btn btn-outline-danger border-2 px-4 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 170px; font-size: 15px;">
-                            <i class="fa-solid fa-xmark fs-5"></i> Reject
-                        </button>
-                    </form>
+                    <button type="button" id="openRejectAccountModalBtn" class="btn btn-outline-danger border-2 px-4 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 170px; font-size: 15px;">
+                        <i class="fa-solid fa-xmark fs-5"></i> Reject
+                    </button>
                     <form action="/admin/account-approvals/${userId}/approve" method="POST" class="m-0">
                         <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'}">
                         <input type="hidden" name="_method" value="PATCH">
@@ -610,6 +622,12 @@
                         </button>
                     </form>
                 `;
+                const openRejectBtn = document.getElementById('openRejectAccountModalBtn');
+                if (openRejectBtn) {
+                    openRejectBtn.addEventListener('click', function () {
+                        openRejectAccountModal(userId, name);
+                    });
+                }
             } else {
                 actionButtons.innerHTML = '';
             }
@@ -622,8 +640,55 @@
         }
     }
 
+    window.openRejectAccountModal = function (userId, residentName) {
+        const modalEl = document.getElementById('rejectAccountConfirmModal');
+        if (!modalEl || !userId) return;
+
+        const form = document.getElementById('rejectAccountConfirmForm');
+        const nameEl = document.getElementById('rejectAccountModalName');
+        const submitBtn = document.getElementById('confirmRejectAccountSubmitBtn');
+
+        if (form) {
+            form.action = `/admin/account-approvals/${userId}/reject`;
+        }
+        if (nameEl) {
+            nameEl.textContent = residentName || 'this resident';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-xmark me-1"></i> Confirm Rejection';
+        }
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    };
+
     // ---- MULTI-SELECT & BULK APPROVE/REJECT ----
     document.addEventListener('DOMContentLoaded', function () {
+        const rejectAccountModalEl = document.getElementById('rejectAccountConfirmModal');
+        const rejectAccountForm = document.getElementById('rejectAccountConfirmForm');
+        const confirmRejectAccountSubmitBtn = document.getElementById('confirmRejectAccountSubmitBtn');
+
+        if (rejectAccountModalEl) {
+            rejectAccountModalEl.addEventListener('shown.bs.modal', function () {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                if (backdrops.length > 1) {
+                    backdrops[backdrops.length - 1].style.zIndex = '1065';
+                }
+            });
+            rejectAccountModalEl.addEventListener('hidden.bs.modal', function () {
+                if (document.querySelectorAll('.modal.show').length > 0) {
+                    document.body.classList.add('modal-open');
+                }
+            });
+        }
+
+        if (rejectAccountForm && confirmRejectAccountSubmitBtn) {
+            rejectAccountForm.addEventListener('submit', function () {
+                confirmRejectAccountSubmitBtn.disabled = true;
+                confirmRejectAccountSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Rejecting...';
+            });
+        }
         // Clickable Approval Selection Rows and Cards
         document.addEventListener('click', function (e) {
             const clickable = e.target.closest('.approval-row-clickable');
@@ -856,6 +921,33 @@
                     <button type="submit" class="btn btn-success rounded-3 px-4 fw-semibold shadow-sm" id="confirmBulkApproveSubmitBtn">
                         <i class="fa-solid fa-check me-1"></i> Confirm Approval
                     </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL: SINGLE ACCOUNT REJECT CONFIRMATION --}}
+<div class="modal fade" id="rejectAccountConfirmModal" tabindex="-1" aria-labelledby="rejectAccountConfirmLabel" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px;">
+                    <i class="fa-solid fa-user-xmark fs-3"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1" id="rejectAccountConfirmLabel">Reject this account?</h5>
+                <p class="text-muted small mb-3">
+                    Are you sure you want to reject the registration for <strong id="rejectAccountModalName" class="text-danger"></strong>? The resident will be notified via email and SMS.
+                </p>
+                <form id="rejectAccountConfirmForm" action="" method="POST" class="m-0">
+                    @csrf
+                    @method('PATCH')
+                    <div class="d-flex justify-content-center gap-2 pt-2">
+                        <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 py-2 rounded-3 fw-semibold shadow-sm" id="confirmRejectAccountSubmitBtn">
+                            <i class="fa-solid fa-xmark me-1"></i> Confirm Rejection
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
