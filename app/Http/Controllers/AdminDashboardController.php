@@ -1867,7 +1867,8 @@ class AdminDashboardController extends Controller
         $residentUser = $this->resolveResidentUser($docRequest);
         $recipientEmail = trim((string) ($docRequest->resident_email ?: ($residentUser?->email ?? '')));
 
-        $reason = $request->input('reason') ?: $request->input('rejection_reason');
+        $rawReason = trim((string) ($request->input('reason') ?: $request->input('rejection_reason')));
+        $reason = $rawReason !== '' ? mb_substr($rawReason, 0, 1000) : null;
         $notificationMessage = "Your document request #{$trackingNumber} ({$docType}) was rejected and removed.";
         if (!empty($reason)) {
             $notificationMessage .= " Reason: {$reason}";

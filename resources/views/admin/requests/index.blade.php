@@ -1952,6 +1952,22 @@
         html[data-bs-theme="dark"] #rejectRequestConfirmModal .text-muted {
             color: #94a3b8 !important;
         }
+        html[data-theme="dark"] #rejectRequestConfirmModal .form-control,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .form-control {
+            background-color: #131d31 !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] #rejectRequestConfirmModal .form-control::placeholder,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .form-control::placeholder {
+            color: #64748b !important;
+        }
+        html[data-theme="dark"] #rejectRequestConfirmModal .reject-reason-chip,
+        html[data-bs-theme="dark"] #rejectRequestConfirmModal .reject-reason-chip {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #cbd5e1 !important;
+        }
     </style>
 
     <div class="card border-0 shadow-sm rounded-4">
@@ -4166,7 +4182,7 @@
 
 {{-- MODAL: CONFIRM REJECT & DELETE REQUEST --}}
 <div class="modal fade" id="rejectRequestConfirmModal" tabindex="-1" aria-labelledby="rejectRequestConfirmLabel" aria-hidden="true" style="z-index: 1070;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-body p-4 text-center">
                 <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 58px; height: 58px;">
@@ -4174,12 +4190,25 @@
                 </div>
                 <h5 class="fw-bold text-dark mb-1" id="rejectRequestConfirmLabel">Reject this request?</h5>
                 <p class="text-muted small mb-3">
-                    Are you sure you want to reject request <strong id="rejectModalTrackingNumber" class="text-danger font-monospace"></strong> for <strong id="rejectModalResidentName"></strong>? The request will be deleted and the resident will be notified.
+                    Are you sure you want to reject request <strong id="rejectModalTrackingNumber" class="text-danger font-monospace"></strong> for <strong id="rejectModalResidentName"></strong>? The request will be deleted and the resident will be notified via email and portal.
                 </p>
-                <form id="rejectRequestForm" action="" method="POST" class="m-0">
+                <form id="rejectRequestForm" action="" method="POST" class="m-0 text-start">
                     @csrf
                     @method('PATCH')
-                    <div class="d-flex justify-content-center gap-2 pt-2">
+                    <div class="mb-3">
+                        <label for="rejectRequestReason" class="form-label small fw-semibold text-dark mb-1">
+                            Reason for Rejection <span class="text-muted fw-normal">(Optional)</span>
+                        </label>
+                        <div class="d-flex flex-wrap gap-1.5 mb-2">
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-0.5 reject-reason-chip" style="font-size: 11px;" data-reason="Incomplete or missing requirements.">Incomplete requirements</button>
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-0.5 reject-reason-chip" style="font-size: 11px;" data-reason="Uploaded valid ID or attachment is blurry or unreadable.">Blurry ID / attachment</button>
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-0.5 reject-reason-chip" style="font-size: 11px;" data-reason="Submitted details do not match barangay records.">Details mismatch</button>
+                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2.5 py-0.5 reject-reason-chip" style="font-size: 11px;" data-reason="Wrong document type selected for the stated purpose.">Wrong document</button>
+                        </div>
+                        <textarea name="reason" id="rejectRequestReason" rows="3" maxlength="500" class="form-control rounded-3" placeholder="State the reason for rejecting this request..."></textarea>
+                        <div class="form-text text-muted" style="font-size: 11.5px;">This reason will be included in the resident's portal notification and email.</div>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 pt-1">
                         <button type="button" class="btn btn-light border px-4 py-2 rounded-3 fw-semibold" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-danger px-4 py-2 rounded-3 fw-semibold shadow-sm" id="confirmRejectSubmitBtn">
                             <i class="fa-solid fa-xmark me-1.5"></i> Reject
@@ -4199,6 +4228,8 @@ window.openRejectRequestModal = function(requestId, trackingNumber, residentName
     const form = document.getElementById('rejectRequestForm');
     const trackingEl = document.getElementById('rejectModalTrackingNumber');
     const nameEl = document.getElementById('rejectModalResidentName');
+    const reasonEl = document.getElementById('rejectRequestReason');
+    const submitBtn = document.getElementById('confirmRejectSubmitBtn');
 
     if (form) {
         form.action = '/admin/requests/' + requestId + '/reject';
@@ -4209,6 +4240,13 @@ window.openRejectRequestModal = function(requestId, trackingNumber, residentName
     if (nameEl) {
         nameEl.textContent = residentName || 'Resident';
     }
+    if (reasonEl) {
+        reasonEl.value = '';
+    }
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-xmark me-1.5"></i> Reject';
+    }
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
@@ -4218,8 +4256,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const rejectModalEl = document.getElementById('rejectRequestConfirmModal');
     const rejectForm = document.getElementById('rejectRequestForm');
     const rejectSubmitBtn = document.getElementById('confirmRejectSubmitBtn');
+    const reasonEl = document.getElementById('rejectRequestReason');
+
+    document.querySelectorAll('#rejectRequestConfirmModal .reject-reason-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            if (!reasonEl) return;
+            reasonEl.value = chip.getAttribute('data-reason') || '';
+            reasonEl.focus();
+        });
+    });
 
     if (rejectModalEl) {
+        rejectModalEl.addEventListener('shown.bs.modal', function () {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                backdrops[backdrops.length - 1].style.zIndex = '1065';
+            }
+            if (reasonEl) {
+                reasonEl.focus();
+            }
+        });
         rejectModalEl.addEventListener('hidden.bs.modal', function () {
             if (document.querySelectorAll('.modal.show').length > 0) {
                 document.body.classList.add('modal-open');

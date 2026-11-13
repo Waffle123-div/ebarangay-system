@@ -109,6 +109,8 @@ class AdminRequestsUiTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('id="rejectRequestConfirmModal"', false);
+        $response->assertSee('id="rejectRequestReason"', false);
+        $response->assertSee('name="reason"', false);
         $response->assertSee('openRejectRequestModal', false);
         $response->assertDontSee("confirm('Reject this request? The resident will be notified.')", false);
     }
@@ -289,6 +291,8 @@ class AdminRequestsUiTest extends TestCase
             'first_name' => 'Fallback',
             'last_name' => 'Resident',
             'email' => 'fallback_reject_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'security_pin' => bcrypt('123456'),
             'role' => 'Resident',
             'status' => 'active',
             'password' => bcrypt('password123'),
@@ -332,6 +336,20 @@ class AdminRequestsUiTest extends TestCase
         ))->render();
         $this->assertStringContainsString('Incomplete valid ID attachment', $renderedHtml);
         $this->assertStringContainsString('Medical Assistance', $renderedHtml);
+
+        $notification = $resident->fresh()->unreadNotifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('Incomplete valid ID attachment', $notification->data['reason'] ?? null);
+        $this->assertStringContainsString('Reason: Incomplete valid ID attachment', $notification->data['message'] ?? '');
+
+        $notifApiResponse = $this->actingAs($resident)
+            ->getJson(route('resident.notifications.get'));
+        $notifApiResponse->assertOk()
+            ->assertJsonPath('unread_count', 1);
+        $this->assertStringContainsString(
+            'Reason: Incomplete valid ID attachment',
+            (string) data_get($notifApiResponse->json(), 'notifications.0.message')
+        );
     }
 
     public function test_rejecting_request_still_succeeds_and_notifies_portal_when_mail_throws(): void
