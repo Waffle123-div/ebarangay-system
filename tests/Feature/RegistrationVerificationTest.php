@@ -299,5 +299,102 @@ class RegistrationVerificationTest extends TestCase
         // Clean up
         $user->delete();
     }
+
+    public function test_rejected_account_can_request_otp_and_re_register_with_same_email_and_phone()
+    {
+        Mail::fake();
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $email = 'rejected_reregister_' . uniqid() . '@example.com';
+        $phone = '0977' . rand(1000000, 9999999);
+
+        User::where('email', $email)->orWhere('phone_number', $phone)->delete();
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        $oldIdPath = 'residency_proofs/old_rejected_id_' . uniqid() . '.jpg';
+        $oldSelfiePath = 'selfies/old_rejected_selfie_' . uniqid() . '.jpg';
+        \Illuminate\Support\Facades\Storage::disk('public')->put($oldIdPath, 'old-id');
+        \Illuminate\Support\Facades\Storage::disk('public')->put($oldSelfiePath, 'old-selfie');
+
+        $rejectedUser = User::create([
+            'user_id'            => 'USR-REJ' . rand(100, 999),
+            'name'               => 'OLD REJECTED NAME',
+            'first_name'         => 'Old',
+            'last_name'          => 'Rejected',
+            'email'              => $email,
+            'phone_number'       => $phone,
+            'password'           => bcrypt('OldPass123!'),
+            'role'               => 'Resident',
+            'status'             => 'rejected',
+            'proof_of_residency' => $oldIdPath,
+            'selfie_photo'       => $oldSelfiePath,
+        ]);
+
+        try {
+            // Step 1: Rejected email & mobile should NOT be blocked from requesting OTP
+            $otpResponse = $this->postJson(route('resident.register.send_otp'), [
+                'email'        => $email,
+                'phone_number' => $phone,
+                'first_name'   => 'Troy',
+                'target_type'  => 'email',
+            ]);
+
+            $otpResponse->assertStatus(200)
+                ->assertJson([
+                    'success'     => true,
+                    'target'      => $email,
+                    'target_type' => 'email',
+                ]);
+
+            Mail::assertSent(RegistrationOtpMail::class, fn ($mail) => $mail->hasTo($email));
+
+            // Step 2: Re-register with updated details, new ID, and new selfie
+            $registerResponse = $this->withSession(['reg_verified_target' => $email])
+                ->post(route('resident.register.submit'), [
+                    'first_name'            => 'Troy',
+                    'last_name'             => 'Suson',
+                    'birthdate'             => '2003-05-10',
+                    'age'                   => 23,
+                    'birthplace'            => 'Carmen, Cebu',
+                    'gender'                => 'Male',
+                    'civil_status'          => 'Single',
+                    'nationality'           => 'Filipino',
+                    'occupation'            => 'Student',
+                    'purok'                 => 'Purok 2',
+                    'sitio'                 => 'Sitio Proper',
+                    'barangay_address'      => 'Cogon East',
+                    'municipality'          => 'Carmen, Cebu',
+                    'zip_code'              => '6005',
+                    'phone_number'          => $phone,
+                    'email'                 => $email,
+                    'password'              => 'NewPassword123!',
+                    'password_confirmation' => 'NewPassword123!',
+                    'id_type'               => 'National ID',
+                    'proof_of_residency'    => UploadedFile::fake()->image('new_id.jpg'),
+                    'selfie_upload'         => UploadedFile::fake()->image('new_selfie.jpg'),
+                    'terms'                 => '1',
+                    'privacy'               => '1',
+                ]);
+
+            $registerResponse->assertRedirect(route('resident.pending') . '?notify=email');
+
+            $rejectedUser->refresh();
+            $this->assertSame('pending_approval', $rejectedUser->status);
+            $this->assertSame('TROY SUSON', $rejectedUser->name);
+            $this->assertSame('National ID', $rejectedUser->id_type);
+            $this->assertNotEquals($oldIdPath, $rejectedUser->proof_of_residency);
+            $this->assertNotEquals($oldSelfiePath, $rejectedUser->selfie_photo);
+            $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewPassword123!', $rejectedUser->password));
+            $this->assertSame(1, User::where('email', $email)->count());
+
+            \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($oldIdPath);
+            \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($oldSelfiePath);
+            \Illuminate\Support\Facades\Storage::disk('public')->assertExists($rejectedUser->proof_of_residency);
+            \Illuminate\Support\Facades\Storage::disk('public')->assertExists($rejectedUser->selfie_photo);
+        } finally {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            User::where('id', $rejectedUser->id)->delete();
+        }
+    }
 }
 

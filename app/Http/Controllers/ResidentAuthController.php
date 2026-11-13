@@ -287,8 +287,8 @@ class ResidentAuthController extends Controller
         $rawPhone = $request->phone_number ? trim($request->phone_number) : null;
         $cleanPhone = $rawPhone ? preg_replace('/[^0-9]/', '', $rawPhone) : null;
 
-        // Check for duplicates in users table
-        if ($email && User::where('email', $email)->exists()) {
+        // Check for duplicates among non-rejected accounts (rejected users may re-register)
+        if ($this->findNonRejectedUserByContact('email', $email)) {
             return response()->json([
                 'success' => false,
                 'field'   => 'email',
@@ -296,7 +296,7 @@ class ResidentAuthController extends Controller
             ], 422);
         }
 
-        if ($cleanPhone && User::where('phone_number', $cleanPhone)->exists()) {
+        if ($this->findNonRejectedUserByContact('phone_number', $cleanPhone)) {
             return response()->json([
                 'success' => false,
                 'field'   => 'phone_number',
@@ -545,16 +545,16 @@ class ResidentAuthController extends Controller
         ]);
 
         // ==========================================
-        // STEP 2: Check for duplicate email/phone
+        // STEP 2: Check for duplicate email/phone among non-rejected accounts
         // ==========================================
-        $actualEmail = $request->email ?: null;
+        $actualEmail = $request->filled('email') ? trim($request->email) : null;
         $actualPhone = $request->phone_number ? preg_replace('/[^0-9]/', '', $request->phone_number) : null;
 
-        if ($actualEmail && User::where('email', $actualEmail)->exists()) {
+        if ($this->findNonRejectedUserByContact('email', $actualEmail)) {
             return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
         }
 
-        if ($actualPhone && User::where('phone_number', $actualPhone)->exists()) {
+        if ($this->findNonRejectedUserByContact('phone_number', $actualPhone)) {
             return back()->withErrors(['phone_number' => 'This mobile number is already registered.'])->withInput();
         }
 
@@ -622,14 +622,11 @@ class ResidentAuthController extends Controller
         $composedName = implode(' ', $nameParts);
 
         // ==========================================
-        // STEP 5: Create the user (Pre-verified!)
+        // STEP 5: Create user or re-submit a previously rejected account (Pre-verified!)
         // ==========================================
-        $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
-
         $passwordValue = $isGoogleUser ? null : Hash::make($request->password);
 
-        $user = User::create([
-            'user_id'       => $userId,
+        $userAttributes = [
             'name'          => $composedName,
             'first_name'    => $firstName,
             'middle_name'   => $middleName,
@@ -659,11 +656,35 @@ class ResidentAuthController extends Controller
             'proof_of_residency' => $imagePath,
             'selfie_photo'       => $selfiePath,
             'face_verified_at'   => $selfiePath ? now() : null,
+            'security_pin'       => null,
 
             // Defaults (Pre-verified, awaiting admin approval)
             'role'              => 'Resident',
             'status'            => 'pending_approval',
-        ]);
+        ];
+
+        $rejectedByEmail = $this->findRejectedUserByContact('email', $actualEmail);
+        $rejectedByPhone = $this->findRejectedUserByContact('phone_number', $actualPhone);
+        $rejectedUser = $rejectedByEmail ?? $rejectedByPhone;
+
+        if ($rejectedUser) {
+            if ($rejectedByEmail && $rejectedByPhone && $rejectedByPhone->id !== $rejectedUser->id) {
+                $rejectedByPhone->update(['phone_number' => null]);
+            }
+
+            if ($rejectedUser->proof_of_residency && $rejectedUser->proof_of_residency !== $imagePath) {
+                Storage::disk('public')->delete($rejectedUser->proof_of_residency);
+            }
+            if ($rejectedUser->selfie_photo && $rejectedUser->selfie_photo !== $selfiePath) {
+                Storage::disk('public')->delete($rejectedUser->selfie_photo);
+            }
+
+            $rejectedUser->update($userAttributes);
+            $user = $rejectedUser->fresh();
+        } else {
+            $userId = 'USR-' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $user = User::create(array_merge(['user_id' => $userId], $userAttributes));
+        }
 
         // Mark as verified since verified prior to Step 2
         $user->markEmailAsVerified();
@@ -967,5 +988,27 @@ class ResidentAuthController extends Controller
         }
 
         return true;
+    }
+
+    private function findNonRejectedUserByContact(string $column, ?string $value): ?User
+    {
+        if (!$value) {
+            return null;
+        }
+
+        return User::where($column, $value)
+            ->whereRaw("LOWER(COALESCE(status, '')) != 'rejected'")
+            ->first();
+    }
+
+    private function findRejectedUserByContact(string $column, ?string $value): ?User
+    {
+        if (!$value) {
+            return null;
+        }
+
+        return User::where($column, $value)
+            ->whereRaw("LOWER(COALESCE(status, '')) = 'rejected'")
+            ->first();
     }
 }
