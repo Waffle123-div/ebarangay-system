@@ -9,12 +9,31 @@ use Symfony\Component\HttpFoundation\Response;
 class StoredFileService
 {
     /**
+     * Resolve the active cloud object storage disk name (supports standard 's3' as well as
+     * dynamically injected Laravel Cloud bucket disks via LARAVEL_CLOUD_DISK_CONFIG).
+     */
+    public static function cloudDisk(): ?string
+    {
+        $defaultDisk = config('filesystems.default');
+        if (is_string($defaultDisk) && $defaultDisk !== '' && config("filesystems.disks.{$defaultDisk}.driver") === 's3') {
+            return $defaultDisk;
+        }
+
+        foreach ((array) config('filesystems.disks', []) as $name => $diskConfig) {
+            if (($diskConfig['driver'] ?? null) === 's3' && filled($diskConfig['bucket'] ?? null)) {
+                return (string) $name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Determine whether cloud object storage (S3 / Laravel Cloud Bucket) is active.
      */
     public static function usesCloudStorage(): bool
     {
-        return config('filesystems.default') === 's3'
-            || filled(config('filesystems.disks.s3.bucket'));
+        return static::cloudDisk() !== null;
     }
 
     /**
@@ -22,7 +41,7 @@ class StoredFileService
      */
     public static function uploadDisk(string $localFallback = 'public'): string
     {
-        return static::usesCloudStorage() ? 's3' : $localFallback;
+        return static::cloudDisk() ?? $localFallback;
     }
 
     /**
@@ -71,8 +90,9 @@ class StoredFileService
         }
         $candidates = array_values(array_unique(array_filter($candidates)));
 
-        $disks = static::usesCloudStorage()
-            ? array_values(array_unique(array_merge(['s3'], $localDisks)))
+        $cloudDisk = static::cloudDisk();
+        $disks = $cloudDisk !== null
+            ? array_values(array_unique(array_merge([$cloudDisk], $localDisks)))
             : $localDisks;
 
         foreach ($disks as $disk) {
@@ -82,7 +102,7 @@ class StoredFileService
                         Storage::disk($disk)->delete($candidate);
                     }
                 } catch (\Throwable $e) {
-                    if ($disk !== 's3') {
+                    if ($disk !== $cloudDisk) {
                         throw $e;
                     }
                 }
@@ -91,7 +111,7 @@ class StoredFileService
     }
 
     /**
-     * Ensure a template file stored on S3 or local paths exists as a readable local file for PHPWord/download.
+     * Ensure a template file stored on cloud storage or local paths exists as a readable local file for PHPWord/download.
      *
      * @param  array<int, string>  $localPaths
      */
@@ -104,7 +124,8 @@ class StoredFileService
         }
 
         $rawPath = trim((string) $rawPath);
-        if ($rawPath === '' || !static::usesCloudStorage()) {
+        $cloudDisk = static::cloudDisk();
+        if ($rawPath === '' || $cloudDisk === null) {
             return null;
         }
 
@@ -122,19 +143,19 @@ class StoredFileService
 
         foreach ($candidates as $candidate) {
             try {
-                if (Storage::disk('s3')->exists($candidate)) {
+                if (Storage::disk($cloudDisk)->exists($candidate)) {
                     $destDir = storage_path('app/document_templates');
                     if (!is_dir($destDir)) {
                         @mkdir($destDir, 0755, true);
                     }
                     $cachedPath = $destDir . DIRECTORY_SEPARATOR . $safeBase;
-                    $contents = Storage::disk('s3')->get($candidate);
+                    $contents = Storage::disk($cloudDisk)->get($candidate);
                     if ($contents !== null && @file_put_contents($cachedPath, $contents) !== false) {
                         return $cachedPath;
                     }
                 }
             } catch (\Throwable $e) {
-                // Fall through if S3 is temporarily unreachable
+                // Fall through if cloud disk is temporarily unreachable
             }
         }
 
@@ -209,8 +230,9 @@ class StoredFileService
         $disposition = $download ? 'attachment' : 'inline';
         $targetFilename = $downloadFilename ? basename(str_replace('\\', '/', $downloadFilename)) : $safeBase;
 
-        $disks = static::usesCloudStorage()
-            ? ['s3', 'local', 'public']
+        $cloudDisk = static::cloudDisk();
+        $disks = $cloudDisk !== null
+            ? array_values(array_unique([$cloudDisk, 'local', 'public']))
             : ['local', 'public'];
 
         foreach ($disks as $disk) {
@@ -225,7 +247,7 @@ class StoredFileService
                         );
                     }
                 } catch (\Throwable $e) {
-                    if ($disk !== 's3') {
+                    if ($disk !== $cloudDisk) {
                         throw $e;
                     }
                 }

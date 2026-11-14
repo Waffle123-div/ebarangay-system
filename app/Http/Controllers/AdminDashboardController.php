@@ -1324,15 +1324,15 @@ class AdminDashboardController extends Controller
                 $availableTemplates = array_map('basename', $files);
             }
         }
-        if (StoredFileService::usesCloudStorage()) {
+        if ($cloudDisk = StoredFileService::cloudDisk()) {
             try {
-                foreach (Storage::disk('s3')->files('document_templates') as $s3Template) {
-                    if (str_ends_with(strtolower($s3Template), '.docx')) {
-                        $availableTemplates[] = basename($s3Template);
+                foreach (Storage::disk($cloudDisk)->files('document_templates') as $cloudTemplate) {
+                    if (str_ends_with(strtolower($cloudTemplate), '.docx')) {
+                        $availableTemplates[] = basename($cloudTemplate);
                     }
                 }
             } catch (\Throwable $e) {
-                // Keep locally discovered templates if S3 listing is unavailable
+                // Keep locally discovered templates if cloud listing is unavailable
             }
         }
         if (!empty($availableTemplates)) {
@@ -1388,10 +1388,10 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $templateFileName = 'document_templates/' . $cleanName;
-            if (StoredFileService::usesCloudStorage()) {
+            if ($cloudDisk = StoredFileService::cloudDisk()) {
                 $contents = @file_get_contents($destDir . DIRECTORY_SEPARATOR . $cleanName);
                 if ($contents !== false) {
-                    Storage::disk('s3')->put($templateFileName, $contents);
+                    Storage::disk($cloudDisk)->put($templateFileName, $contents);
                 }
             }
         } elseif ($request->filled('existing_template')) {
@@ -1472,10 +1472,10 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $updateData['template_file'] = 'document_templates/' . $cleanName;
-            if (StoredFileService::usesCloudStorage()) {
+            if ($cloudDisk = StoredFileService::cloudDisk()) {
                 $contents = @file_get_contents($destDir . DIRECTORY_SEPARATOR . $cleanName);
                 if ($contents !== false) {
-                    Storage::disk('s3')->put($updateData['template_file'], $contents);
+                    Storage::disk($cloudDisk)->put($updateData['template_file'], $contents);
                 }
             }
         } elseif ($request->filled('existing_template')) {

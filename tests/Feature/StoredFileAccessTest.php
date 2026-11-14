@@ -285,6 +285,17 @@ class StoredFileAccessTest extends TestCase
 
         $this->actingAs($admin)->get($resident->id_document_url)->assertOk();
         $this->actingAs($admin)->get($resident->selfie_photo_url)->assertOk();
+
+        // 6. Custom disk names injected by Laravel Cloud (e.g. 'r2') are auto-detected
+        config([
+            'filesystems.default' => 'r2',
+            'filesystems.disks.r2' => [
+                'driver' => 's3',
+                'bucket' => 'laravel-cloud-r2-bucket',
+            ],
+        ]);
+        $this->assertSame('r2', StoredFileService::cloudDisk());
+        $this->assertSame('r2', StoredFileService::uploadDisk('public'));
     }
 }
 
