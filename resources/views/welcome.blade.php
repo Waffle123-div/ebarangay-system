@@ -162,7 +162,7 @@
             <div class="welcome-profile-wrap" id="welcomeProfileWrap">
               <button type="button" class="welcome-profile-btn" id="welcomeProfileBtn" aria-label="Open profile menu">
                 @if($navUser->profile_picture)
-                  <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-avatar" width="34" height="34" decoding="async">
+                  <img src="{{ $navUser->profile_picture_url }}" alt="{{ $navUser->name }}" class="welcome-profile-avatar" width="34" height="34" decoding="async">
                 @else
                   <span class="welcome-profile-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
                 @endif
@@ -172,7 +172,7 @@
               <div class="welcome-dropdown welcome-profile-dropdown" id="welcomeProfileDropdown">
                 <div class="welcome-profile-card">
                   @if($navUser->profile_picture)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($navUser->profile_picture) }}" alt="{{ $navUser->name }}" class="welcome-profile-card-avatar" width="48" height="48" decoding="async">
+                    <img src="{{ $navUser->profile_picture_url }}" alt="{{ $navUser->name }}" class="welcome-profile-card-avatar" width="48" height="48" decoding="async">
                   @else
                     <span class="welcome-profile-card-avatar welcome-profile-avatar-fallback">{{ $navInitials ?: 'R' }}</span>
                   @endif

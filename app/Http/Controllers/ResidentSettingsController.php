@@ -283,10 +283,10 @@ class ResidentSettingsController extends Controller
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
             // Delete old picture if it exists
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
+            if ($user->profile_picture) {
+                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
             }
-            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $path = StoredFileService::storeUploadedFile($request->file('profile_picture'), 'profile_pictures', 'public');
             $data['profile_picture'] = $path;
         }
 
@@ -408,11 +408,11 @@ class ResidentSettingsController extends Controller
         $user = Auth::user();
 
         // Remove old ID photo if present
-        if ($user->id_photo && Storage::disk('public')->exists($user->id_photo)) {
-            Storage::disk('public')->delete($user->id_photo);
+        if ($user->id_photo) {
+            StoredFileService::delete($user->id_photo, ['valid_ids']);
         }
 
-        $path = $request->file('id_photo')->store('valid_ids', 'public');
+        $path = StoredFileService::storeUploadedFile($request->file('id_photo'), 'valid_ids', 'public');
 
         $user->update([
             'id_type'       => $request->id_type,
@@ -527,8 +527,12 @@ class ResidentSettingsController extends Controller
         }
 
         // Clean up uploaded files
-        if ($user->profile_picture) Storage::disk('public')->delete($user->profile_picture);
-        if ($user->id_photo)        Storage::disk('public')->delete($user->id_photo);
+        if ($user->profile_picture) {
+            StoredFileService::delete($user->profile_picture, ['profile_pictures']);
+        }
+        if ($user->id_photo) {
+            StoredFileService::delete($user->id_photo, ['valid_ids']);
+        }
 
         Auth::logout();
         $request->session()->invalidate();

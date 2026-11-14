@@ -2169,9 +2169,8 @@
         $pendingConcernsCount = \App\Models\CommunityConcern::where('status', 'Pending')->count();
 
         $barangayLogo = \App\Models\BarangaySetting::get('barangay_logo');
-        $logoUrl = ($barangayLogo && \Illuminate\Support\Facades\Storage::exists($barangayLogo))
-            ? \Illuminate\Support\Facades\Storage::url($barangayLogo)
-            : asset('images/cogon_east_logo.png');
+        $logoUrl = \App\Services\StoredFileService::settingImageUrl('barangay_logo', $barangayLogo)
+            ?: asset('images/cogon_east_logo.png');
 
         $adminUser = auth()->user();
         $adminNameParts = explode(' ', trim($adminUser->name ?? 'Admin'));
@@ -2250,7 +2249,7 @@
             <div class="sidebar-user-footer">
                 <div class="sidebar-user-card">
                     @if($adminUser && $adminUser->profile_picture)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($adminUser->profile_picture) }}" 
+                        <img src="{{ $adminUser->profile_picture_url }}" 
                              alt="{{ $adminUser->name }}" 
                              class="sidebar-user-avatar img-cover">
                     @else

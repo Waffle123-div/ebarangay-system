@@ -646,8 +646,8 @@ class AdminDashboardController extends Controller
         $user = User::findOrFail($id);
         $name = $user->name;
 
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-            Storage::disk('public')->delete($user->profile_picture);
+        if ($user->profile_picture) {
+            StoredFileService::delete($user->profile_picture, ['profile_pictures']);
         }
 
         $user->delete();
@@ -675,8 +675,8 @@ class AdminDashboardController extends Controller
         $deletedCount = 0;
 
         foreach ($users as $u) {
-            if ($u->profile_picture && Storage::disk('public')->exists($u->profile_picture)) {
-                Storage::disk('public')->delete($u->profile_picture);
+            if ($u->profile_picture) {
+                StoredFileService::delete($u->profile_picture, ['profile_pictures']);
             }
             $u->delete();
             $deletedCount++;
@@ -972,6 +972,20 @@ class AdminDashboardController extends Controller
         );
     }
 
+    /**
+     * Stream the authenticated administrator's profile picture without relying on public/storage symlinks.
+     */
+    public function showAvatar(?string $filename = null, StoredFileService $storedFileService = null)
+    {
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+
+        return $storedFileService->serve(
+            auth()->user()?->profile_picture,
+            ['profile_pictures'],
+            'Profile picture not found.'
+        );
+    }
+
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
@@ -997,15 +1011,15 @@ class AdminDashboardController extends Controller
         $user->contact_number = $request->input('contact_number');
 
         if ($request->input('remove_profile_picture') == '1') {
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
+            if ($user->profile_picture) {
+                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
             }
             $user->profile_picture = null;
         } elseif ($request->hasFile('profile_picture')) {
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
+            if ($user->profile_picture) {
+                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
             }
-            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $path = StoredFileService::storeUploadedFile($request->file('profile_picture'), 'profile_pictures', 'public');
             $user->profile_picture = $path;
         }
 
@@ -1104,12 +1118,14 @@ class AdminDashboardController extends Controller
             }
 
             if ($request->hasFile('barangay_logo')) {
-                $path = $request->file('barangay_logo')->store('settings', 'public');
+                StoredFileService::delete(BarangaySetting::get('barangay_logo'), ['settings']);
+                $path = StoredFileService::storeUploadedFile($request->file('barangay_logo'), 'settings', 'public');
                 BarangaySetting::set('barangay_logo', $path, 'barangay');
             }
 
             if ($request->hasFile('municipal_logo')) {
-                $path = $request->file('municipal_logo')->store('settings', 'public');
+                StoredFileService::delete(BarangaySetting::get('municipal_logo'), ['settings']);
+                $path = StoredFileService::storeUploadedFile($request->file('municipal_logo'), 'settings', 'public');
                 BarangaySetting::set('municipal_logo', $path, 'barangay');
             }
 
@@ -1136,7 +1152,8 @@ class AdminDashboardController extends Controller
             BarangaySetting::set('payment_instructions', $request->input('payment_instructions'), 'payment');
 
             if ($request->hasFile('gcash_qr_code')) {
-                $path = $request->file('gcash_qr_code')->store('settings', 'public');
+                StoredFileService::delete(BarangaySetting::get('gcash_qr_code'), ['settings']);
+                $path = StoredFileService::storeUploadedFile($request->file('gcash_qr_code'), 'settings', 'public');
                 BarangaySetting::set('gcash_qr_code', $path, 'payment');
             }
 
@@ -1305,9 +1322,23 @@ class AdminDashboardController extends Controller
             $files = glob($templateDir . '/*.docx');
             if ($files) {
                 $availableTemplates = array_map('basename', $files);
-                natsort($availableTemplates);
-                $availableTemplates = array_values($availableTemplates);
             }
+        }
+        if (StoredFileService::usesCloudStorage()) {
+            try {
+                foreach (Storage::disk('s3')->files('document_templates') as $s3Template) {
+                    if (str_ends_with(strtolower($s3Template), '.docx')) {
+                        $availableTemplates[] = basename($s3Template);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Keep locally discovered templates if S3 listing is unavailable
+            }
+        }
+        if (!empty($availableTemplates)) {
+            $availableTemplates = array_values(array_unique($availableTemplates));
+            natsort($availableTemplates);
+            $availableTemplates = array_values($availableTemplates);
         }
 
         return view('admin.document_types.index', compact('documentTypes', 'stats', 'availableTemplates'));
@@ -1357,6 +1388,12 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $templateFileName = 'document_templates/' . $cleanName;
+            if (StoredFileService::usesCloudStorage()) {
+                $contents = @file_get_contents($destDir . DIRECTORY_SEPARATOR . $cleanName);
+                if ($contents !== false) {
+                    Storage::disk('s3')->put($templateFileName, $contents);
+                }
+            }
         } elseif ($request->filled('existing_template')) {
             $templateFileName = 'document_templates/' . basename($request->existing_template);
         }
@@ -1427,6 +1464,7 @@ class AdminDashboardController extends Controller
             }
             if ($docType->template_file && str_starts_with($docType->template_file, 'document_templates/template_')) {
                 @unlink(storage_path('app/' . $docType->template_file));
+                StoredFileService::delete($docType->template_file, ['document_templates'], []);
             }
             $file = $request->file('template_file');
             $slug = Str::slug($request->name ?: 'document');
@@ -1434,11 +1472,18 @@ class AdminDashboardController extends Controller
             $cleanName = 'template_' . $slug . '_' . time() . '.' . $ext;
             $file->move($destDir, $cleanName);
             $updateData['template_file'] = 'document_templates/' . $cleanName;
+            if (StoredFileService::usesCloudStorage()) {
+                $contents = @file_get_contents($destDir . DIRECTORY_SEPARATOR . $cleanName);
+                if ($contents !== false) {
+                    Storage::disk('s3')->put($updateData['template_file'], $contents);
+                }
+            }
         } elseif ($request->filled('existing_template')) {
             $updateData['template_file'] = 'document_templates/' . basename($request->existing_template);
         } elseif ($request->boolean('remove_template')) {
             if ($docType->template_file && str_starts_with($docType->template_file, 'document_templates/template_')) {
                 @unlink(storage_path('app/' . $docType->template_file));
+                StoredFileService::delete($docType->template_file, ['document_templates'], []);
             }
             $updateData['template_file'] = null;
         }
@@ -1467,13 +1512,7 @@ class AdminDashboardController extends Controller
             storage_path('app/' . basename($docType->template_file)),
         ];
 
-        $foundPath = null;
-        foreach ($possiblePaths as $p) {
-            if (file_exists($p)) {
-                $foundPath = $p;
-                break;
-            }
-        }
+        $foundPath = StoredFileService::resolveLocalTemplatePath($docType->template_file, $possiblePaths);
 
         if (!$foundPath) {
             return back()->with('error', 'Template file not found on disk.');
@@ -1613,7 +1652,7 @@ class AdminDashboardController extends Controller
             foreach ($request->file('attachments') as $file) {
                 if ($file->isValid()) {
                     $originalName = $file->getClientOriginalName();
-                    $path = $file->store('attachments', 'public');
+                    $path = StoredFileService::storeUploadedFile($file, 'attachments', 'public');
                     $ext = strtolower($file->getClientOriginalExtension());
                     $fileType = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? 'image' : 'document';
                     $attachmentsData[] = [
@@ -2031,12 +2070,7 @@ class AdminDashboardController extends Controller
                 storage_path('app/private/document_templates/' . $docTypeRecord->template_file),
                 public_path('templates/' . $docTypeRecord->template_file),
             ];
-            foreach ($possiblePaths as $path) {
-                if (file_exists($path)) {
-                    $customTemplatePath = $path;
-                    break;
-                }
-            }
+            $customTemplatePath = StoredFileService::resolveLocalTemplatePath($docTypeRecord->template_file, $possiblePaths);
         }
 
         // Output file naming

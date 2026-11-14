@@ -40,6 +40,21 @@ Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 })->name('csrf_token');
 
+// Stored media / branding streaming routes (cloud bucket & local storage compatible)
+Route::get('/branding/{key}/{filename?}', function (string $key, ?string $filename = null, \App\Services\StoredFileService $storedFileService) {
+    $path = \App\Models\BarangaySetting::get($key);
+
+    return $storedFileService->serve($path, ['settings'], 'Branding image not found.');
+})->whereIn('key', ['barangay_logo', 'municipal_logo', 'gcash_qr_code'])->name('branding.asset');
+
+Route::get('/media/profile-avatar/{filename?}', function (?string $filename = null, \App\Services\StoredFileService $storedFileService) {
+    return $storedFileService->serve(
+        Auth::user()?->profile_picture,
+        ['profile_pictures'],
+        'Profile picture not found.'
+    );
+})->middleware('auth')->name('media.profile_avatar');
+
 // ==========================================
 // GOOGLE AUTHENTICATION ROUTES
 // ==========================================
@@ -67,6 +82,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     
     // Profile Routes
     Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('profile');
+    Route::get('/profile/avatar/{filename?}', [AdminDashboardController::class, 'showAvatar'])->name('profile.avatar');
     Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
 
     // Secure Resident Selfie, ID Document, & Attachment Routes for Staff

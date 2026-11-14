@@ -312,7 +312,7 @@
                                         <div class="rounded-circle overflow-hidden bg-white border shadow-sm d-flex align-items-center justify-content-center"
                                              style="width:72px; height:72px; flex-shrink:0;">
                                             @if(!empty($settings['barangay_logo']))
-                                                <img src="{{ asset('storage/' . $settings['barangay_logo']) }}" alt="Barangay Logo" style="width:100%; height:100%; object-fit:contain;">
+                                                <img src="{{ \App\Services\StoredFileService::settingImageUrl('barangay_logo', $settings['barangay_logo']) }}" alt="Barangay Logo" style="width:100%; height:100%; object-fit:contain;">
                                             @else
                                                 <img src="{{ asset('images/logo.png') }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Barangay+Seal&background=4f46e5&color=fff';" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
                                             @endif
@@ -329,7 +329,7 @@
                                         <div class="rounded-circle overflow-hidden bg-white border shadow-sm d-flex align-items-center justify-content-center"
                                              style="width:72px; height:72px; flex-shrink:0;">
                                             @if(!empty($settings['municipal_logo']))
-                                                <img src="{{ asset('storage/' . $settings['municipal_logo']) }}" alt="City Logo" style="width:100%; height:100%; object-fit:contain;">
+                                                <img src="{{ \App\Services\StoredFileService::settingImageUrl('municipal_logo', $settings['municipal_logo']) }}" alt="City Logo" style="width:100%; height:100%; object-fit:contain;">
                                             @else
                                                 <div class="text-muted small text-center px-1"><i class="fa-solid fa-city fa-2x text-secondary"></i></div>
                                             @endif

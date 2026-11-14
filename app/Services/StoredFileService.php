@@ -2,13 +2,172 @@
 
 namespace App\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class StoredFileService
 {
     /**
-     * Serve a stored file across local/public disks and fallback storage paths
+     * Determine whether cloud object storage (S3 / Laravel Cloud Bucket) is active.
+     */
+    public static function usesCloudStorage(): bool
+    {
+        return config('filesystems.default') === 's3'
+            || filled(config('filesystems.disks.s3.bucket'));
+    }
+
+    /**
+     * Resolve the target filesystem disk for newly stored files.
+     */
+    public static function uploadDisk(string $localFallback = 'public'): string
+    {
+        return static::usesCloudStorage() ? 's3' : $localFallback;
+    }
+
+    /**
+     * Store an uploaded file on the active storage disk (S3 on cloud, local/public otherwise).
+     */
+    public static function storeUploadedFile(UploadedFile $file, string $directory, string $localFallback = 'public'): string
+    {
+        return $file->store(trim($directory, '/'), static::uploadDisk($localFallback));
+    }
+
+    /**
+     * Write raw file contents onto the active storage disk.
+     */
+    public static function put(string $path, string $contents, string $localFallback = 'public'): bool
+    {
+        return (bool) Storage::disk(static::uploadDisk($localFallback))->put(ltrim($path, '/'), $contents);
+    }
+
+    /**
+     * Delete a stored file from active/local disks if present.
+     *
+     * @param  array<int, string>  $directoryHints
+     * @param  array<int, string>  $localDisks
+     */
+    public static function delete(?string $rawPath, array $directoryHints = [], array $localDisks = ['public', 'local']): void
+    {
+        $rawPath = trim((string) $rawPath);
+        if ($rawPath === '' || filter_var($rawPath, FILTER_VALIDATE_URL) || str_starts_with($rawPath, 'data:')) {
+            return;
+        }
+
+        $normalized = ltrim(str_replace('\\', '/', $rawPath), '/');
+        if (str_contains($normalized, '..')) {
+            return;
+        }
+
+        $stripped = preg_replace('#^(?:storage|public)/#', '', $normalized);
+        $safeBase = basename($stripped);
+
+        $candidates = [$normalized, $stripped];
+        foreach ($directoryHints as $hint) {
+            $hint = trim($hint, '/');
+            if ($hint !== '' && $safeBase !== '') {
+                $candidates[] = $hint . '/' . $safeBase;
+            }
+        }
+        $candidates = array_values(array_unique(array_filter($candidates)));
+
+        $disks = static::usesCloudStorage()
+            ? array_values(array_unique(array_merge(['s3'], $localDisks)))
+            : $localDisks;
+
+        foreach ($disks as $disk) {
+            foreach ($candidates as $candidate) {
+                try {
+                    if (Storage::disk($disk)->exists($candidate)) {
+                        Storage::disk($disk)->delete($candidate);
+                    }
+                } catch (\Throwable $e) {
+                    if ($disk !== 's3') {
+                        throw $e;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure a template file stored on S3 or local paths exists as a readable local file for PHPWord/download.
+     *
+     * @param  array<int, string>  $localPaths
+     */
+    public static function resolveLocalTemplatePath(?string $rawPath, array $localPaths = []): ?string
+    {
+        foreach ($localPaths as $localPath) {
+            if ($localPath && is_file($localPath)) {
+                return $localPath;
+            }
+        }
+
+        $rawPath = trim((string) $rawPath);
+        if ($rawPath === '' || !static::usesCloudStorage()) {
+            return null;
+        }
+
+        $normalized = ltrim(str_replace('\\', '/', $rawPath), '/');
+        if (str_contains($normalized, '..')) {
+            return null;
+        }
+
+        $safeBase = basename($normalized);
+        $candidates = array_values(array_unique(array_filter([
+            $normalized,
+            'document_templates/' . $safeBase,
+            $safeBase,
+        ])));
+
+        foreach ($candidates as $candidate) {
+            try {
+                if (Storage::disk('s3')->exists($candidate)) {
+                    $destDir = storage_path('app/document_templates');
+                    if (!is_dir($destDir)) {
+                        @mkdir($destDir, 0755, true);
+                    }
+                    $cachedPath = $destDir . DIRECTORY_SEPARATOR . $safeBase;
+                    $contents = Storage::disk('s3')->get($candidate);
+                    if ($contents !== null && @file_put_contents($cachedPath, $contents) !== false) {
+                        return $cachedPath;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fall through if S3 is temporarily unreachable
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the browser-accessible URL for a branding/payment setting image stored on local or cloud storage.
+     */
+    public static function settingImageUrl(string $key, ?string $rawPath): ?string
+    {
+        $rawPath = trim((string) $rawPath);
+        if ($rawPath === '') {
+            return null;
+        }
+
+        if (filter_var($rawPath, FILTER_VALIDATE_URL) || str_starts_with($rawPath, 'data:image/')) {
+            return $rawPath;
+        }
+
+        $safeBase = basename(str_replace('\\', '/', $rawPath));
+        if ($safeBase !== '' && \Illuminate\Support\Facades\Route::has('branding.asset')) {
+            return route('branding.asset', [
+                'key' => $key,
+                'filename' => $safeBase,
+            ]);
+        }
+
+        return Storage::disk(static::uploadDisk('public'))->url($rawPath);
+    }
+
+    /**
+     * Serve a stored file across S3, local, and public disks (plus fallback storage paths)
      * without requiring a public/storage symlink.
      *
      * @param  array<int, string>  $directoryHints
@@ -50,15 +209,25 @@ class StoredFileService
         $disposition = $download ? 'attachment' : 'inline';
         $targetFilename = $downloadFilename ? basename(str_replace('\\', '/', $downloadFilename)) : $safeBase;
 
-        foreach (['local', 'public'] as $disk) {
+        $disks = static::usesCloudStorage()
+            ? ['s3', 'local', 'public']
+            : ['local', 'public'];
+
+        foreach ($disks as $disk) {
             foreach ($candidatePaths as $candidate) {
-                if (Storage::disk($disk)->exists($candidate)) {
-                    return Storage::disk($disk)->response(
-                        $candidate,
-                        $download ? $targetFilename : null,
-                        [],
-                        $disposition
-                    );
+                try {
+                    if (Storage::disk($disk)->exists($candidate)) {
+                        return Storage::disk($disk)->response(
+                            $candidate,
+                            $download ? $targetFilename : null,
+                            [],
+                            $disposition
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    if ($disk !== 's3') {
+                        throw $e;
+                    }
                 }
             }
         }

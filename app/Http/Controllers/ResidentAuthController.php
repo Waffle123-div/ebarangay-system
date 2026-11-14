@@ -15,6 +15,7 @@ use App\Mail\PasswordChangedMail;
 use App\Mail\RegistrationOtpMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use App\Services\StoredFileService;
 
 class ResidentAuthController extends Controller
 {
@@ -579,7 +580,7 @@ class ResidentAuthController extends Controller
         // ==========================================
         $imagePath = null;
         if ($request->hasFile('proof_of_residency')) {
-            $imagePath = $request->file('proof_of_residency')->store('residency_proofs', 'public');
+            $imagePath = StoredFileService::storeUploadedFile($request->file('proof_of_residency'), 'residency_proofs', 'public');
         }
 
         $selfiePath = null;
@@ -594,13 +595,13 @@ class ResidentAuthController extends Controller
                     $ext = 'png';
                 }
                 $selfieFileName = 'selfie_' . Str::random(24) . '.' . $ext;
-                Storage::disk('public')->put('selfies/' . $selfieFileName, $decoded);
+                StoredFileService::put('selfies/' . $selfieFileName, $decoded, 'public');
                 $selfiePath = 'selfies/' . $selfieFileName;
             }
         } elseif ($request->hasFile('selfie_upload')) {
-            $selfiePath = $request->file('selfie_upload')->store('selfies', 'public');
+            $selfiePath = StoredFileService::storeUploadedFile($request->file('selfie_upload'), 'selfies', 'public');
         } elseif ($request->hasFile('selfie_photo')) {
-            $selfiePath = $request->file('selfie_photo')->store('selfies', 'public');
+            $selfiePath = StoredFileService::storeUploadedFile($request->file('selfie_photo'), 'selfies', 'public');
         }
 
         // ==========================================
@@ -673,10 +674,10 @@ class ResidentAuthController extends Controller
             }
 
             if ($rejectedUser->proof_of_residency && $rejectedUser->proof_of_residency !== $imagePath) {
-                Storage::disk('public')->delete($rejectedUser->proof_of_residency);
+                StoredFileService::delete($rejectedUser->proof_of_residency, ['residency_proofs', 'valid_ids']);
             }
             if ($rejectedUser->selfie_photo && $rejectedUser->selfie_photo !== $selfiePath) {
-                Storage::disk('public')->delete($rejectedUser->selfie_photo);
+                StoredFileService::delete($rejectedUser->selfie_photo, ['selfies']);
             }
 
             $rejectedUser->update($userAttributes);

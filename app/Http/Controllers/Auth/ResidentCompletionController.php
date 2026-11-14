@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Notifications\NewUserRegistrationNotification;
+use App\Services\StoredFileService;
 
 class ResidentCompletionController extends Controller
 {
@@ -47,7 +48,7 @@ class ResidentCompletionController extends Controller
         // 3. Handle the ID Upload
         $imagePath = null;
         if ($request->hasFile('proof_of_residency')) {
-            $imagePath = $request->file('proof_of_residency')->store('residency_proofs', 'public');
+            $imagePath = StoredFileService::storeUploadedFile($request->file('proof_of_residency'), 'residency_proofs', 'public');
         }
 
         // 4. Prepare the base data to update
@@ -68,15 +69,13 @@ class ResidentCompletionController extends Controller
                     $ext = 'png';
                 }
                 $selfieFileName = 'selfie_' . \Illuminate\Support\Str::random(24) . '.' . $ext;
-                // CHANGED: Saved to private storage disk ('local') instead of 'public'
-                \Illuminate\Support\Facades\Storage::disk('local')->put('selfies/' . $selfieFileName, $decoded);
+                StoredFileService::put('selfies/' . $selfieFileName, $decoded, 'local');
                 $updateData['selfie_photo'] = 'selfies/' . $selfieFileName;
                 $updateData['face_verified_at'] = now();
             }
         } elseif ($request->hasFile('selfie_upload') || $request->hasFile('selfie_photo')) {
             $file = $request->file('selfie_upload') ?: $request->file('selfie_photo');
-            // CHANGED: Saved to private storage disk ('local') instead of 'public'
-            $updateData['selfie_photo'] = $file->store('selfies', 'local');
+            $updateData['selfie_photo'] = StoredFileService::storeUploadedFile($file, 'selfies', 'local');
             $updateData['face_verified_at'] = now();
         }
 

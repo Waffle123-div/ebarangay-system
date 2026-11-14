@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\BarangaySetting;
 use App\Models\CommunityConcern;
 use App\Models\DocumentRequest;
 use App\Models\User;
+use App\Services\StoredFileService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -179,6 +182,109 @@ class StoredFileAccessTest extends TestCase
         $settingsPage->assertOk();
         $settingsPage->assertSee($avatarUrl, false);
         $settingsPage->assertSee($idUrl, false);
+    }
+
+    public function test_cloud_s3_uploads_branding_and_avatars_stream_through_app_routes(): void
+    {
+        Storage::fake('s3');
+        Storage::fake('public');
+
+        config([
+            'filesystems.default' => 's3',
+            'filesystems.disks.s3.bucket' => 'laravel-cloud-private-bucket',
+        ]);
+
+        $this->assertTrue(StoredFileService::usesCloudStorage());
+        $this->assertSame('s3', StoredFileService::uploadDisk('public'));
+
+        $admin = $this->createAdmin();
+        $resident = $this->createVerifiedResident('RES-CLOUD1', 'cloud.resident@example.com');
+
+        // 1. Admin uploads barangay logo & municipal logo under S3 config
+        $logoFile = UploadedFile::fake()->image('barangay_seal.png', 100, 100);
+        $municipalFile = UploadedFile::fake()->image('municipal_seal.png', 100, 100);
+
+        $this->actingAs($admin)->post(route('admin.settings.barangay'), [
+            '_group' => 'barangay',
+            'barangay_name' => 'Barangay Cogon East',
+            'municipality' => 'Ormoc City',
+            'province' => 'Leyte',
+            'barangay_logo' => $logoFile,
+            'municipal_logo' => $municipalFile,
+        ])->assertRedirect();
+
+        $savedLogoPath = BarangaySetting::get('barangay_logo');
+        $savedMunicipalPath = BarangaySetting::get('municipal_logo');
+
+        $this->assertNotEmpty($savedLogoPath);
+        $this->assertNotEmpty($savedMunicipalPath);
+        Storage::disk('s3')->assertExists($savedLogoPath);
+        Storage::disk('s3')->assertExists($savedMunicipalPath);
+        Storage::disk('public')->assertMissing($savedLogoPath);
+
+        $expectedLogoUrl = route('branding.asset', [
+            'key' => 'barangay_logo',
+            'filename' => basename($savedLogoPath),
+        ]);
+        $this->get($expectedLogoUrl)->assertOk();
+
+        $adminSettingsPage = $this->actingAs($admin)->get(route('admin.settings'));
+        $adminSettingsPage->assertOk();
+        $adminSettingsPage->assertSee($expectedLogoUrl, false);
+        $adminSettingsPage->assertDontSee('/storage/' . $savedLogoPath, false);
+
+        // 2. Resident uploads profile picture to S3 and streams it via media.profile_avatar & resident.settings.file
+        $residentAvatar = UploadedFile::fake()->image('resident_avatar.jpg', 120, 120);
+        $this->actingAs($resident)->post(route('resident.settings.profile'), [
+            'first_name' => 'Test',
+            'last_name' => 'Resident',
+            'birthdate' => '1998-01-15',
+            'age' => 28,
+            'birthplace' => 'Ormoc City',
+            'gender' => 'Male',
+            'civil_status' => 'Single',
+            'nationality' => 'Filipino',
+            'occupation' => 'Engineer',
+            'phone_number' => '09171234567',
+            'house_number' => '12',
+            'street' => 'Rizal St',
+            'barangay_address' => 'Cogon East',
+            'municipality' => 'Ormoc City',
+            'province' => 'Leyte',
+            'zip_code' => '6541',
+            'profile_picture' => $residentAvatar,
+        ])->assertRedirect();
+
+        $resident->refresh();
+        $this->assertNotNull($resident->profile_picture);
+        Storage::disk('s3')->assertExists($resident->profile_picture);
+        Storage::disk('public')->assertMissing($resident->profile_picture);
+
+        $this->actingAs($resident)->get($resident->profile_picture_url)->assertOk();
+
+        // 3. Admin avatar stored on S3 streams via admin.profile.avatar and appears on admin profile page
+        Storage::disk('s3')->put('profile_pictures/admin_cloud.png', 'cloud-admin-avatar-bytes');
+        $admin->update(['profile_picture' => 'profile_pictures/admin_cloud.png']);
+
+        $this->actingAs($admin)->get($admin->profile_picture_url)->assertOk();
+        $this->actingAs($admin)->get(route('admin.profile'))
+            ->assertOk()
+            ->assertSee($admin->profile_picture_url, false);
+
+        // 4. Deleting stored files cleans up S3 object cleanly
+        StoredFileService::delete($admin->profile_picture, ['profile_pictures']);
+        Storage::disk('s3')->assertMissing('profile_pictures/admin_cloud.png');
+
+        // 5. Private ID document and selfie on S3 stream via admin routes
+        Storage::disk('s3')->put('residency_proofs/cloud_id.png', "\x89PNG\r\n\x1a\ncloud-id");
+        Storage::disk('s3')->put('selfies/cloud_selfie.jpg', 'cloud-selfie');
+        $resident->update([
+            'proof_of_residency' => 'residency_proofs/cloud_id.png',
+            'selfie_photo' => 'selfies/cloud_selfie.jpg',
+        ]);
+
+        $this->actingAs($admin)->get($resident->id_document_url)->assertOk();
+        $this->actingAs($admin)->get($resident->selfie_photo_url)->assertOk();
     }
 }
 

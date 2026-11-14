@@ -43,7 +43,7 @@
                     <div class="bg-white p-2 rounded-circle shadow-sm position-relative">
                         <div id="avatarPreviewContainer" style="width: 105px; height: 105px; overflow: hidden; border-radius: 50%;">
                             @if($user->profile_picture)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($user->profile_picture) }}" 
+                                <img src="{{ $user->profile_picture_url }}" 
                                      alt="{{ $user->name }}" 
                                      id="avatarPreviewImg"
                                      class="w-100 h-100 rounded-circle object-fit-cover shadow-sm">
@@ -106,7 +106,7 @@
                             <div class="d-flex align-items-center flex-wrap gap-3">
                                 <div class="bg-white p-1 rounded-circle border shadow-sm flex-shrink-0" style="width: 64px; height: 64px; overflow: hidden;">
                                     @if($user->profile_picture)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($user->profile_picture) }}" 
+                                        <img src="{{ $user->profile_picture_url }}" 
                                              alt="{{ $user->name }}" 
                                              id="formAvatarThumb"
                                              class="w-100 h-100 rounded-circle object-fit-cover">

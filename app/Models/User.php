@@ -167,7 +167,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ]);
         }
 
-        return \Illuminate\Support\Facades\Storage::url($path);
+        return \Illuminate\Support\Facades\Storage::disk(\App\Services\StoredFileService::uploadDisk('public'))->url($path);
     }
 
     /**
@@ -188,6 +188,33 @@ class User extends Authenticatable implements MustVerifyEmail
             return route('admin.resident.selfie', basename($path));
         }
 
-        return \Illuminate\Support\Facades\Storage::url($path);
+        return \Illuminate\Support\Facades\Storage::disk(\App\Services\StoredFileService::uploadDisk('public'))->url($path);
+    }
+
+    /**
+     * Get the URL to view the user's profile picture without relying on public/storage symlinks.
+     */
+    public function getProfilePictureUrlAttribute(): ?string
+    {
+        $path = $this->profile_picture;
+        if (!$path) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL) || str_starts_with($path, 'data:image/')) {
+            return $path;
+        }
+
+        $safeBase = basename(str_replace('\\', '/', $path));
+
+        if (trim(strtolower((string) $this->role)) === 'admin' && \Illuminate\Support\Facades\Route::has('admin.profile.avatar')) {
+            return route('admin.profile.avatar', ['filename' => $safeBase]);
+        }
+
+        if (\Illuminate\Support\Facades\Route::has('media.profile_avatar')) {
+            return route('media.profile_avatar', ['filename' => $safeBase]);
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk(\App\Services\StoredFileService::uploadDisk('public'))->url($path);
     }
 }

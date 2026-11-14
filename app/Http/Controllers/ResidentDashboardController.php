@@ -271,7 +271,7 @@ class ResidentDashboardController extends Controller
             foreach ($request->file('attachments') as $idx => $file) {
                 if ($file->isValid()) {
                     $originalName = $file->getClientOriginalName();
-                    $path = $file->store('attachments', 'public');
+                    $path = StoredFileService::storeUploadedFile($file, 'attachments', 'public');
                     
                     $matchedMeta = null;
                     foreach ($metaList as $m) {
@@ -490,7 +490,7 @@ class ResidentDashboardController extends Controller
         $concern->status = 'Pending';
         
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('concerns', 'public');
+            $path = StoredFileService::storeUploadedFile($request->file('photo'), 'concerns', 'public');
             $concern->photo_path = $path; 
         }
 
