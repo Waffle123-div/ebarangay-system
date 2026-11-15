@@ -112,4 +112,87 @@ class ResidentDocumentRequestFlowTest extends TestCase
             'id_type' => 'National ID',
         ]);
     }
+
+    public function test_resident_uploaded_request_image_is_stored_on_cloud_disk_and_visible_to_admin(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('s3');
+        config([
+            'filesystems.default' => 's3',
+            'filesystems.disks.s3.bucket' => 'ebarangay_system_production',
+        ]);
+
+        $admin = User::create([
+            'user_id' => 'ADM-' . rand(1000, 9999),
+            'name' => 'Admin Reviewer',
+            'email' => 'admin_req_view_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('Password123!'),
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $resident = User::create([
+            'user_id' => 'RES-' . substr(uniqid(), -6) . rand(10, 99),
+            'name' => 'Troy Suson',
+            'first_name' => 'Troy',
+            'last_name' => 'Suson',
+            'email' => 'troy_cloud_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'security_pin' => bcrypt('1234'),
+            'password' => bcrypt('Password123!'),
+            'role' => 'resident',
+            'status' => 'active',
+        ]);
+
+        $createPage = $this->actingAs($resident)->get(route('resident.request.create'));
+        $createPage->assertOk();
+        $createPage->assertSee("formData.delete('attachments[]');", false);
+        $createPage->assertSee('const pickedFiles = Array.from(this.files || []);', false);
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('uploaded_picture.jpg', 200, 200);
+
+        $this->actingAs($resident)
+            ->post(route('resident.request.store'), [
+                'first_name' => 'Troy',
+                'last_name' => 'Suson',
+                'age' => 22,
+                'contact_number' => '09123456789',
+                'resident_email' => $resident->email,
+                'address' => 'Barangay Proper',
+                'document_type' => 'Barangay Clearance',
+                'purpose' => 'EMPLOYMENT REQUIREMENT',
+                'attachments' => [$image],
+                'attachment_meta' => json_encode([
+                    [
+                        'name' => 'uploaded_picture.jpg',
+                        'doc_type' => 'Supporting Document',
+                        'file_type' => 'image/jpeg',
+                        'size' => $image->getSize(),
+                    ],
+                ]),
+            ])
+            ->assertRedirect();
+
+        $docRequest = \App\Models\DocumentRequest::where('user_id', $resident->id)->latest('id')->firstOrFail();
+        $attachments = $docRequest->attachments_list;
+
+        $this->assertCount(1, $attachments);
+        $this->assertSame('uploaded_picture.jpg', $attachments[0]['file_name']);
+        $this->assertSame('image', $attachments[0]['file_type']);
+        \Illuminate\Support\Facades\Storage::disk('s3')->assertExists($attachments[0]['file_path']);
+
+        $previewUrl = route('admin.requests.attachment', [
+            'documentRequest' => $docRequest->id,
+            'index' => 0,
+            'filename' => basename($attachments[0]['file_path']),
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.requests'))
+            ->assertOk()
+            ->assertSee($previewUrl, false);
+
+        $stream = $this->actingAs($admin)->get($previewUrl);
+        $stream->assertOk();
+        $this->assertStringContainsString('inline', (string) $stream->headers->get('Content-Disposition'));
+    }
 }

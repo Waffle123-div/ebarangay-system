@@ -1961,8 +1961,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     fileInput.addEventListener('change', function() {
-        handleFiles(this.files);
+        const pickedFiles = Array.from(this.files || []);
         this.value = '';
+        if (pickedFiles.length > 0) {
+            handleFiles(pickedFiles);
+        }
     });
 
     function getDocTypeOptionList() {
@@ -2450,8 +2453,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (confirmModal) confirmModal.hide();
 
+        syncFileInput();
         const form = document.getElementById('docRequestForm');
         const formData = new FormData(form);
+        formData.delete('attachments[]');
+        uploadedFiles.forEach(f => formData.append('attachments[]', f, f.name));
 
         fetch(form.action, {
             method: 'POST',

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -45,11 +46,31 @@ class StoredFileService
     }
 
     /**
-     * Store an uploaded file on the active storage disk (S3 on cloud, local/public otherwise).
+     * Store an uploaded file on the active storage disk (cloud on Laravel Cloud, local/public otherwise).
      */
     public static function storeUploadedFile(UploadedFile $file, string $directory, string $localFallback = 'public'): string
     {
-        return $file->store(trim($directory, '/'), static::uploadDisk($localFallback));
+        $cleanDir = trim($directory, '/');
+        $disk = static::uploadDisk($localFallback);
+        $path = $file->store($cleanDir, $disk);
+
+        if ($path === false || $path === '') {
+            Log::warning('StoredFileService failed to store uploaded file on primary disk.', [
+                'disk' => $disk,
+                'directory' => $cleanDir,
+                'filename' => $file->getClientOriginalName(),
+            ]);
+
+            if ($disk !== $localFallback) {
+                $path = $file->store($cleanDir, $localFallback);
+            }
+        }
+
+        if ($path === false || $path === '') {
+            throw new \RuntimeException('Unable to store uploaded file.');
+        }
+
+        return $path;
     }
 
     /**
