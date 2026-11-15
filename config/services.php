@@ -23,6 +23,11 @@ return [
         'from_address' => env('RESEND_FROM_ADDRESS', 'onboarding@resend.dev'),
     ],
 
+    'mailjet' => [
+        'key' => env('MAILJET_API_KEY') ?: env('MAIL_USERNAME'),
+        'secret' => env('MAILJET_SECRET_KEY') ?: env('MAIL_PASSWORD'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

@@ -84,6 +84,13 @@ class AppServiceProvider extends ServiceProvider
             return new \App\Mail\Transports\ResendHttpTransport($key);
         });
 
+        // Register Mailjet v3.1 HTTPS mail transport (bypasses blocked cloud outbound SMTP ports)
+        \Illuminate\Support\Facades\Mail::extend('mailjet_http', function (array $config = []) {
+            $key = $config['key'] ?? config('services.mailjet.key') ?? config('mail.mailers.smtp.username');
+            $secret = $config['secret'] ?? config('services.mailjet.secret') ?? config('mail.mailers.smtp.password');
+            return new \App\Mail\Transports\MailjetHttpTransport($key, $secret);
+        });
+
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
            return (new MailMessage)
                ->subject('Action Required: Verify Your E-Barangay Account')

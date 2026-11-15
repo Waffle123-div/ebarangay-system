@@ -71,6 +71,18 @@ return [
             'key' => env('RESEND_API_KEY'),
         ],
 
+        'mailjet' => [
+            'transport' => 'mailjet_http',
+            'key' => env('MAILJET_API_KEY', env('MAIL_USERNAME')),
+            'secret' => env('MAILJET_SECRET_KEY', env('MAIL_PASSWORD')),
+        ],
+
+        'mailjet_http' => [
+            'transport' => 'mailjet_http',
+            'key' => env('MAILJET_API_KEY', env('MAIL_USERNAME')),
+            'secret' => env('MAILJET_SECRET_KEY', env('MAIL_PASSWORD')),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
