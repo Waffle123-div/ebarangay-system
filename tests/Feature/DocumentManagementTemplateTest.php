@@ -99,5 +99,41 @@ class DocumentManagementTemplateTest extends TestCase
             $this->assertMatchesRegularExpression('/<w:r\b[^>]*>(?:(?!<\/w:r>).)*<w:b\b(?:(?!<\/w:r>).)*<w:t[^>]*>\$\{name\}<\/w:t>/s', $xml, "Tag \${name} should be bold in $tmpl");
         }
     }
+
+    public function test_all_legacy_and_official_document_types_have_downloadable_templates_and_library_includes_root_templates(): void
+    {
+        (new \Database\Seeders\DocumentTypeSeeder())->run();
+
+        $legacyAndOfficialNames = [
+            'Medical Assistance',
+            'First Time Job Seeker',
+            'Oath of Undertaking Job Seeker',
+            'Cohabitation Certificate',
+            'Electric Certificate',
+            'Certification for Senior Citizen',
+            'Cash Assistance Senior Certificate',
+            'Burial Senior Citizen Certificate',
+            'Scholarship Indigency',
+            'Indigency Bail Certificate',
+            'Bail Certificate',
+            'Probation Barangay Certificate',
+            'Brgy Clearance for Business Permit',
+        ];
+
+        foreach ($legacyAndOfficialNames as $name) {
+            $docType = DocumentType::where('name', $name)->first();
+            $this->assertNotNull($docType, "Expected document type '{$name}' to exist.");
+            $this->assertNotEmpty($docType->template_file, "Expected '{$name}' to have an assigned template_file.");
+
+            $download = $this->actingAs($this->admin)->get(route('admin.document-types.download-template', $docType->id));
+            $download->assertStatus(200);
+        }
+
+        $page = $this->actingAs($this->admin)->get(route('admin.document-types.index'));
+        $page->assertStatus(200);
+        $page->assertSee('bail_certificate_template.docx');
+        $page->assertSee('first_time_job_seeker_template.docx');
+        $page->assertSee('electric_certificate_template.docx');
+    }
 }
 

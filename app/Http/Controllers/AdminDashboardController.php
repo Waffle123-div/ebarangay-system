@@ -1316,14 +1316,33 @@ class AdminDashboardController extends Controller
             'free'     => DocumentType::where('fee', 0)->count(),
         ];
 
-        $templateDir = storage_path('app/document_templates');
+        $availableTemplates = $this->collectAvailableTemplates();
+
+        return view('admin.document_types.index', compact('documentTypes', 'stats', 'availableTemplates'));
+    }
+
+    /**
+     * Collect available built-in and uploaded .docx templates from document_templates and storage/app.
+     */
+    private function collectAvailableTemplates(): array
+    {
         $availableTemplates = [];
-        if (file_exists($templateDir)) {
-            $files = glob($templateDir . '/*.docx');
-            if ($files) {
-                $availableTemplates = array_map('basename', $files);
+
+        $templateDir = storage_path('app/document_templates');
+        if (is_dir($templateDir)) {
+            foreach (glob($templateDir . '/*.docx') ?: [] as $file) {
+                $base = basename($file);
+                if (!str_starts_with(strtolower($base), 'test_')) {
+                    $availableTemplates[] = $base;
+                }
             }
         }
+
+        // Also include root *_template.docx files stored directly in storage/app
+        foreach (glob(storage_path('app/*_template.docx')) ?: [] as $file) {
+            $availableTemplates[] = basename($file);
+        }
+
         if ($cloudDisk = StoredFileService::cloudDisk()) {
             try {
                 foreach (Storage::disk($cloudDisk)->files('document_templates') as $cloudTemplate) {
@@ -1335,13 +1354,46 @@ class AdminDashboardController extends Controller
                 // Keep locally discovered templates if cloud listing is unavailable
             }
         }
-        if (!empty($availableTemplates)) {
-            $availableTemplates = array_values(array_unique($availableTemplates));
-            natsort($availableTemplates);
-            $availableTemplates = array_values($availableTemplates);
+
+        $availableTemplates = array_values(array_unique($availableTemplates));
+        natsort($availableTemplates);
+
+        return array_values($availableTemplates);
+    }
+
+    /**
+     * Resolve an existing template selection to its actual storage-relative path.
+     */
+    private function resolveExistingTemplateSelection(string $selectedTemplate): string
+    {
+        $safeBase = basename(trim($selectedTemplate));
+        if (is_file(storage_path('app/document_templates/' . $safeBase))) {
+            return 'document_templates/' . $safeBase;
+        }
+        if (is_file(storage_path('app/' . $safeBase))) {
+            return $safeBase;
         }
 
-        return view('admin.document_types.index', compact('documentTypes', 'stats', 'availableTemplates'));
+        return 'document_templates/' . $safeBase;
+    }
+
+    /**
+     * Build ordered local filesystem candidate paths for resolving a template file.
+     */
+    private function buildTemplateCandidatePaths(string $templateFile): array
+    {
+        $safeBase = basename($templateFile);
+
+        return array_values(array_unique([
+            storage_path('app/' . $templateFile),
+            storage_path('app/document_templates/' . $safeBase),
+            storage_path('app/document_templates/' . $templateFile),
+            storage_path('app/templates/' . $templateFile),
+            storage_path('app/private/' . $templateFile),
+            storage_path('app/private/document_templates/' . $templateFile),
+            storage_path('app/' . $safeBase),
+            public_path('templates/' . $templateFile),
+        ]));
     }
 
     public function storeDocumentType(Request $request)
@@ -1395,7 +1447,7 @@ class AdminDashboardController extends Controller
                 }
             }
         } elseif ($request->filled('existing_template')) {
-            $templateFileName = 'document_templates/' . basename($request->existing_template);
+            $templateFileName = $this->resolveExistingTemplateSelection((string) $request->existing_template);
         }
 
         $docType = DocumentType::create([
@@ -1479,7 +1531,7 @@ class AdminDashboardController extends Controller
                 }
             }
         } elseif ($request->filled('existing_template')) {
-            $updateData['template_file'] = 'document_templates/' . basename($request->existing_template);
+            $updateData['template_file'] = $this->resolveExistingTemplateSelection((string) $request->existing_template);
         } elseif ($request->boolean('remove_template')) {
             if ($docType->template_file && str_starts_with($docType->template_file, 'document_templates/template_')) {
                 @unlink(storage_path('app/' . $docType->template_file));
@@ -1502,17 +1554,10 @@ class AdminDashboardController extends Controller
             return back()->with('error', 'This document type does not have a custom template.');
         }
 
-        $possiblePaths = [
-            storage_path('app/' . $docType->template_file),
-            storage_path('app/document_templates/' . basename($docType->template_file)),
-            storage_path('app/document_templates/' . $docType->template_file),
-            storage_path('app/templates/' . $docType->template_file),
-            storage_path('app/private/' . $docType->template_file),
-            storage_path('app/private/document_templates/' . $docType->template_file),
-            storage_path('app/' . basename($docType->template_file)),
-        ];
-
-        $foundPath = StoredFileService::resolveLocalTemplatePath($docType->template_file, $possiblePaths);
+        $foundPath = StoredFileService::resolveLocalTemplatePath(
+            $docType->template_file,
+            $this->buildTemplateCandidatePaths($docType->template_file)
+        );
 
         if (!$foundPath) {
             return back()->with('error', 'Template file not found on disk.');
@@ -2072,15 +2117,10 @@ class AdminDashboardController extends Controller
 
         $customTemplatePath = null;
         if ($docTypeRecord && !empty($docTypeRecord->template_file)) {
-            $possiblePaths = [
-                storage_path('app/' . $docTypeRecord->template_file),
-                storage_path('app/document_templates/' . $docTypeRecord->template_file),
-                storage_path('app/templates/' . $docTypeRecord->template_file),
-                storage_path('app/private/' . $docTypeRecord->template_file),
-                storage_path('app/private/document_templates/' . $docTypeRecord->template_file),
-                public_path('templates/' . $docTypeRecord->template_file),
-            ];
-            $customTemplatePath = StoredFileService::resolveLocalTemplatePath($docTypeRecord->template_file, $possiblePaths);
+            $customTemplatePath = StoredFileService::resolveLocalTemplatePath(
+                $docTypeRecord->template_file,
+                $this->buildTemplateCandidatePaths($docTypeRecord->template_file)
+            );
         }
 
         // Output file naming

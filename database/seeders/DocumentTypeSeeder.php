@@ -192,6 +192,38 @@ class DocumentTypeSeeder extends Seeder
                 $doc
             );
         }
+
+        $this->backfillMissingTemplates();
+    }
+
+    /**
+     * Ensure legacy document types that were created without a template_file
+     * are linked to their corresponding built-in .docx template.
+     */
+    public function backfillMissingTemplates(): void
+    {
+        $legacyTemplateMap = [
+            'Medical Assistance'                 => 'document_templates/indigency_template.docx',
+            'First Time Job Seeker'              => 'document_templates/12_First_Time_Jobseeker_Cert.docx',
+            'Oath of Undertaking Job Seeker'     => 'document_templates/13_Oath_of_Undertaking_Jobseeker.docx',
+            'Cohabitation Certificate'           => 'document_templates/08_Certificate_of_Cohabitation.docx',
+            'Electric Certificate'               => 'document_templates/03_Electric_Connection_Cert.docx',
+            'Certification for Senior Citizen'   => 'document_templates/05_Senior_Citizen_Cert.docx',
+            'Cash Assistance Senior Certificate' => 'document_templates/06_Senior_Cash_Assistance.docx',
+            'Burial Senior Citizen Certificate'  => 'document_templates/07_Senior_Burial_Assistance.docx',
+            'Scholarship Indigency'              => 'document_templates/indigency_template.docx',
+            'Indigency Bail Certificate'         => 'document_templates/10_Probation_Bail_Brgy_Cert.docx',
+            'Bail Certificate'                   => 'document_templates/10_Probation_Bail_Brgy_Cert.docx',
+            'Probation Barangay Certificate'     => 'document_templates/10_Probation_Bail_Brgy_Cert.docx',
+            'Brgy Clearance for Business Permit' => 'document_templates/02_Barangay_Business_Permit.docx',
+        ];
+
+        foreach ($legacyTemplateMap as $name => $templatePath) {
+            $docType = DocumentType::where('name', $name)->first();
+            if ($docType && empty($docType->template_file)) {
+                $docType->update(['template_file' => $templatePath]);
+            }
+        }
     }
 }
 
