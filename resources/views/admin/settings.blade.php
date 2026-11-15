@@ -43,11 +43,28 @@
                 {{-- Profile mini header --}}
                 <div style="height:90px; background: linear-gradient(135deg, #0F2240 0%, #18365D 55%, #2B6CB0 100%);"></div>
                 <div class="d-flex justify-content-center" style="margin-top:-44px;">
-                    <div class="bg-white rounded-circle admin-avatar-outer" style="padding:3px; box-shadow: 0 4px 12px rgba(24,54,93,0.25);">
-                        <div class="rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials"
-                             style="width:82px;height:82px;font-size:26px;background:linear-gradient(135deg,#EBF4FF,#BEE3F8);color:#18365D; border:3px solid #fff;">
-                            {{ strtoupper(substr($user->name, 0, 2)) }}
+                    <div class="bg-white rounded-circle admin-avatar-outer position-relative" style="padding:3px; box-shadow: 0 4px 12px rgba(24,54,93,0.25);">
+                        <div id="settingsCardAvatarContainer" class="rounded-circle overflow-hidden" style="width:82px;height:82px;">
+                            @if($user->profile_picture)
+                                <img src="{{ $user->profile_picture_url }}"
+                                     alt="{{ $user->name }}"
+                                     class="w-100 h-100 rounded-circle object-fit-cover"
+                                     style="border:3px solid #fff;">
+                            @else
+                                <div class="w-100 h-100 rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials"
+                                     style="font-size:26px;background:linear-gradient(135deg,#EBF4FF,#BEE3F8);color:#18365D; border:3px solid #fff;">
+                                    {{ strtoupper(substr($user->name, 0, 2)) }}
+                                </div>
+                            @endif
                         </div>
+                        <button type="button"
+                                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow-sm"
+                                style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;border:2px solid #fff;"
+                                onclick="document.getElementById('nav-profile')?.click(); document.getElementById('admin_settings_profile_picture')?.click();"
+                                title="Change profile picture"
+                                aria-label="Change profile picture">
+                            <i class="fa-solid fa-camera" style="font-size:11px;"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body text-center pt-2 pb-3 px-3">
@@ -159,8 +176,45 @@
                         </div>
                     </div>
                     <div class="card-body p-4">
-                        <form action="{{ route('admin.settings.profile') }}" method="POST">
+                        <form action="{{ route('admin.settings.profile') }}" method="POST" enctype="multipart/form-data">
                             @csrf
+                            <div class="p-3 bg-light rounded-4 border mb-4 settings-stats-pill">
+                                <label class="form-label text-dark fw-semibold small mb-2">Profile Picture</label>
+                                <div class="d-flex align-items-center flex-wrap gap-3">
+                                    <div id="settingsFormAvatarThumbContainer" class="bg-white p-1 rounded-circle border shadow-sm flex-shrink-0 overflow-hidden" style="width: 60px; height: 60px;">
+                                        @if($user->profile_picture)
+                                            <img src="{{ $user->profile_picture_url }}"
+                                                 alt="{{ $user->name }}"
+                                                 class="w-100 h-100 rounded-circle object-fit-cover">
+                                        @else
+                                            <div class="w-100 h-100 rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials" style="font-size: 18px; background:linear-gradient(135deg,#EBF4FF,#BEE3F8); color:#18365D;">
+                                                {{ strtoupper(substr($user->name, 0, 2)) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <input type="file" name="profile_picture" id="admin_settings_profile_picture" accept="image/png,image/jpeg,image/jpg,image/webp" class="d-none">
+                                            <input type="hidden" name="remove_profile_picture" id="admin_settings_remove_profile_picture" value="0">
+
+                                            <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill" onclick="document.getElementById('admin_settings_profile_picture').click();">
+                                                <i class="fa-solid fa-camera me-1"></i> Upload Photo
+                                            </button>
+
+                                            @if($user->profile_picture)
+                                                <button type="button" class="btn btn-sm btn-outline-danger fw-semibold px-3 rounded-pill" id="adminSettingsRemovePhotoBtn">
+                                                    <i class="fa-solid fa-trash-can me-1"></i> Remove Photo
+                                                </button>
+                                            @endif
+                                        </div>
+                                        <div class="text-muted small mt-1" style="font-size: 11.5px;">
+                                            JPG, PNG, or WEBP up to 2MB. Click Save Profile to apply changes.
+                                        </div>
+                                        <div id="adminSettingsSelectedFileName" class="text-primary small fw-semibold mt-1 d-none"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label text-muted small fw-semibold">Full Name <span class="text-danger">*</span></label>
@@ -1276,6 +1330,56 @@ if (bannerCategory) bannerCategory.addEventListener('input', updateBannerPreview
 if (bannerTitle) bannerTitle.addEventListener('input', updateBannerPreview);
 if (bannerMsg) bannerMsg.addEventListener('input', updateBannerPreview);
 if (bannerActionText) bannerActionText.addEventListener('input', updateBannerPreview);
+
+const adminSettingsPicInput = document.getElementById('admin_settings_profile_picture');
+const adminSettingsRemoveFlag = document.getElementById('admin_settings_remove_profile_picture');
+const adminSettingsRemoveBtn = document.getElementById('adminSettingsRemovePhotoBtn');
+const adminSettingsCardAvatar = document.getElementById('settingsCardAvatarContainer');
+const adminSettingsThumbAvatar = document.getElementById('settingsFormAvatarThumbContainer');
+const adminSettingsFileName = document.getElementById('adminSettingsSelectedFileName');
+const adminInitialsFallback = @json(strtoupper(substr($user->name, 0, 2)));
+
+if (adminSettingsPicInput) {
+    adminSettingsPicInput.addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (adminSettingsRemoveFlag) adminSettingsRemoveFlag.value = '0';
+        if (adminSettingsFileName) {
+            adminSettingsFileName.textContent = 'Selected: ' + file.name + ' (click Save Profile to upload)';
+            adminSettingsFileName.classList.remove('d-none');
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const src = event.target.result;
+            if (adminSettingsCardAvatar) {
+                adminSettingsCardAvatar.innerHTML = `<img src="${src}" class="w-100 h-100 rounded-circle object-fit-cover" style="border:3px solid #fff;" alt="Preview">`;
+            }
+            if (adminSettingsThumbAvatar) {
+                adminSettingsThumbAvatar.innerHTML = `<img src="${src}" class="w-100 h-100 rounded-circle object-fit-cover" alt="Preview">`;
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+if (adminSettingsRemoveBtn) {
+    adminSettingsRemoveBtn.addEventListener('click', function () {
+        if (adminSettingsRemoveFlag) adminSettingsRemoveFlag.value = '1';
+        if (adminSettingsPicInput) adminSettingsPicInput.value = '';
+        if (adminSettingsFileName) {
+            adminSettingsFileName.textContent = 'Photo marked for removal (click Save Profile to apply).';
+            adminSettingsFileName.classList.remove('d-none');
+        }
+        if (adminSettingsCardAvatar) {
+            adminSettingsCardAvatar.innerHTML = `<div class="w-100 h-100 rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials" style="font-size:26px;background:linear-gradient(135deg,#EBF4FF,#BEE3F8);color:#18365D; border:3px solid #fff;">${adminInitialsFallback}</div>`;
+        }
+        if (adminSettingsThumbAvatar) {
+            adminSettingsThumbAvatar.innerHTML = `<div class="w-100 h-100 rounded-circle d-flex justify-content-center align-items-center fw-bold text-uppercase admin-avatar-initials" style="font-size: 18px; background:linear-gradient(135deg,#EBF4FF,#BEE3F8); color:#18365D;">${adminInitialsFallback}</div>`;
+        }
+    });
+}
 </script>
 
 @endsection

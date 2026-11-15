@@ -1010,24 +1010,34 @@ class AdminDashboardController extends Controller
         $user->email = $request->input('email');
         $user->contact_number = $request->input('contact_number');
 
-        if ($request->input('remove_profile_picture') == '1') {
-            if ($user->profile_picture) {
-                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
-            }
-            $user->profile_picture = null;
-        } elseif ($request->hasFile('profile_picture')) {
-            if ($user->profile_picture) {
-                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
-            }
-            $path = StoredFileService::storeUploadedFile($request->file('profile_picture'), 'profile_pictures', 'public');
-            $user->profile_picture = $path;
-        }
+        $this->syncProfilePicture($request, $user);
 
         $user->save();
         
         ActivityLog::record('profile_updated', "Admin {$user->name} updated their profile settings.");
 
         return back()->with('success', 'Profile updated successfully!');
+    }
+
+    /**
+     * Store or remove an uploaded administrator profile picture using StoredFileService.
+     */
+    private function syncProfilePicture(Request $request, User $user): void
+    {
+        if ($request->input('remove_profile_picture') == '1') {
+            if ($user->profile_picture) {
+                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
+            }
+            $user->profile_picture = null;
+            return;
+        }
+
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                StoredFileService::delete($user->profile_picture, ['profile_pictures']);
+            }
+            $user->profile_picture = StoredFileService::storeUploadedFile($request->file('profile_picture'), 'profile_pictures', 'public');
+        }
     }
 
     // ==========================================
@@ -1046,12 +1056,14 @@ class AdminDashboardController extends Controller
         $user = auth()->user();
 
         $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name'            => 'required|string|max:255',
+            'email'           => 'required|email|unique:users,email,' . $user->id,
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $user->name  = $request->input('name');
         $user->email = $request->input('email');
+        $this->syncProfilePicture($request, $user);
         $user->save();
 
         ActivityLog::record('profile_updated', "Admin updated their profile information.");

@@ -275,4 +275,43 @@ class AdminSettingsTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     }
+
+    public function test_admin_can_upload_and_remove_profile_picture_from_system_settings(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $admin = $this->createAdmin();
+
+        $settingsPage = $this->actingAs($admin)->get(route('admin.settings'));
+        $settingsPage->assertStatus(200);
+        $settingsPage->assertSee('name="profile_picture"', false);
+
+        $photo = \Illuminate\Http\UploadedFile::fake()->image('admin_avatar.png', 200, 200);
+
+        $uploadResponse = $this->actingAs($admin)->post(route('admin.settings.profile'), [
+            'name'            => 'Updated Admin',
+            'email'           => $admin->email,
+            'profile_picture' => $photo,
+        ]);
+
+        $uploadResponse->assertSessionHas('success');
+        $admin->refresh();
+        $this->assertNotEmpty($admin->profile_picture);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($admin->profile_picture);
+
+        $updatedSettingsPage = $this->actingAs($admin)->get(route('admin.settings'));
+        $updatedSettingsPage->assertStatus(200);
+        $updatedSettingsPage->assertSee($admin->profile_picture_url, false);
+
+        $oldPath = $admin->profile_picture;
+        $removeResponse = $this->actingAs($admin)->post(route('admin.settings.profile'), [
+            'name'                   => 'Updated Admin',
+            'email'                  => $admin->email,
+            'remove_profile_picture' => '1',
+        ]);
+
+        $removeResponse->assertSessionHas('success');
+        $admin->refresh();
+        $this->assertNull($admin->profile_picture);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($oldPath);
+    }
 }
