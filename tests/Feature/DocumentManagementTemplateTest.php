@@ -135,5 +135,29 @@ class DocumentManagementTemplateTest extends TestCase
         $page->assertSee('first_time_job_seeker_template.docx');
         $page->assertSee('electric_certificate_template.docx');
     }
+
+    public function test_document_management_rows_are_clickable_without_actions_column_and_edit_modal_has_centered_delete_and_update(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.document-types.index'));
+
+        $response->assertStatus(200);
+        $html = $response->getContent();
+
+        $this->assertStringNotContainsString('>ACTIONS<', $html);
+        $this->assertStringNotContainsString('col-actions', $html);
+        $this->assertStringNotContainsString('edit-doc-btn', $html);
+        $this->assertStringNotContainsString('delete-doc-btn', $html);
+        $this->assertStringContainsString('doc-type-row-clickable', $html);
+
+        $this->assertSame(1, preg_match('/<form id="editDocumentTypeForm".*?<\/form>/s', $html, $editFormMatch));
+        $this->assertMatchesRegularExpression(
+            '/<div class="modal-footer[^"]*justify-content-center gap-2[^"]*">\s*<button[^>]*id="editModalDeleteBtn"[^>]*>.*?Delete.*?<\/button>\s*<button[^>]*type="submit"[^>]*>.*?Update Document Type.*?<\/button>\s*<\/div>/s',
+            $editFormMatch[0]
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/<div class="modal-footer[^>]*>.*?Cancel.*?<\/div>/s',
+            $editFormMatch[0]
+        );
+    }
 }
 

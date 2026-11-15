@@ -35,21 +35,11 @@
             padding: 0.75rem 0.75rem;
             vertical-align: middle;
         }
-        .table-doc-types thead th.col-actions,
-        .table-doc-types tbody td.col-actions {
-            position: sticky;
-            right: 0;
-            z-index: 5;
-            white-space: nowrap;
-            text-align: right;
-            padding-right: 1.25rem !important;
-            background-color: #ffffff;
-            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.04);
+        .doc-type-row-clickable {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
         }
-        .table-doc-types thead th.col-actions {
-            background-color: #f8f9fe;
-        }
-        .table-doc-types tbody tr:hover > td.col-actions {
+        .table-doc-types tbody tr.doc-type-row-clickable:hover > td {
             background-color: #f8fafc;
         }
 
@@ -120,20 +110,6 @@
         html[data-bs-theme="dark"] .table-doc-types tbody tr:hover > td {
             background-color: #19253d !important;
             color: #ffffff !important;
-        }
-        html[data-theme="dark"] .table-doc-types thead th.col-actions,
-        html[data-bs-theme="dark"] .table-doc-types thead th.col-actions {
-            background-color: #10192a !important;
-            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.35);
-        }
-        html[data-theme="dark"] .table-doc-types tbody td.col-actions,
-        html[data-bs-theme="dark"] .table-doc-types tbody td.col-actions {
-            background-color: #131d31 !important;
-            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.35);
-        }
-        html[data-theme="dark"] .table-doc-types tbody tr:hover > td.col-actions,
-        html[data-bs-theme="dark"] .table-doc-types tbody tr:hover > td.col-actions {
-            background-color: #19253d !important;
         }
         html[data-theme="dark"] .mobile-doc-card,
         html[data-bs-theme="dark"] .mobile-doc-card {
@@ -393,13 +369,22 @@
                         <th class="py-3 border-0 text-center" style="width: 120px; min-width: 110px;">PROCESSING TIME</th>
                         <th class="py-3 border-0" style="min-width: 190px;">WORD TEMPLATE</th>
                         <th class="py-3 border-0" style="width: 160px; min-width: 140px;">REQUIRED ATTACHMENTS</th>
-                        <th class="py-3 border-0 text-center" style="width: 100px; min-width: 90px;">AVAILABILITY</th>
-                        <th class="pe-3 pe-md-4 py-3 border-0 text-end col-actions" style="width: 115px; min-width: 115px;">ACTIONS</th>
+                        <th class="py-3 pe-3 pe-md-4 border-0 text-center" style="width: 115px; min-width: 100px;">AVAILABILITY</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     @forelse($documentTypes as $doc)
-                        <tr id="doc-row-{{ $doc->id }}">
+                        <tr id="doc-row-{{ $doc->id }}"
+                            class="doc-type-row-clickable"
+                            data-id="{{ $doc->id }}"
+                            data-name="{{ $doc->name }}"
+                            data-fee="{{ $doc->fee }}"
+                            data-days="{{ $doc->processing_days }}"
+                            data-description="{{ $doc->description }}"
+                            data-requirements="{{ is_array($doc->requirements) ? implode("\n", $doc->requirements) : $doc->requirements }}"
+                            data-active="{{ $doc->is_active ? 1 : 0 }}"
+                            data-template="{{ $doc->template_file }}"
+                            title="Click row to edit {{ $doc->name }}">
                             <td class="ps-3 ps-md-4 py-3 text-center" style="width: 44px;">
                                 <input class="form-check-input doc-checkbox" type="checkbox" value="{{ $doc->id }}" data-name="{{ $doc->name }}">
                             </td>
@@ -497,7 +482,7 @@
                                 @endif
                             </td>
 
-                            <td class="text-center py-3" style="width: 105px;">
+                            <td class="text-center py-3 pe-3 pe-md-4" style="width: 115px;">
                                 <form action="{{ route('admin.document-types.toggle-status', $doc->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('PATCH')
@@ -513,41 +498,6 @@
                                         @endif
                                     </button>
                                 </form>
-                            </td>
-
-                            <td class="pe-3 pe-md-4 py-3 text-end col-actions" style="width: 115px;">
-                                <div class="d-inline-flex align-items-center gap-1">
-                                    {{-- Download Template Button --}}
-                                    @if($doc->template_file)
-                                        <a href="{{ route('admin.document-types.download-template', $doc->id) }}" class="btn btn-sm btn-light border p-1 text-success rounded-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;" title="Download Word Template (.docx)">
-                                            <i class="fa-solid fa-file-word" style="font-size: 11px;"></i>
-                                        </a>
-                                    @endif
-
-                                    {{-- Edit Button --}}
-                                    <button type="button" class="btn btn-sm btn-light border p-1 text-primary edit-doc-btn rounded-2" 
-                                            data-id="{{ $doc->id }}"
-                                            data-name="{{ $doc->name }}"
-                                            data-fee="{{ $doc->fee }}"
-                                            data-days="{{ $doc->processing_days }}"
-                                            data-description="{{ $doc->description }}"
-                                            data-requirements="{{ is_array($doc->requirements) ? implode("\n", $doc->requirements) : $doc->requirements }}"
-                                            data-active="{{ $doc->is_active ? 1 : 0 }}"
-                                            data-template="{{ $doc->template_file }}"
-                                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
-                                            title="Edit Document Type">
-                                        <i class="fa-regular fa-pen-to-square" style="font-size: 11px;"></i>
-                                    </button>
-
-                                    {{-- Delete Button --}}
-                                    <button type="button" class="btn btn-sm btn-light border p-1 text-danger delete-doc-btn rounded-2" 
-                                            data-id="{{ $doc->id }}"
-                                            data-name="{{ $doc->name }}"
-                                            style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
-                                            title="Delete or Deactivate">
-                                        <i class="fa-regular fa-trash-can" style="font-size: 11px;"></i>
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                     @empty
@@ -571,7 +521,16 @@
         {{-- Mobile Cards View (Visible on screens < 768px, exactly like Request tab) --}}
         <div class="d-md-none p-3" id="doc-types-mobile-list">
             @forelse($documentTypes as $doc)
-                <div class="mobile-doc-card {{ !$doc->is_active ? 'bg-light bg-opacity-50' : 'bg-white' }}" id="doc-card-{{ $doc->id }}">
+                <div class="mobile-doc-card doc-type-row-clickable {{ !$doc->is_active ? 'bg-light bg-opacity-50' : 'bg-white' }}"
+                     id="doc-card-{{ $doc->id }}"
+                     data-id="{{ $doc->id }}"
+                     data-name="{{ $doc->name }}"
+                     data-fee="{{ $doc->fee }}"
+                     data-days="{{ $doc->processing_days }}"
+                     data-description="{{ $doc->description }}"
+                     data-requirements="{{ is_array($doc->requirements) ? implode("\n", $doc->requirements) : $doc->requirements }}"
+                     data-active="{{ $doc->is_active ? 1 : 0 }}"
+                     data-template="{{ $doc->template_file }}">
                     {{-- Header: Selection checkbox, icon, title, and status toggle --}}
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
@@ -651,29 +610,9 @@
                         </div>
                     @endif
 
-                    {{-- Actions Grid for Mobile --}}
-                    <div class="d-flex gap-2 pt-2 border-top">
-                        @if($doc->template_file)
-                            <a href="{{ route('admin.document-types.download-template', $doc->id) }}" class="btn btn-sm btn-outline-success rounded-3 flex-fill fw-semibold py-1.5 text-center" title="Download Word Template">
-                                <i class="fa-solid fa-file-word me-1"></i> Template
-                            </a>
-                        @endif
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-3 flex-fill fw-semibold edit-doc-btn py-1.5"
-                                data-id="{{ $doc->id }}"
-                                data-name="{{ $doc->name }}"
-                                data-fee="{{ $doc->fee }}"
-                                data-days="{{ $doc->processing_days }}"
-                                data-description="{{ $doc->description }}"
-                                data-requirements="{{ is_array($doc->requirements) ? implode("\n", $doc->requirements) : $doc->requirements }}"
-                                data-active="{{ $doc->is_active ? 1 : 0 }}"
-                                data-template="{{ $doc->template_file }}">
-                            <i class="fa-regular fa-pen-to-square me-1"></i> Edit
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-3 flex-fill fw-semibold delete-doc-btn py-1.5"
-                                data-id="{{ $doc->id }}"
-                                data-name="{{ $doc->name }}">
-                            <i class="fa-regular fa-trash-can me-1"></i> Delete
-                        </button>
+                    {{-- Tap Card Hint on Mobile --}}
+                    <div class="text-muted text-end pt-1" style="font-size: 11px;">
+                        <i class="fa-regular fa-hand-pointer me-1"></i> Tap card to edit or delete
                     </div>
                 </div>
             @empty
@@ -875,8 +814,10 @@
                 </div>
             </div>
 
-            <div class="modal-footer border-top px-4 py-3 flex-shrink-0 bg-white">
-                <button type="button" class="btn btn-light border px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer border-top px-4 py-3 flex-shrink-0 bg-white justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-danger px-4 fw-semibold" id="editModalDeleteBtn">
+                    <i class="fa-regular fa-trash-can me-1"></i> Delete
+                </button>
                 <button type="submit" class="btn btn-primary px-4 fw-semibold">
                     <i class="fa-solid fa-floppy-disk me-1"></i> Update Document Type
                 </button>
@@ -951,69 +892,84 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Edit Modal handler
-    const editModal = new bootstrap.Modal(document.getElementById('editDocumentTypeModal'));
+    const editModalEl = document.getElementById('editDocumentTypeModal');
+    const editModal = new bootstrap.Modal(editModalEl);
     const editForm = document.getElementById('editDocumentTypeForm');
+    const editModalDeleteBtn = document.getElementById('editModalDeleteBtn');
 
-    document.querySelectorAll('.edit-doc-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            const name = this.getAttribute('data-name');
-            const fee = this.getAttribute('data-fee');
-            const days = this.getAttribute('data-days');
-            const description = this.getAttribute('data-description');
-            const requirements = this.getAttribute('data-requirements');
-            const active = this.getAttribute('data-active');
-            const template = this.getAttribute('data-template');
+    function openEditDocumentModal(sourceEl) {
+        const id = sourceEl.getAttribute('data-id');
+        const name = sourceEl.getAttribute('data-name');
+        const fee = sourceEl.getAttribute('data-fee');
+        const days = sourceEl.getAttribute('data-days');
+        const description = sourceEl.getAttribute('data-description');
+        const requirements = sourceEl.getAttribute('data-requirements');
+        const active = sourceEl.getAttribute('data-active');
+        const template = sourceEl.getAttribute('data-template');
 
-            editForm.action = `/admin/document-types/${id}`;
-            document.getElementById('edit_name').value = name || '';
-            document.getElementById('edit_fee').value = parseFloat(fee).toFixed(2);
-            document.getElementById('edit_processing_days').value = days || '';
-            document.getElementById('edit_description').value = description || '';
-            document.getElementById('edit_requirements').value = requirements || '';
-            document.getElementById('edit_is_active').value = active;
+        editForm.action = `/admin/document-types/${id}`;
+        editForm.dataset.docId = id || '';
+        editForm.dataset.docName = name || '';
+        document.getElementById('edit_name').value = name || '';
+        document.getElementById('edit_fee').value = parseFloat(fee).toFixed(2);
+        document.getElementById('edit_processing_days').value = days || '';
+        document.getElementById('edit_description').value = description || '';
+        document.getElementById('edit_requirements').value = requirements || '';
+        document.getElementById('edit_is_active').value = active;
 
-            const templateBox = document.getElementById('current_template_box');
-            const templateDownloadLink = document.getElementById('current_template_download_link');
-            const templateFilename = document.getElementById('current_template_filename');
-            const removeTemplateCheckbox = document.getElementById('edit_remove_template');
-            const editFileInput = document.getElementById('edit_template_file');
+        const templateBox = document.getElementById('current_template_box');
+        const templateDownloadLink = document.getElementById('current_template_download_link');
+        const templateFilename = document.getElementById('current_template_filename');
+        const removeTemplateCheckbox = document.getElementById('edit_remove_template');
+        const editFileInput = document.getElementById('edit_template_file');
 
-            if (editFileInput) editFileInput.value = '';
-            if (removeTemplateCheckbox) removeTemplateCheckbox.checked = false;
+        if (editFileInput) editFileInput.value = '';
+        if (removeTemplateCheckbox) removeTemplateCheckbox.checked = false;
 
-            const editExistingSelect = document.getElementById('edit_existing_template');
-            if (editExistingSelect) {
-                editExistingSelect.value = template ? template.split('/').pop() : '';
+        const editExistingSelect = document.getElementById('edit_existing_template');
+        if (editExistingSelect) {
+            editExistingSelect.value = template ? template.split('/').pop() : '';
+        }
+
+        if (template) {
+            templateBox.classList.remove('d-none');
+            templateFilename.textContent = template.split('/').pop();
+            templateDownloadLink.href = `/admin/document-types/${id}/template`;
+        } else {
+            templateBox.classList.add('d-none');
+        }
+
+        editModal.show();
+    }
+
+    document.querySelectorAll('.doc-type-row-clickable').forEach(row => {
+        row.addEventListener('click', function (e) {
+            if (e.target.closest('a, button, input, form, label, select, textarea')) {
+                return;
             }
-
-            if (template) {
-                templateBox.classList.remove('d-none');
-                templateFilename.textContent = template.split('/').pop();
-                templateDownloadLink.href = `/admin/document-types/${id}/template`;
-            } else {
-                templateBox.classList.add('d-none');
-            }
-
-            editModal.show();
+            openEditDocumentModal(this);
         });
     });
 
-    // Delete Modal handler
+    // Delete Modal handler (triggered from inside the Edit Modal)
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteDocumentTypeModal'));
     const deleteForm = document.getElementById('deleteDocumentTypeForm');
 
-    document.querySelectorAll('.delete-doc-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            const name = this.getAttribute('data-name');
+    if (editModalDeleteBtn) {
+        editModalDeleteBtn.addEventListener('click', function () {
+            const id = editForm.dataset.docId;
+            const name = editForm.dataset.docName;
+            if (!id) return;
 
-            deleteForm.action = `/admin/document-types/${id}`;
-            document.getElementById('delete_doc_name').textContent = `"${name}"`;
+            editModalEl.addEventListener('hidden.bs.modal', function () {
+                deleteForm.action = `/admin/document-types/${id}`;
+                document.getElementById('delete_doc_name').textContent = `"${name}"`;
+                deleteModal.show();
+            }, { once: true });
 
-            deleteModal.show();
+            editModal.hide();
         });
-    });
+    }
 
     // Multi-select & Bulk Delete Handler
     const selectAllDocs = document.getElementById('selectAllDocs');
