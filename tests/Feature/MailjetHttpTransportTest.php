@@ -178,4 +178,70 @@ class MailjetHttpTransportTest extends TestCase
             'Resident'
         ));
     }
+
+    public function test_reject_request_surfaces_email_error_warning_when_mailjet_blocks_account(): void
+    {
+        Config::set('mail.default', 'mailjet');
+        Config::set('mail.from.address', 'susontroy5@gmail.com');
+        Config::set('mail.mailers.mailjet.key', 'blocked_key');
+        Config::set('mail.mailers.mailjet.secret', 'blocked_secret');
+        Mail::purge('mailjet');
+
+        Http::fake([
+            'https://api.mailjet.com/v3.1/send' => Http::response([
+                'ErrorCode' => 'mj-0001',
+                'StatusCode' => 401,
+                'ErrorMessage' => 'Your account has been temporarily blocked. Please contact our support team to get assistance.',
+            ], 401),
+        ]);
+
+        $admin = User::create([
+            'user_id' => 'ADM-' . strtoupper(substr(uniqid(), -6)),
+            'name' => 'Barangay Admin',
+            'first_name' => 'Barangay',
+            'last_name' => 'Admin',
+            'email' => 'admin_warn_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('password123'),
+            'role' => 'Admin',
+            'status' => 'active',
+        ]);
+
+        $resident = User::create([
+            'user_id' => 'RES-' . strtoupper(substr(uniqid(), -6)) . rand(10, 99),
+            'name' => 'Troy Suson',
+            'first_name' => 'Troy',
+            'last_name' => 'Suson',
+            'email' => 'resident_warn_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'security_pin' => bcrypt('1234'),
+            'password' => bcrypt('Password123!'),
+            'role' => 'resident',
+            'status' => 'active',
+        ]);
+
+        $docRequest = DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-WARN-' . rand(1000, 9999),
+            'first_name' => 'TROY',
+            'last_name' => 'SUSON',
+            'resident_email' => $resident->email,
+            'document_type' => 'Barangay Clearance',
+            'purpose' => 'Employment',
+            'status' => 'Pending',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->from('/admin/requests')
+            ->patch(route('admin.requests.reject', $docRequest->id), [
+                'reason' => 'Blurry attachment.',
+            ]);
+
+        $response->assertRedirect('/admin/requests');
+        $response->assertSessionHas('success');
+        $response->assertSessionHas('warning', function ($warning) {
+            return str_contains((string) $warning, 'mj-0001')
+                && str_contains((string) $warning, 'temporarily blocked');
+        });
+    }
 }

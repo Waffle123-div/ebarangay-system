@@ -1915,6 +1915,7 @@ class AdminDashboardController extends Controller
 
         // 1. Send rejection email to the resident if an email address is available
         $emailSent = false;
+        $emailError = null;
         if ($recipientEmail !== '') {
             try {
                 Mail::to($recipientEmail)->send(new DocumentRequestRejected(
@@ -1926,8 +1927,11 @@ class AdminDashboardController extends Controller
                 ));
                 $emailSent = true;
             } catch (\Throwable $e) {
-                Log::error('Request rejected email error for #' . $trackingNumber . ': ' . $e->getMessage());
+                $emailError = $e->getMessage();
+                Log::error('Request rejected email error for #' . $trackingNumber . ': ' . $emailError);
             }
+        } else {
+            $emailError = 'No resident email address is attached to this request.';
         }
 
         // 2. Notify the resident user via database notification
@@ -1974,12 +1978,18 @@ class AdminDashboardController extends Controller
             return response()->json([
                 'success'         => true,
                 'email_sent'      => $emailSent,
+                'email_error'     => $emailError,
                 'portal_notified' => $portalNotified,
                 'message'         => $statusMessage,
             ]);
         }
 
-        return back()->with('success', $statusMessage);
+        $redirect = back()->with('success', $statusMessage);
+        if (!$emailSent && !empty($emailError)) {
+            $redirect->with('warning', 'Email notification could not be sent: ' . $emailError);
+        }
+
+        return $redirect;
     }
 
     private function numberToWords(float $number): string

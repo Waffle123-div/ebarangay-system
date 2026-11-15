@@ -26,6 +26,14 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="background-color: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; margin-bottom: var(--spacing-gap, 14px) !important;">
+            <i class="fa-solid fa-triangle-exclamation me-2 text-warning fa-lg"></i>
+            <span class="fw-medium">{{ session('warning') }}</span>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-start" role="alert" style="background-color: #fef2f2; color: #991b1b; border: 1.5px solid #fecaca; margin-bottom: var(--spacing-gap, 14px) !important;">
             <i class="fa-solid fa-triangle-exclamation me-2 text-danger fa-lg mt-1"></i>
