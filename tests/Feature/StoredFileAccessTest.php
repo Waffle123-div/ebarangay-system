@@ -88,9 +88,13 @@ class StoredFileAccessTest extends TestCase
             'filename' => 'utility_bill.pdf',
             'download' => 1,
         ]);
-        $profileProofUrl = route('admin.requests.attachment', [
+        $unattachedProfileUrl = route('admin.requests.attachment', [
             'documentRequest' => $docRequest->id,
             'index' => 1,
+            'filename' => 'proof_residency.png',
+        ]);
+        $userProfileIdUrl = route('admin.resident.id_document', [
+            'user' => $resident->id,
             'filename' => 'proof_residency.png',
         ]);
 
@@ -98,25 +102,27 @@ class StoredFileAccessTest extends TestCase
         $this->get($inlineUrl)->assertRedirect();
         $this->actingAs($resident)->get($inlineUrl)->assertRedirect(route('resident.dashboard'));
 
-        // Admin inline preview works for both request attachment and profile proof_of_residency
+        // Admin inline preview works for request attachment; profile proof_of_residency is not auto-attached to requests
         $inlineResponse = $this->actingAs($admin)->get($inlineUrl);
         $inlineResponse->assertOk();
         $this->assertStringContainsString('inline', (string) $inlineResponse->headers->get('Content-Disposition'));
 
-        $proofResponse = $this->actingAs($admin)->get($profileProofUrl);
-        $proofResponse->assertOk();
-        $this->assertStringContainsString('inline', (string) $proofResponse->headers->get('Content-Disposition'));
+        $this->actingAs($admin)->get($unattachedProfileUrl)->assertNotFound();
+
+        $profileProofResponse = $this->actingAs($admin)->get($userProfileIdUrl);
+        $profileProofResponse->assertOk();
+        $this->assertStringContainsString('inline', (string) $profileProofResponse->headers->get('Content-Disposition'));
 
         // Admin download sets attachment disposition
         $downloadResponse = $this->actingAs($admin)->get($downloadUrl);
         $downloadResponse->assertOk();
         $this->assertStringContainsString('attachment', (string) $downloadResponse->headers->get('Content-Disposition'));
 
-        // Admin requests page renders authenticated route URLs instead of /storage/...
+        // Admin requests page renders authenticated route URLs instead of /storage/... and does not leak profile proof
         $requestsPage = $this->actingAs($admin)->get(route('admin.requests'));
         $requestsPage->assertOk();
         $requestsPage->assertSee($inlineUrl, false);
-        $requestsPage->assertSee($profileProofUrl, false);
+        $requestsPage->assertDontSee($unattachedProfileUrl, false);
 
         // Out-of-bounds index returns 404
         $this->actingAs($admin)

@@ -114,35 +114,6 @@ class DocumentRequest extends Model
             }
         }
 
-        // 2. Also check if the user has ID photo or proof of residency from profile
-        $user = $this->user ?: ($this->user_id ? User::find($this->user_id) : null);
-        if ($user) {
-            if (!empty($user->id_photo)) {
-                $ext = strtolower(pathinfo($user->id_photo, PATHINFO_EXTENSION));
-                $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                $list[] = [
-                    'file_path' => $user->id_photo,
-                    'file_name' => 'Resident ID Photo (' . ($user->id_type ?: 'Valid ID') . ')',
-                    'doc_type'  => $user->id_type ?: 'Valid Government ID',
-                    'file_type' => $isImg ? 'image' : 'document',
-                    'file_size' => null,
-                    'source'    => 'profile_id',
-                ];
-            }
-            if (!empty($user->proof_of_residency)) {
-                $ext = strtolower(pathinfo($user->proof_of_residency, PATHINFO_EXTENSION));
-                $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-                $list[] = [
-                    'file_path' => $user->proof_of_residency,
-                    'file_name' => 'Proof of Residency',
-                    'doc_type'  => 'Proof of Residence',
-                    'file_type' => $isImg ? 'image' : 'document',
-                    'file_size' => null,
-                    'source'    => 'profile_residency',
-                ];
-            }
-        }
-
         return $list;
     }
 

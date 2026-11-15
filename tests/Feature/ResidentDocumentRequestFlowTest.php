@@ -195,4 +195,34 @@ class ResidentDocumentRequestFlowTest extends TestCase
         $stream->assertOk();
         $this->assertStringContainsString('inline', (string) $stream->headers->get('Content-Disposition'));
     }
+
+    public function test_document_request_without_uploads_does_not_auto_attach_profile_proof_of_residency(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . substr(uniqid(), -6) . rand(10, 99),
+            'name' => 'Troy Suson',
+            'first_name' => 'Troy',
+            'last_name' => 'Suson',
+            'email' => 'no_auto_attach_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('Password123!'),
+            'role' => 'resident',
+            'status' => 'active',
+            'id_photo' => 'valid_ids/profile_id.jpg',
+            'proof_of_residency' => 'residency_proofs/profile_residency.jpg',
+        ]);
+
+        $docRequest = \App\Models\DocumentRequest::create([
+            'user_id' => $resident->id,
+            'tracking_number' => 'REQ-NOATT-' . strtoupper(substr(uniqid(), -6)),
+            'first_name' => 'TROY',
+            'last_name' => 'SUSON',
+            'resident_email' => $resident->email,
+            'document_type' => 'Bail Certificate',
+            'purpose' => 'EMPLOYMENT',
+            'status' => 'Pending',
+        ]);
+
+        $this->assertSame([], $docRequest->attachments_list);
+    }
 }
