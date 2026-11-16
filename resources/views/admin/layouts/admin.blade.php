@@ -2682,12 +2682,12 @@
             }
         }
 
-        // Heartbeat ping every 25 seconds
+        // Heartbeat ping every 30 seconds
         setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'ping' }));
             }
-        }, 25000);
+        }, 30000);
 
         // Start connection
         connect();

@@ -14,7 +14,7 @@
             <span class="live-badge" id="live-status-indicator" style="display: none !important;">
                 <span class="live-status-dot"></span>LIVE
             </span>
-            <span class="text-muted" style="font-size: 11px; display: none !important;" id="last-refreshed-label">Auto-refreshes every 10s</span>
+            <span class="text-muted" style="font-size: 11px; display: none !important;" id="last-refreshed-label">Auto-refreshes every 30s</span>
         </div>
     </div>
 
@@ -3862,7 +3862,7 @@
             }, 300);
         });
 
-        // 2. Real-Time Auto-Refresh Polling (10 Seconds, paused when tab is inactive)
+        // 2. Real-Time Auto-Refresh Polling (30 Seconds, paused when tab is inactive)
         let _prevTabCounts = null;
         let _liveIndicator = document.getElementById('live-status-indicator');
 
@@ -3982,7 +3982,7 @@
         })
         .catch(error => console.error("Auto-refresh error:", error));
 
-        }, 10000); 
+        }, 30000);
 
         // 3. Real-Time WebSocket Event Listener
         document.addEventListener('admin:realtime-event', function(e) {

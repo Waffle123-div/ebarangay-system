@@ -2335,7 +2335,7 @@ if (auth()->check()) {
                 if (!document.hidden) {
                     window.fetchResidentNotifications();
                 }
-            }, 12000);
+            }, 30000);
             @endif
         })();
     </script>

@@ -150,5 +150,30 @@ class ResidentTrackRequestsCounterTest extends TestCase
             $response->assertSee('restoreStoredChat()', false);
         }
     }
+
+    public function test_resident_realtime_refresh_and_notification_intervals_are_30_seconds(): void
+    {
+        $resident = User::create([
+            'user_id' => 'RES-' . substr(uniqid(), -6) . rand(10, 99),
+            'name' => 'Polling Interval Resident',
+            'first_name' => 'Polling',
+            'last_name' => 'Resident',
+            'email' => 'poll_interval_' . uniqid() . '@example.com',
+            'email_verified_at' => now(),
+            'security_pin' => bcrypt('1234'),
+            'password' => bcrypt('Password123!'),
+            'role' => 'resident',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($resident)->get(route('resident.request.track'));
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertStringContainsString('setInterval(pollForUpdates, 30000);', $html);
+        $this->assertStringContainsString('}, 30000);', $html);
+        $this->assertStringNotContainsString('setInterval(pollForUpdates, 6000);', $html);
+        $this->assertStringNotContainsString('}, 12000);', $html);
+    }
 }
 

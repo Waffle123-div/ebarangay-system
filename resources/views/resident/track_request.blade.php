@@ -517,7 +517,7 @@
                 .catch(error => console.error("Polling error:", error));
         }
 
-        setInterval(pollForUpdates, 6000);
+        setInterval(pollForUpdates, 30000);
 
         // Instant refresh on WebSocket broadcast
         document.addEventListener('resident:realtime-event', function(e) {

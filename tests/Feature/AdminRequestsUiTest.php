@@ -394,4 +394,18 @@ class AdminRequestsUiTest extends TestCase
         ]);
         $this->assertCount(1, $resident->fresh()->unreadNotifications);
     }
+
+    public function test_admin_requests_and_websocket_refresh_intervals_are_30_seconds(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.requests'));
+
+        $response->assertOk();
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('Auto-refreshes every 30s', $html);
+        $this->assertStringContainsString('}, 30000);', $html);
+        $this->assertStringNotContainsString('Auto-refreshes every 10s', $html);
+        $this->assertStringNotContainsString('}, 10000);', $html);
+        $this->assertStringNotContainsString('}, 25000);', $html);
+    }
 }
