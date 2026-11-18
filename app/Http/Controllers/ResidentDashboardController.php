@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\DocumentRequest;
 use App\Models\BarangaySetting;
 use App\Models\CommunityConcern;
+use App\Models\CommunityConcernRemark;
 use App\Services\StoredFileService;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -450,9 +451,10 @@ class ResidentDashboardController extends Controller
             'Others'
         ];
 
-        $concerns = \App\Models\CommunityConcern::where('user_id', Auth::id())
-                                                ->latest()
-                                                ->get();
+        $concerns = CommunityConcern::with(['remarks.admin'])
+                                   ->where('user_id', Auth::id())
+                                   ->latest()
+                                   ->get();
 
         return view('resident.community_concerns', compact('concerns', 'authUser', 'categories', 'residentAddress'));
     }
@@ -510,7 +512,7 @@ class ResidentDashboardController extends Controller
     /**
      * Stream the authenticated resident's own community concern attachment without relying on public/storage symlinks.
      */
-    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, StoredFileService $storedFileService = null)
+    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, ?StoredFileService $storedFileService = null)
     {
         if ((int) $concern->user_id !== (int) Auth::id()) {
             abort(403, 'Unauthorized.');
@@ -522,6 +524,36 @@ class ResidentDashboardController extends Controller
             $concern->photo_path,
             ['concerns'],
             'Concern photo not found.'
+        );
+    }
+
+    /**
+     * Stream an admin feedback attachment only to the resident who owns its concern.
+     */
+    public function showConcernFeedbackAttachment(
+        CommunityConcern $concern,
+        CommunityConcernRemark $remark,
+        ?StoredFileService $storedFileService = null
+    ) {
+        if ((int) $concern->user_id !== (int) Auth::id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ((int) $remark->community_concern_id !== (int) $concern->id) {
+            abort(404, 'Feedback attachment not found.');
+        }
+
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+        $path = $remark->attachment_path;
+
+        if (!$path || !str_starts_with($path, 'community-concern-feedback/')) {
+            abort(404, 'Feedback attachment not found.');
+        }
+
+        return $storedFileService->serve(
+            $path,
+            ['community-concern-feedback'],
+            'Feedback attachment not found.'
         );
     }
 }

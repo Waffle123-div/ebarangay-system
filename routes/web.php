@@ -131,6 +131,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
     // Community Concerns
     Route::get('/concerns', [AdminDashboardController::class, 'concerns'])->name('concerns');
     Route::get('/concerns/{concern}/photo/{filename?}', [AdminDashboardController::class, 'showConcernPhoto'])->name('concerns.photo');
+    Route::get('/concerns/{concern}/remarks/{remark}/attachment', [AdminDashboardController::class, 'showConcernFeedbackAttachment'])->name('concerns.remarks.attachment');
     Route::patch('/concerns/{id}', [AdminDashboardController::class, 'updateConcern'])->name('concerns.update');
 
     // Document Types Catalog / Document Management (CRUD)
@@ -291,6 +292,7 @@ Route::prefix('resident')->name('resident.')->middleware(['auth', 'verified', 'r
     // Community Concerns
     Route::get('/community-concerns', [ResidentDashboardController::class, 'communityConcerns'])->name('concerns');
     Route::get('/community-concerns/{concern}/photo/{filename?}', [ResidentDashboardController::class, 'showConcernPhoto'])->name('concerns.photo');
+    Route::get('/community-concerns/{concern}/remarks/{remark}/attachment', [ResidentDashboardController::class, 'showConcernFeedbackAttachment'])->name('concerns.remarks.attachment');
     Route::post('/community-concerns', [ResidentDashboardController::class, 'storeConcern'])->name('concern.store');
     
     // Form Submission Route

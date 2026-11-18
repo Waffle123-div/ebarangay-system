@@ -237,6 +237,16 @@
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+    @if($errors->any())
+        <div class="alert alert-danger rounded-4 mb-4 shadow-sm" role="alert">
+            <strong>Please correct the following before saving:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- Status Filters (Scrollable on mobile) --}}
     <ul class="nav nav-pills mb-4 gap-2 flex-wrap concerns-nav-pills">
@@ -689,7 +699,7 @@
                     <hr class="my-4">
 
                     {{-- Section 5: Action Form (Status & Remarks) --}}
-                    <form action="{{ route('admin.concerns.update', $concern->id) }}" method="POST">
+                    <form action="{{ route('admin.concerns.update', $concern->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PATCH')
 
@@ -716,13 +726,48 @@
                             <div class="form-text text-muted small">Residents will see the latest remark in their dashboard. Historical remarks are preserved.</div>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="feedback_image{{ $concern->id }}" class="form-label fw-bold text-dark small">Attach an Image (Optional)</label>
+                            <input type="file"
+                                   name="feedback_image"
+                                   id="feedback_image{{ $concern->id }}"
+                                   class="form-control rounded-3 concern-feedback-image"
+                                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                            <div class="form-text text-muted small">JPG, JPEG, PNG, or WEBP. Maximum file size: 5 MB.</div>
+                            @error('feedback_image')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                            <div class="concern-feedback-preview mt-2" hidden>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="" alt="Selected feedback image preview" class="rounded-2 border" style="max-width: 120px; max-height: 90px; object-fit: contain;">
+                                    <div class="min-w-0">
+                                        <div class="small text-muted concern-feedback-filename text-break"></div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1 concern-feedback-remove">Remove image</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         @if($concern->remarks->isNotEmpty())
                             <div class="mb-3">
                                 <div class="text-muted small fw-semibold mb-2">Previous Remarks Timeline:</div>
                                 <div class="bg-light rounded-3 p-3 border" style="max-height: 160px; overflow-y: auto;">
                                     @foreach($concern->remarks as $remark)
                                         <div class="mb-2 pb-2 border-bottom last-border-0">
-                                            <div class="text-dark" style="font-size: 13px;">{{ $remark->remark }}</div>
+                                            @if($remark->remark !== '')
+                                                <div class="text-dark" style="font-size: 13px; white-space: pre-wrap;">{{ $remark->remark }}</div>
+                                            @endif
+                                            @if($remark->attachment_path)
+                                                @php
+                                                    $feedbackImageUrl = route('admin.concerns.remarks.attachment', [
+                                                        'concern' => $concern->id,
+                                                        'remark' => $remark->id,
+                                                    ]);
+                                                @endphp
+                                                <a href="{{ $feedbackImageUrl }}" target="_blank" rel="noopener" class="d-inline-block mt-2">
+                                                    <img src="{{ $feedbackImageUrl }}" alt="Admin feedback attachment" class="img-fluid rounded-2 border" style="max-height: 100px; object-fit: contain;">
+                                                </a>
+                                            @endif
                                             <div class="text-muted" style="font-size: 11px;">
                                                 <i class="fa-solid fa-user-shield me-1"></i> {{ $remark->admin?->name ?? 'Admin' }} &bull; {{ $remark->created_at->format('M d, Y h:i A') }}
                                             </div>
@@ -755,6 +800,37 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.concern-feedback-image').forEach(function (input) {
+        const form = input.closest('form');
+        const preview = form.querySelector('.concern-feedback-preview');
+        const image = preview.querySelector('img');
+        const filename = preview.querySelector('.concern-feedback-filename');
+        const removeButton = preview.querySelector('.concern-feedback-remove');
+        let previewUrl = null;
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = URL.createObjectURL(file);
+            image.src = previewUrl;
+            filename.textContent = file.name;
+            preview.hidden = false;
+        });
+
+        removeButton.addEventListener('click', function () {
+            input.value = '';
+            image.removeAttribute('src');
+            filename.textContent = '';
+            preview.hidden = true;
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+        });
+    });
+
     // Enable click and keyboard activation on all concern selection rows and cards
     document.addEventListener('click', function (e) {
         const row = e.target.closest('.concern-row-clickable');

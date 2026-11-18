@@ -961,7 +961,7 @@ class AdminDashboardController extends Controller
     /**
      * Stream an uploaded community concern photo to authorized administrators.
      */
-    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, StoredFileService $storedFileService = null)
+    public function showConcernPhoto(CommunityConcern $concern, ?string $filename = null, ?StoredFileService $storedFileService = null)
     {
         $storedFileService = $storedFileService ?: app(StoredFileService::class);
 
@@ -969,6 +969,32 @@ class AdminDashboardController extends Controller
             $concern->photo_path,
             ['concerns'],
             'Concern photo not found.'
+        );
+    }
+
+    /**
+     * Stream a feedback image through the authenticated Admin Community Reports route.
+     */
+    public function showConcernFeedbackAttachment(
+        CommunityConcern $concern,
+        CommunityConcernRemark $remark,
+        ?StoredFileService $storedFileService = null
+    ) {
+        if ((int) $remark->community_concern_id !== (int) $concern->id) {
+            abort(404, 'Feedback attachment not found.');
+        }
+
+        $path = $remark->attachment_path;
+        if (!$path || !str_starts_with($path, 'community-concern-feedback/')) {
+            abort(404, 'Feedback attachment not found.');
+        }
+
+        $storedFileService = $storedFileService ?: app(StoredFileService::class);
+
+        return $storedFileService->serve(
+            $path,
+            ['community-concern-feedback'],
+            'Feedback attachment not found.'
         );
     }
 
@@ -2604,23 +2630,49 @@ class AdminDashboardController extends Controller
         $validated = $request->validate([
             'status'        => ['required', Rule::in(CommunityConcern::statuses())],
             'admin_remarks' => 'nullable|string|max:5000',
+            'feedback_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $previousStatus = $concern->status;
-        $concern->status = $validated['status'];
-        $concern->updated_by = auth()->id();
-
-        if (!empty($validated['admin_remarks'])) {
-            $concern->admin_remarks = $validated['admin_remarks'];
-
-            CommunityConcernRemark::create([
-                'community_concern_id' => $concern->id,
-                'admin_id'             => auth()->id(),
-                'remark'               => $validated['admin_remarks'],
-            ]);
+        $attachmentPath = null;
+        if ($request->hasFile('feedback_image')) {
+            $attachmentPath = StoredFileService::storeUploadedFile(
+                $request->file('feedback_image'),
+                'community-concern-feedback',
+                'local',
+                'private'
+            );
         }
 
-        $concern->save();
+        try {
+            $previousStatus = DB::transaction(function () use ($concern, $validated, $attachmentPath) {
+                $previousStatus = $concern->status;
+                $concern->status = $validated['status'];
+                $concern->updated_by = auth()->id();
+
+                if (!empty($validated['admin_remarks'])) {
+                    $concern->admin_remarks = $validated['admin_remarks'];
+                }
+
+                $concern->save();
+
+                if (!empty($validated['admin_remarks']) || $attachmentPath !== null) {
+                    CommunityConcernRemark::create([
+                        'community_concern_id' => $concern->id,
+                        'admin_id'             => auth()->id(),
+                        'remark'               => $validated['admin_remarks'] ?? '',
+                        'attachment_path'      => $attachmentPath,
+                    ]);
+                }
+
+                return $previousStatus;
+            });
+        } catch (\Throwable $exception) {
+            if ($attachmentPath !== null) {
+                StoredFileService::delete($attachmentPath, ['community-concern-feedback'], ['local']);
+            }
+
+            throw $exception;
+        }
 
         ActivityLog::record(
             'concern_updated',

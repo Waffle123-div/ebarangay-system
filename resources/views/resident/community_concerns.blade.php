@@ -27,12 +27,7 @@
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
             <div class="text-muted mb-3"><i class="fa-solid fa-bullhorn fs-1"></i></div>
             <h5 class="fw-bold text-dark">No Concerns Submitted Yet</h5>
-            <p class="text-muted small mb-0">You haven't submitted any community concerns yet. Click below to report an issue in your community.</p>
-            <div class="mt-4">
-                <button type="button" class="btn btn-primary rounded-3 px-4" data-bs-toggle="modal" data-bs-target="#submitConcernModal">
-                    <i class="fa-solid fa-plus me-1"></i> Submit a Concern
-                </button>
-            </div>
+            <p class="text-muted small mb-0">No community concerns have been submitted yet. Once you submit a concern, it will appear here along with its status and any updates from the barangay.</p>
         </div>
     @else
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -140,14 +135,41 @@
                     @endif
 
                     <div class="mb-3">
-                        <div class="text-muted small mb-1">Admin Remarks</div>
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-3 border border-primary border-opacity-25" style="font-size: 14px;">
-                            @if($concern->admin_remarks)
-                                {{ $concern->admin_remarks }}
-                            @else
+                        <div class="text-muted small mb-1">Admin Feedback &amp; Updates</div>
+                        @if($concern->remarks->isNotEmpty())
+                            <div class="d-flex flex-column gap-2">
+                                @foreach($concern->remarks as $remark)
+                                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 border border-primary border-opacity-25">
+                                        @if($remark->remark !== '')
+                                            <div style="font-size: 14px; white-space: pre-wrap;">{{ $remark->remark }}</div>
+                                        @endif
+                                        @if($remark->attachment_path)
+                                            @php
+                                                $feedbackImageUrl = route('resident.concerns.remarks.attachment', [
+                                                    'concern' => $concern->id,
+                                                    'remark' => $remark->id,
+                                                ]);
+                                            @endphp
+                                            <div class="{{ $remark->remark !== '' ? 'mt-2' : '' }}">
+                                                <a href="{{ $feedbackImageUrl }}" target="_blank" rel="noopener" aria-label="View larger admin feedback image">
+                                                    <img src="{{ $feedbackImageUrl }}" alt="Image attached to barangay feedback" class="img-fluid rounded-3 border" style="max-height: 280px; object-fit: contain;">
+                                                </a>
+                                            </div>
+                                        @endif
+                                        <div class="text-muted mt-2" style="font-size: 12px;">
+                                            <i class="fa-solid fa-user-shield me-1"></i>{{ $remark->admin?->name ?? 'Barangay Staff' }}
+                                            &bull; {{ $remark->created_at->format('M d, Y h:i A') }}
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @elseif($concern->admin_remarks)
+                            <div class="bg-primary bg-opacity-10 rounded-3 p-3 border border-primary border-opacity-25" style="font-size: 14px; white-space: pre-wrap;">{{ $concern->admin_remarks }}</div>
+                        @else
+                            <div class="bg-primary bg-opacity-10 rounded-3 p-3 border border-primary border-opacity-25" style="font-size: 14px;">
                                 <span class="text-muted">No remarks from barangay staff yet.</span>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mb-3">

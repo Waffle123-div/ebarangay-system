@@ -48,11 +48,17 @@ class StoredFileService
     /**
      * Store an uploaded file on the active storage disk (cloud on Laravel Cloud, local/public otherwise).
      */
-    public static function storeUploadedFile(UploadedFile $file, string $directory, string $localFallback = 'public'): string
+    public static function storeUploadedFile(
+        UploadedFile $file,
+        string $directory,
+        string $localFallback = 'public',
+        ?string $visibility = null
+    ): string
     {
         $cleanDir = trim($directory, '/');
         $disk = static::uploadDisk($localFallback);
-        $path = $file->store($cleanDir, $disk);
+        $options = $visibility === null ? $disk : ['disk' => $disk, 'visibility' => $visibility];
+        $path = $file->store($cleanDir, $options);
 
         if ($path === false || $path === '') {
             Log::warning('StoredFileService failed to store uploaded file on primary disk.', [
@@ -62,7 +68,10 @@ class StoredFileService
             ]);
 
             if ($disk !== $localFallback) {
-                $path = $file->store($cleanDir, $localFallback);
+                $fallbackOptions = $visibility === null
+                    ? $localFallback
+                    : ['disk' => $localFallback, 'visibility' => $visibility];
+                $path = $file->store($cleanDir, $fallbackOptions);
             }
         }
 

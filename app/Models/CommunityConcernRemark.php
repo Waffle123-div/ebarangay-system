@@ -11,6 +11,7 @@ class CommunityConcernRemark extends Model
         'community_concern_id',
         'admin_id',
         'remark',
+        'attachment_path',
     ];
 
     public function concern(): BelongsTo
