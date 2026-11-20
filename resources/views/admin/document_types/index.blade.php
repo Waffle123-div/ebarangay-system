@@ -111,6 +111,24 @@
             background-color: #19253d !important;
             color: #ffffff !important;
         }
+        .doc-type-row-icon.is-active {
+            background: rgba(43, 108, 176, 0.12);
+            color: #18365D;
+        }
+        .doc-type-row-icon.is-inactive {
+            background: #f3f4f6;
+            color: #9ca3af;
+        }
+        html[data-theme="dark"] .doc-type-row-icon.is-active,
+        html[data-bs-theme="dark"] .doc-type-row-icon.is-active {
+            background: rgba(56, 189, 248, 0.16) !important;
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .doc-type-row-icon.is-inactive,
+        html[data-bs-theme="dark"] .doc-type-row-icon.is-inactive {
+            background: #1e293b !important;
+            color: #64748b !important;
+        }
         html[data-theme="dark"] .mobile-doc-card,
         html[data-bs-theme="dark"] .mobile-doc-card {
             background: #131d31 !important;
@@ -390,8 +408,8 @@
                             </td>
                             <td class="py-3">
                                 <div class="d-flex align-items-center gap-2.5">
-                                    <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-                                         style="width: 38px; height: 38px; background: {{ $doc->is_active ? 'rgba(43, 108, 176, 0.12)' : '#f3f4f6' }}; color: {{ $doc->is_active ? '#18365D' : '#9ca3af' }};">
+                                    <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold flex-shrink-0 doc-type-row-icon {{ $doc->is_active ? 'is-active' : 'is-inactive' }}"
+                                         style="width: 38px; height: 38px;">
                                         <i class="fa-solid fa-file-lines"></i>
                                     </div>
                                     <div class="min-w-0" style="max-width: 260px;">
@@ -535,8 +553,8 @@
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2 pb-2 border-bottom">
                         <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
                             <input class="form-check-input doc-checkbox mt-0 flex-shrink-0" type="checkbox" value="{{ $doc->id }}" data-name="{{ $doc->name }}">
-                            <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-                                 style="width: 36px; height: 36px; background: {{ $doc->is_active ? 'rgba(43, 108, 176, 0.12)' : '#e2e8f0' }}; color: {{ $doc->is_active ? '#18365D' : '#718096' }};">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold flex-shrink-0 doc-type-row-icon {{ $doc->is_active ? 'is-active' : 'is-inactive' }}"
+                                 style="width: 36px; height: 36px;">
                                 <i class="fa-solid fa-file-lines"></i>
                             </div>
                             <div class="min-w-0">

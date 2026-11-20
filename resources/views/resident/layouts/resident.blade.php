@@ -989,16 +989,16 @@
         }
 
         /* ── Headings, Typography & Accents ── */
-        html[data-theme="dark"] h1, html[data-bs-theme="dark"] h1,
-        html[data-theme="dark"] h2, html[data-bs-theme="dark"] h2,
-        html[data-theme="dark"] h3, html[data-bs-theme="dark"] h3,
-        html[data-theme="dark"] h4, html[data-bs-theme="dark"] h4,
-        html[data-theme="dark"] h5, html[data-bs-theme="dark"] h5,
-        html[data-theme="dark"] h6, html[data-bs-theme="dark"] h6,
-        html[data-theme="dark"] .text-dark, html[data-bs-theme="dark"] .text-dark,
-        html[data-theme="dark"] .fw-bold, html[data-bs-theme="dark"] .fw-bold,
-        html[data-theme="dark"] strong, html[data-bs-theme="dark"] strong,
-        html[data-theme="dark"] b, html[data-bs-theme="dark"] b {
+        html[data-theme="dark"] h1:not([class*="text-"]), html[data-bs-theme="dark"] h1:not([class*="text-"]),
+        html[data-theme="dark"] h2:not([class*="text-"]), html[data-bs-theme="dark"] h2:not([class*="text-"]),
+        html[data-theme="dark"] h3:not([class*="text-"]), html[data-bs-theme="dark"] h3:not([class*="text-"]),
+        html[data-theme="dark"] h4:not([class*="text-"]), html[data-bs-theme="dark"] h4:not([class*="text-"]),
+        html[data-theme="dark"] h5:not([class*="text-"]), html[data-bs-theme="dark"] h5:not([class*="text-"]),
+        html[data-theme="dark"] h6:not([class*="text-"]), html[data-bs-theme="dark"] h6:not([class*="text-"]),
+        html[data-theme="dark"] .text-dark:not(.badge):not(.btn),
+        html[data-bs-theme="dark"] .text-dark:not(.badge):not(.btn),
+        html[data-theme="dark"] .fw-bold:not([class*="text-"]):not(.btn):not(.badge):not(.status-badge):not(.dash-badge):not(.alert),
+        html[data-bs-theme="dark"] .fw-bold:not([class*="text-"]):not(.btn):not(.badge):not(.status-badge):not(.dash-badge):not(.alert) {
             color: #f8fafc !important;
         }
         html[data-theme="dark"] .text-muted,
@@ -1011,6 +1011,56 @@
         html[data-bs-theme="dark"] .bg-light {
             background-color: #182238 !important;
             color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .text-primary,
+        html[data-bs-theme="dark"] .text-primary {
+            color: #60a5fa !important;
+        }
+        html[data-theme="dark"] .text-success,
+        html[data-bs-theme="dark"] .text-success {
+            color: #4ade80 !important;
+        }
+        html[data-theme="dark"] .text-warning,
+        html[data-bs-theme="dark"] .text-warning {
+            color: #fbbf24 !important;
+        }
+        html[data-theme="dark"] .text-info,
+        html[data-bs-theme="dark"] .text-info {
+            color: #38bdf8 !important;
+        }
+        html[data-theme="dark"] .text-danger,
+        html[data-bs-theme="dark"] .text-danger {
+            color: #f87171 !important;
+        }
+        html[data-theme="dark"] .form-control:disabled,
+        html[data-bs-theme="dark"] .form-control:disabled,
+        html[data-theme="dark"] .form-control[readonly],
+        html[data-bs-theme="dark"] .form-control[readonly],
+        html[data-theme="dark"] .form-select:disabled,
+        html[data-bs-theme="dark"] .form-select:disabled {
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
+            border-color: #283548 !important;
+        }
+        html[data-theme="dark"] .form-check-input,
+        html[data-bs-theme="dark"] .form-check-input {
+            background-color: #182238;
+            border-color: #475569;
+        }
+        html[data-theme="dark"] .form-check-input:checked,
+        html[data-bs-theme="dark"] .form-check-input:checked {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+        html[data-theme="dark"] .table td i.text-light,
+        html[data-bs-theme="dark"] .table td i.text-light,
+        html[data-theme="dark"] .text-center i.text-light,
+        html[data-bs-theme="dark"] .text-center i.text-light {
+            color: #475569 !important;
+        }
+        html[data-theme="dark"] .font-monospace:not(.btn):not(.badge):not(.text-muted),
+        html[data-bs-theme="dark"] .font-monospace:not(.btn):not(.badge):not(.text-muted) {
+            color: #93c5fd !important;
         }
 
         /* ── Status Badges in Dark Mode (High-Contrast System) ── */
@@ -1217,7 +1267,7 @@
         html[data-bs-theme="dark"] .reminder-icon {
             background: #182238 !important;
             border-color: #283548 !important;
-            color: #94a3b8 !important;
+            color: #94a3b8;
         }
         html[data-theme="dark"] .dash-badge.badge-completed,
         html[data-bs-theme="dark"] .dash-badge.badge-completed {
@@ -1586,12 +1636,74 @@
         html[data-theme="dark"] .agy-toast-close,
         html[data-bs-theme="dark"] .agy-toast-close { color: #64748b !important; }
 
+        /* ── Session Lock Screen ── */
+        .session-lock-icon-circle {
+            width: 76px;
+            height: 76px;
+            background: #EBF4FF;
+            border: 4px solid #fff;
+            color: #18365D;
+            box-shadow: 0 0 0 4px rgba(24, 54, 93, 0.15);
+        }
+        html[data-theme="dark"] .session-lock-icon-circle,
+        html[data-bs-theme="dark"] .session-lock-icon-circle {
+            background: rgba(59, 130, 246, 0.18) !important;
+            border: 4px solid #1e293b !important;
+            color: #60a5fa !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+        }
+        html[data-theme="dark"] .session-lock-icon-circle i,
+        html[data-bs-theme="dark"] .session-lock-icon-circle i {
+            color: inherit !important;
+        }
+        .session-lock-error {
+            background: #FFF5F5;
+            color: #9B2C2C;
+            font-size: 13px;
+        }
+        .session-lock-pin-input {
+            letter-spacing: 16px;
+            font-size: 1.75rem;
+            background: #F7FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            height: 64px;
+            color: #18365D;
+            transition: all 0.2s;
+        }
+        .session-lock-pin-input:focus {
+            border-color: #2B6CB0;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.15);
+        }
+        html[data-theme="dark"] .session-lock-pin-input,
+        html[data-bs-theme="dark"] .session-lock-pin-input {
+            background: #182238 !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .session-lock-pin-input:focus,
+        html[data-bs-theme="dark"] .session-lock-pin-input:focus {
+            background: #1e2b45 !important;
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+        }
+
         /* ── Istong AI Chatbot in Dark Mode ── */
         html[data-theme="dark"] #ai-chat-window,
         html[data-bs-theme="dark"] #ai-chat-window {
             background: #131d31 !important;
             border-color: #1e293b !important;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+        }
+        html[data-theme="dark"] #chat-body,
+        html[data-bs-theme="dark"] #chat-body {
+            background: #0f172a !important;
+        }
+        html[data-theme="dark"] .chat-header .bg-white,
+        html[data-bs-theme="dark"] .chat-header .bg-white {
+            background-color: #ffffff !important;
         }
         html[data-theme="dark"] .chat-disclaimer,
         html[data-bs-theme="dark"] .chat-disclaimer {
@@ -1615,6 +1727,20 @@
             background: #182238 !important;
             color: #f1f5f9 !important;
             border-color: #283548 !important;
+        }
+        html[data-theme="dark"] #chat-input:focus,
+        html[data-bs-theme="dark"] #chat-input:focus {
+            background: #1e2b45 !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+        }
+        html[data-theme="dark"] #chat-input::placeholder,
+        html[data-bs-theme="dark"] #chat-input::placeholder {
+            color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] .ai-badge,
+        html[data-bs-theme="dark"] .ai-badge {
+            border-color: #0f172a !important;
         }
 
         /* ── Dark Mode Pagination & Controls ── */
@@ -2125,9 +2251,8 @@ if (auth()->check()) {
                     <div style="height:5px;background:linear-gradient(90deg,#18365D,#2B6CB0,#319795);width:100%;"></div>
                     <div class="modal-body p-5 text-center bg-white">
                         <div class="d-flex justify-content-center mb-4">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                 style="width:76px;height:76px;background:#EBF4FF;border:4px solid #fff;box-shadow:0 0 0 4px rgba(24,54,93,0.15);">
-                                <i class="fa-solid fa-lock" style="font-size:28px;color:#18365D;"></i>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center session-lock-icon-circle">
+                                <i class="fa-solid fa-lock" style="font-size:28px;"></i>
                             </div>
                         </div>
                         <h4 class="fw-bold text-dark mb-2" style="letter-spacing:-0.5px;">Session Locked</h4>
@@ -2135,8 +2260,7 @@ if (auth()->check()) {
                             Your session timed out due to inactivity. Please enter your 6-digit PIN to resume.
                         </p>
                         @error('security_pin')
-                            <div class="alert border-0 small py-2 px-3 rounded-3 mb-4 fw-semibold d-flex align-items-center justify-content-center gap-2"
-                                 style="background:#FFF5F5;color:#9B2C2C;font-size:13px;">
+                            <div class="alert alert-danger border-0 small py-2 px-3 rounded-3 mb-4 fw-semibold d-flex align-items-center justify-content-center gap-2 session-lock-error">
                                 <i class="fa-solid fa-circle-exclamation"></i> {{ $message }}
                             </div>
                         @enderror
@@ -2144,13 +2268,10 @@ if (auth()->check()) {
                             @csrf
                             <div class="mb-4">
                                 <input type="password" name="security_pin"
-                                       class="form-control text-center fw-bold"
+                                       class="form-control text-center fw-bold session-lock-pin-input"
                                        maxlength="6" inputmode="numeric" pattern="[0-9]*"
                                        placeholder="••••••"
-                                       style="letter-spacing:16px;font-size:1.75rem;background:#F7FAFC;border:2px solid #E2E8F0;border-radius:12px;height:64px;color:#18365D;transition:all 0.2s;"
-                                       required autofocus
-                                       onfocus="this.style.borderColor='#2B6CB0';this.style.background='#fff';this.style.boxShadow='0 0 0 4px rgba(43,108,176,0.15)';"
-                                       onblur="this.style.borderColor='#E2E8F0';this.style.background='#F7FAFC';this.style.boxShadow='none';">
+                                       required autofocus>
                             </div>
                             <button type="submit" class="btn w-100 py-3 rounded-3 fw-bold mb-3 text-white"
                                     style="font-size:15px;background:linear-gradient(90deg,#18365D,#2B6CB0);box-shadow:0 4px 12px rgba(24,54,93,0.25);">
@@ -2159,8 +2280,8 @@ if (auth()->check()) {
                         </form>
                         <form action="{{ route('resident.logout') }}" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-light w-100 py-2 rounded-3 fw-bold text-muted"
-                                    style="border:1.5px solid #E2E8F0;font-size:14px;">
+                            <button type="submit" class="btn btn-light border w-100 py-2 rounded-3 fw-bold text-muted"
+                                    style="font-size:14px;">
                                 <i class="fa-solid fa-right-from-bracket me-2"></i> Log Out
                             </button>
                         </form>

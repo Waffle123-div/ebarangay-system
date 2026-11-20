@@ -573,6 +573,18 @@
         html[data-bs-theme="dark"] #viewUserModal .btn-close {
             filter: invert(1) grayscale(100%) brightness(200%);
         }
+        html[data-theme="dark"] .text-slate-800,
+        html[data-bs-theme="dark"] .text-slate-800 {
+            color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .text-slate-700,
+        html[data-bs-theme="dark"] .text-slate-700 {
+            color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] #createUserModal .form-text,
+        html[data-bs-theme="dark"] #createUserModal .form-text {
+            color: #94a3b8 !important;
+        }
 
     </style>
 
@@ -1125,7 +1137,7 @@
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-1">
                     <button type="button" class="btn btn-light rounded-3 fw-semibold px-4" data-bs-dismiss="modal" style="min-height: 44px;">Cancel</button>
-                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" style="background-color: #0f2240; border-color: #0f2240; min-height: 44px;">
+                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" style="min-height: 44px;">
                         <i class="fa-solid fa-plus me-1"></i> Create User
                     </button>
                 </div>

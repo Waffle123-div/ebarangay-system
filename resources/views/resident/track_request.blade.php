@@ -114,6 +114,37 @@
     .btn-claim-stub:active {
         transform: translateY(0);
     }
+
+    /* Claim Stub Card Base (Light) */
+    .claim-stub-card {
+        background: #ffffff;
+        border: 2px dashed #cbd5e1 !important;
+    }
+
+    /* Dark Mode Overrides for Track Requests */
+    html[data-theme="dark"] .accordion-button::after,
+    html[data-bs-theme="dark"] .accordion-button::after {
+        filter: brightness(0) invert(0.85);
+    }
+    html[data-theme="dark"] .timeline-item.line-active::after,
+    html[data-bs-theme="dark"] .timeline-item.line-active::after {
+        background: linear-gradient(180deg, #2563eb 0%, #38bdf8 100%) !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+    }
+    html[data-theme="dark"] .timeline-icon.active,
+    html[data-bs-theme="dark"] .timeline-icon.active,
+    html[data-theme="dark"] .timeline-icon.completed-all,
+    html[data-bs-theme="dark"] .timeline-icon.completed-all {
+        background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%) !important;
+        border-color: #38bdf8 !important;
+        color: #ffffff !important;
+    }
+    html[data-theme="dark"] .claim-stub-card,
+    html[data-bs-theme="dark"] .claim-stub-card {
+        background: #131d31 !important;
+        border: 2px dashed #475569 !important;
+        color: #f1f5f9 !important;
+    }
 </style>
 
 <div class="container-fluid px-4 py-4">
@@ -359,8 +390,7 @@
             <div class="modal-body p-4">
                 
                 {{-- THE STUB CARD TO CAPTURE AS AN IMAGE --}}
-                <div id="claimStubCard" class="bg-white border rounded-4 p-4 text-dark position-relative shadow-sm" 
-                     style="background: #ffffff; border: 2px dashed #cbd5e1 !important;">
+                <div id="claimStubCard" class="bg-white border rounded-4 p-4 text-dark position-relative shadow-sm claim-stub-card">
                     
                     {{-- Header Logo & Title --}}
                     <div class="text-center pb-3 mb-3 border-bottom">
@@ -449,7 +479,7 @@
         html2canvas(stubElement, {
             scale: 3, // High-DPI crisp image export
             useCORS: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#131d31' : '#ffffff'
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `Claim-Stub-${reqId}.png`;

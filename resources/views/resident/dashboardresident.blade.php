@@ -108,6 +108,88 @@
     }
     .reminder-info h6 { margin: 0 0 0.15rem 0; font-size: 0.85rem; font-weight: 600; color: #2d3748; }
     .reminder-info p { margin: 0; font-size: 0.72rem; color: #a0aec0; }
+
+    /* Dark Mode Overrides for Resident Dashboard */
+    html[data-theme="dark"] .section-link,
+    html[data-bs-theme="dark"] .section-link,
+    html[data-theme="dark"] .calendar-nav,
+    html[data-bs-theme="dark"] .calendar-nav,
+    html[data-theme="dark"] .calendar-day-name,
+    html[data-bs-theme="dark"] .calendar-day-name,
+    html[data-theme="dark"] .reminder-info p,
+    html[data-bs-theme="dark"] .reminder-info p {
+        color: #94a3b8 !important;
+    }
+    html[data-theme="dark"] .section-link:hover,
+    html[data-bs-theme="dark"] .section-link:hover,
+    html[data-theme="dark"] .calendar-nav:hover,
+    html[data-bs-theme="dark"] .calendar-nav:hover {
+        color: #60a5fa !important;
+    }
+    html[data-theme="dark"] .calendar-day,
+    html[data-bs-theme="dark"] .calendar-day {
+        color: #e2e8f0 !important;
+    }
+    html[data-theme="dark"] .calendar-day.muted,
+    html[data-bs-theme="dark"] .calendar-day.muted {
+        color: #475569 !important;
+    }
+    html[data-theme="dark"] .calendar-day.active,
+    html[data-bs-theme="dark"] .calendar-day.active,
+    html[data-theme="dark"] .calendar-day.active:hover,
+    html[data-bs-theme="dark"] .calendar-day.active:hover {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.5) !important;
+    }
+
+    html[data-theme="dark"] .announcement-type-info,
+    html[data-bs-theme="dark"] .announcement-type-info {
+        background: linear-gradient(135deg, #132347 0%, #172c58 100%) !important;
+        border-color: #3b82f6 !important;
+    }
+    html[data-theme="dark"] .announcement-type-info .announcement-title,
+    html[data-bs-theme="dark"] .announcement-type-info .announcement-title { color: #eff6ff !important; }
+    html[data-theme="dark"] .announcement-type-info .announcement-message,
+    html[data-bs-theme="dark"] .announcement-type-info .announcement-message { color: #dbeafe !important; }
+    html[data-theme="dark"] .announcement-type-info .announcement-meta,
+    html[data-bs-theme="dark"] .announcement-type-info .announcement-meta { color: #93c5fd !important; }
+
+    html[data-theme="dark"] .announcement-type-warning,
+    html[data-bs-theme="dark"] .announcement-type-warning {
+        background: linear-gradient(135deg, #2a1f0b 0%, #3b2a0e 100%) !important;
+        border-color: #f59e0b !important;
+    }
+    html[data-theme="dark"] .announcement-type-warning .announcement-title,
+    html[data-bs-theme="dark"] .announcement-type-warning .announcement-title { color: #fef3c7 !important; }
+    html[data-theme="dark"] .announcement-type-warning .announcement-message,
+    html[data-bs-theme="dark"] .announcement-type-warning .announcement-message { color: #fde68a !important; }
+    html[data-theme="dark"] .announcement-type-warning .announcement-meta,
+    html[data-bs-theme="dark"] .announcement-type-warning .announcement-meta { color: #fcd34d !important; }
+
+    html[data-theme="dark"] .announcement-type-danger,
+    html[data-bs-theme="dark"] .announcement-type-danger {
+        background: linear-gradient(135deg, #2c1218 0%, #3f1720 100%) !important;
+        border-color: #ef4444 !important;
+    }
+    html[data-theme="dark"] .announcement-type-danger .announcement-title,
+    html[data-bs-theme="dark"] .announcement-type-danger .announcement-title { color: #fee2e2 !important; }
+    html[data-theme="dark"] .announcement-type-danger .announcement-message,
+    html[data-bs-theme="dark"] .announcement-type-danger .announcement-message { color: #fecaca !important; }
+    html[data-theme="dark"] .announcement-type-danger .announcement-meta,
+    html[data-bs-theme="dark"] .announcement-type-danger .announcement-meta { color: #fca5a5 !important; }
+
+    html[data-theme="dark"] .announcement-type-success,
+    html[data-bs-theme="dark"] .announcement-type-success {
+        background: linear-gradient(135deg, #0f291e 0%, #133829 100%) !important;
+        border-color: #22c55e !important;
+    }
+    html[data-theme="dark"] .announcement-type-success .announcement-title,
+    html[data-bs-theme="dark"] .announcement-type-success .announcement-title { color: #dcfce7 !important; }
+    html[data-theme="dark"] .announcement-type-success .announcement-message,
+    html[data-bs-theme="dark"] .announcement-type-success .announcement-message { color: #bbf7d0 !important; }
+    html[data-theme="dark"] .announcement-type-success .announcement-meta,
+    html[data-bs-theme="dark"] .announcement-type-success .announcement-meta { color: #86efac !important; }
 </style>
 
 <div class="dashboard-wrapper pb-5">
@@ -174,7 +256,7 @@
                 ];
             @endphp
 
-            <div id="barangay-announcement-card" class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden position-relative" style="background: {{ $config['bg'] }}; border: 1px solid {{ $config['border'] }} !important;">
+            <div id="barangay-announcement-card" class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden position-relative announcement-card announcement-type-{{ $type }}" style="background: {{ $config['bg'] }}; border: 1px solid {{ $config['border'] }} !important;">
                 @if($type === 'danger')
                     <div style="height: 4px; background: linear-gradient(90deg, #ef4444, #b91c1c); animation: pulse 2s infinite;"></div>
                 @endif
@@ -190,7 +272,7 @@
                                 </span>
                             @endif
                             @if(!empty($announcement['updated_at']))
-                                <span class="small" style="color: {{ $config['color'] }}; opacity: 0.85; font-size: 12px;">
+                                <span class="small announcement-meta" style="color: {{ $config['color'] }}; opacity: 0.85; font-size: 12px;">
                                     <i class="fa-regular fa-clock me-1"></i> {{ \Carbon\Carbon::parse($announcement['updated_at'])->format('M d, Y · h:i A') }}
                                 </span>
                             @endif
@@ -204,8 +286,8 @@
                             <i class="{{ $config['icon'] }}"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h5 class="fw-bold mb-1" style="color: {{ $config['color'] }};">{{ $announcement['title'] }}</h5>
-                            <p class="mb-0" style="color: {{ $config['color'] }}; opacity: 0.95; font-size: 14.5px; line-height: 1.55; white-space: pre-line;">{{ $announcement['message'] }}</p>
+                            <h5 class="fw-bold mb-1 announcement-title" style="color: {{ $config['color'] }};">{{ $announcement['title'] }}</h5>
+                            <p class="mb-0 announcement-message" style="color: {{ $config['color'] }}; opacity: 0.95; font-size: 14.5px; line-height: 1.55; white-space: pre-line;">{{ $announcement['message'] }}</p>
                             @if(!empty($announcement['action_url']))
                                 <div class="mt-3">
                                     <a href="{{ $announcement['action_url'] }}" class="btn {{ $config['btn'] }} btn-sm px-3.5 py-1.5 rounded-pill fw-semibold shadow-sm d-inline-flex align-items-center gap-1.5">
@@ -425,7 +507,7 @@
             </div>
 
             <div id="receiptCard{{ $request->id }}" class="bg-white">
-                <div class="p-4 text-center border-bottom position-relative" style="border-bottom: 2px solid #000 !important; background-color: #f8f9fa;">
+                <div class="p-4 text-center border-bottom position-relative bg-light receipt-header-divider">
                     <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 22px; color: #ffffff !important;">
                             <i class="fa-solid fa-landmark text-white" style="color: #ffffff !important;"></i>

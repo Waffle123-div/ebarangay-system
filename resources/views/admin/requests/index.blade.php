@@ -19,7 +19,7 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="background-color: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0; margin-bottom: var(--spacing-gap, 14px) !important;">
+        <div class="alert alert-success alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="margin-bottom: var(--spacing-gap, 14px) !important;">
             <i class="fa-solid fa-circle-check me-2 text-success fa-lg"></i>
             <span class="fw-medium">{{ session('success') }}</span>
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -27,7 +27,7 @@
     @endif
 
     @if(session('warning'))
-        <div class="alert alert-warning alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="background-color: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; margin-bottom: var(--spacing-gap, 14px) !important;">
+        <div class="alert alert-warning alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-center" role="alert" style="margin-bottom: var(--spacing-gap, 14px) !important;">
             <i class="fa-solid fa-triangle-exclamation me-2 text-warning fa-lg"></i>
             <span class="fw-medium">{{ session('warning') }}</span>
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -35,7 +35,7 @@
     @endif
 
     @if($errors->any())
-        <div class="alert alert-danger alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-start" role="alert" style="background-color: #fef2f2; color: #991b1b; border: 1.5px solid #fecaca; margin-bottom: var(--spacing-gap, 14px) !important;">
+        <div class="alert alert-danger alert-dismissible show rounded-3 mb-3 shadow-sm d-flex align-items-start" role="alert" style="margin-bottom: var(--spacing-gap, 14px) !important;">
             <i class="fa-solid fa-triangle-exclamation me-2 text-danger fa-lg mt-1"></i>
             <div class="flex-grow-1">
                 <div class="fw-bold mb-1">Please check the form for errors:</div>
@@ -1735,6 +1735,19 @@
             color: #86efac !important;
             border-color: rgba(74, 222, 128, 0.35) !important;
         }
+        .attached-word-card,
+        .attached-word-btn {
+            background-color: #f0fdf4;
+            border-color: #86efac !important;
+        }
+        html[data-theme="dark"] .attached-word-card,
+        html[data-bs-theme="dark"] .attached-word-card,
+        html[data-theme="dark"] .attached-word-btn,
+        html[data-bs-theme="dark"] .attached-word-btn {
+            background-color: rgba(22, 163, 74, 0.16) !important;
+            border-color: rgba(74, 222, 128, 0.45) !important;
+            color: #f1f5f9 !important;
+        }
 
         /* ═══════════════════════════════════════════════════════════
            ANIMATIONS — REQUESTS PAGE
@@ -2717,7 +2730,7 @@
 
                             {{-- Official Word Document Card Attached in Final Step Before Complete (Ready / Completed) --}}
                             <div class="modal-attached-word-card-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} {{ count($request->attachments_list) > 0 ? 'mt-2' : '' }}">
-                                <div class="rounded-3 border d-flex justify-content-between align-items-center gap-2 p-2.5 shadow-xs" style="background-color: #f0fdf4; border-color: #86efac !important;">
+                                <div class="rounded-3 border d-flex justify-content-between align-items-center gap-2 p-2.5 shadow-xs attached-word-card">
                                     <div class="d-flex align-items-center gap-2.5 min-w-0">
                                         <div class="rounded-3 bg-white border d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 44px; height: 44px;">
                                             <i class="fa-solid fa-file-word text-primary fs-4"></i>
@@ -2799,7 +2812,7 @@
                                             <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }} pt-2.5 border-top">
                                                 <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
                                                    class="btn btn-primary w-100 rounded-3 py-2.5 px-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" 
-                                                   style="font-size: 14px; min-height: 44px; background-color: #0f2240; border-color: #0f2240;" 
+                                                   style="font-size: 14px; min-height: 44px;" 
                                                    title="Generate Word Document for {{ $docItem['type'] }}">
                                                     <i class="fa-solid fa-file-word fs-5"></i> <span>Generate Word Doc ({{ $docItem['type'] }})</span>
                                                 </a>
@@ -2807,8 +2820,8 @@
                                             {{-- Final step (Ready/Completed): Attached Word File (Placed at bottom, Big and Visible) --}}
                                             <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} pt-2.5 border-top">
                                                 <a href="{{ route('admin.requests.generate', [$request->id, 'doc_type' => $docItem['type']]) }}" 
-                                                   class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2" 
-                                                   style="font-size: 14px; min-height: 44px; background-color: #f0fdf4; border-color: #86efac !important;" 
+                                                   class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2 attached-word-btn" 
+                                                   style="font-size: 14px; min-height: 44px;" 
                                                    title="Download Attached Word Document for {{ $docItem['type'] }}">
                                                     <i class="fa-solid fa-file-word text-primary fs-5"></i> <span>Attached File ({{ $docItem['type'] }})</span>
                                                     <span class="badge bg-success text-white rounded-pill px-2 py-0.5 ms-1" style="font-size: 10px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>
@@ -2839,7 +2852,7 @@
                                     <div class="modal-generate-doc-btn-{{ $request->id }} {{ $request->status === 'Processing' ? '' : 'd-none' }} pt-2.5 border-top">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
                                            class="btn btn-primary w-100 rounded-3 py-2.5 px-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white" 
-                                           style="font-size: 14.5px; min-height: 46px; background-color: #0f2240; border-color: #0f2240;" 
+                                           style="font-size: 14.5px; min-height: 46px;" 
                                            title="Generate Word Document">
                                             <i class="fa-solid fa-file-word fs-5"></i> <span>Generate Word Doc</span>
                                         </a>
@@ -2847,8 +2860,8 @@
                                     {{-- Final step (Ready/Completed): Attached Word File (Placed at bottom, Big and Visible) --}}
                                     <div class="modal-attached-doc-btn-{{ $request->id }} {{ in_array($request->status, ['Ready', 'Completed']) ? '' : 'd-none' }} pt-2.5 border-top">
                                         <a href="{{ route('admin.requests.generate', $request->id) }}" 
-                                           class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2" 
-                                           style="font-size: 14.5px; min-height: 46px; background-color: #f0fdf4; border-color: #86efac !important;" 
+                                           class="btn btn-light border border-success text-dark w-100 rounded-3 py-2.5 px-4 fw-bold shadow-xs d-flex align-items-center justify-content-center gap-2 attached-word-btn" 
+                                           style="font-size: 14.5px; min-height: 46px;" 
                                            title="Download Attached Word Document">
                                             <i class="fa-solid fa-file-word text-primary fs-5"></i> <span>Attached Word File</span>
                                             <span class="badge bg-success text-white rounded-pill px-2.5 py-1 ms-1" style="font-size: 10.5px;"><i class="fa-solid fa-paperclip me-1"></i> Attached</span>

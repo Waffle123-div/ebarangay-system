@@ -22,10 +22,10 @@
     </div>
 
     {{-- Official Printable Receipt Document --}}
-    <div id="receiptCard" class="card border-0 shadow-lg rounded-4 overflow-hidden mx-auto printable-receipt" style="max-width: 800px; background: #fff;">
+    <div id="receiptCard" class="card border-0 shadow-lg rounded-4 overflow-hidden mx-auto printable-receipt bg-white" style="max-width: 800px;">
         
         {{-- Receipt Header --}}
-        <div class="p-4 text-center border-bottom bg-light position-relative" style="border-bottom: 2px solid #000 !important;">
+        <div class="p-4 text-center border-bottom bg-light position-relative receipt-header-divider">
             <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 22px; color: #ffffff !important;">
                     <i class="fa-solid fa-landmark text-white" style="color: #ffffff !important;"></i>
@@ -162,6 +162,19 @@ function downloadReceiptAsImage() {
         background: #fff !important;
         padding: 0 !important;
         margin: 0 !important;
+    }
+    #receiptCard {
+        background: #ffffff !important;
+    }
+    #receiptCard,
+    #receiptCard * {
+        background-color: transparent !important;
+        color: #111827 !important;
+    }
+    #receiptCard .bg-primary,
+    #receiptCard .bg-primary * {
+        background-color: #18365D !important;
+        color: #ffffff !important;
     }
     .printable-receipt {
         box-shadow: none !important;

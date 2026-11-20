@@ -339,11 +339,353 @@
     /* ---- Divider ---- */
     .section-divider { border-top: 1px solid #f1f3f5; margin: 24px 0; }
 
+    /* ---- Input Group Addon & Sub-Boxes ---- */
+    .settings-input-addon {
+        border: 1.5px solid #e5e7eb;
+    }
+    .settings-input-addon.is-left { border-right: none; }
+    .settings-input-addon.is-right { border-left: none; }
+    .settings-sub-box {
+        background: #f9fafb;
+        border: 1.5px solid #e5e7eb;
+    }
+    .settings-sub-box-dashed {
+        background: #f9fafb;
+        border: 1.5px dashed #d1d5db;
+        border-radius: 12px;
+    }
+    .settings-upload-box-dashed {
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        cursor: pointer;
+    }
+    .settings-google-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .settings-img-preview {
+        border: 2px solid #e5e7eb;
+    }
+    .settings-modal-icon-circle {
+        width: 60px;
+        height: 60px;
+        background: #fff;
+    }
+    .settings-otp-icon-circle {
+        width: 64px;
+        height: 64px;
+        background-color: #e8f0fe;
+        color: #0b2e59;
+        border-radius: 50%;
+        font-size: 1.75rem;
+    }
+    .settings-alert-warning {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #92400e;
+        font-size: 13px;
+    }
+    .settings-alert-danger {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #7f1d1d;
+        font-size: 13px;
+    }
+
     /* ---- Responsive ---- */
     @media (max-width: 768px) {
         .settings-nav .nav-link { font-size: 13.5px; padding: 9px 12px; gap: 10px; }
         .settings-nav .nav-link .nav-icon { width: 36px; height: 36px; font-size: 16px; border-radius: 9px; }
         .settings-card-body { padding: 16px; }
+    }
+
+    /* ---- Dark Mode Overrides ---- */
+    html[data-theme="dark"] .settings-card,
+    html[data-bs-theme="dark"] .settings-card {
+        background: #131d31 !important;
+        border: 1px solid #1e293b !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
+    }
+    html[data-theme="dark"] .settings-card-header,
+    html[data-bs-theme="dark"] .settings-card-header {
+        border-bottom-color: #1e293b !important;
+    }
+    html[data-theme="dark"] .settings-card-header .section-icon,
+    html[data-bs-theme="dark"] .settings-card-header .section-icon {
+        background: rgba(56, 189, 248, 0.14) !important;
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+    }
+    html[data-theme="dark"] .settings-card-header h5,
+    html[data-bs-theme="dark"] .settings-card-header h5 {
+        color: #f8fafc !important;
+    }
+    html[data-theme="dark"] .settings-card-header p,
+    html[data-bs-theme="dark"] .settings-card-header p {
+        color: #94a3b8 !important;
+    }
+
+    html[data-theme="dark"] .settings-nav .nav-link,
+    html[data-bs-theme="dark"] .settings-nav .nav-link {
+        color: #cbd5e1 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link .nav-icon {
+        background: #182238 !important;
+        color: #60a5fa !important;
+        border-color: #283548 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link:hover,
+    html[data-bs-theme="dark"] .settings-nav .nav-link:hover {
+        background: #182238 !important;
+        color: #ffffff !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link:hover .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link:hover .nav-icon {
+        background: #1e3152 !important;
+        color: #93c5fd !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.active,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.active {
+        background: rgba(37, 99, 235, 0.22) !important;
+        color: #93c5fd !important;
+        border-color: rgba(59, 130, 246, 0.35) !important;
+        font-weight: 700 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.active .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.active .nav-icon {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border-color: transparent !important;
+    }
+
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger {
+        color: #f87171 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger .nav-icon {
+        background: rgba(239, 68, 68, 0.16) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger:hover,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger:hover {
+        background: rgba(239, 68, 68, 0.14) !important;
+        color: #fca5a5 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger:hover .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger:hover .nav-icon {
+        background: rgba(239, 68, 68, 0.25) !important;
+        color: #fca5a5 !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger.active,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger.active {
+        background: rgba(239, 68, 68, 0.22) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+    }
+    html[data-theme="dark"] .settings-nav .nav-link.nav-link-danger.active .nav-icon,
+    html[data-bs-theme="dark"] .settings-nav .nav-link.nav-link-danger.active .nav-icon {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+        color: #ffffff !important;
+    }
+
+    html[data-theme="dark"] .form-label-sm,
+    html[data-bs-theme="dark"] .form-label-sm {
+        color: #94a3b8 !important;
+    }
+    html[data-theme="dark"] .form-control-settings,
+    html[data-bs-theme="dark"] .form-control-settings {
+        background: #182238 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    html[data-theme="dark"] .form-control-settings:focus,
+    html[data-bs-theme="dark"] .form-control-settings:focus {
+        background: #1e2b45 !important;
+        border-color: #3b82f6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+    html[data-theme="dark"] .form-control-settings:disabled,
+    html[data-bs-theme="dark"] .form-control-settings:disabled,
+    html[data-theme="dark"] .form-control-settings[readonly],
+    html[data-bs-theme="dark"] .form-control-settings[readonly] {
+        background: #0f172a !important;
+        color: #94a3b8 !important;
+        border-color: #1e293b !important;
+    }
+    html[data-theme="dark"] .settings-input-addon,
+    html[data-bs-theme="dark"] .settings-input-addon {
+        border-color: #334155 !important;
+        background-color: #182238 !important;
+    }
+
+    html[data-theme="dark"] .avatar-circle,
+    html[data-bs-theme="dark"] .avatar-circle,
+    html[data-theme="dark"] .avatar-placeholder,
+    html[data-bs-theme="dark"] .avatar-placeholder,
+    html[data-theme="dark"] .avatar-edit-btn,
+    html[data-bs-theme="dark"] .avatar-edit-btn {
+        border-color: #131d31 !important;
+    }
+    html[data-theme="dark"] .strength-bar,
+    html[data-bs-theme="dark"] .strength-bar {
+        background: #1e293b !important;
+    }
+    html[data-theme="dark"] .badge-verified,
+    html[data-bs-theme="dark"] .badge-verified {
+        background: rgba(34, 197, 94, 0.18) !important;
+        color: #4ade80 !important;
+    }
+    html[data-theme="dark"] .badge-pending,
+    html[data-bs-theme="dark"] .badge-pending {
+        background: rgba(245, 158, 11, 0.18) !important;
+        color: #fbbf24 !important;
+    }
+    html[data-theme="dark"] .badge-unverified,
+    html[data-bs-theme="dark"] .badge-unverified {
+        background: rgba(239, 68, 68, 0.18) !important;
+        color: #f87171 !important;
+    }
+
+    html[data-theme="dark"] .session-row,
+    html[data-bs-theme="dark"] .session-row,
+    html[data-theme="dark"] .activity-row,
+    html[data-bs-theme="dark"] .activity-row,
+    html[data-theme="dark"] .section-divider,
+    html[data-bs-theme="dark"] .section-divider {
+        border-color: #1e293b !important;
+    }
+    html[data-theme="dark"] .session-icon,
+    html[data-bs-theme="dark"] .session-icon {
+        background: #182238 !important;
+        color: #94a3b8 !important;
+        border: 1px solid #283548;
+    }
+    html[data-theme="dark"] .toggle-slider,
+    html[data-bs-theme="dark"] .toggle-slider {
+        background: #334155 !important;
+    }
+    html[data-theme="dark"] .toggle-switch input:checked + .toggle-slider,
+    html[data-bs-theme="dark"] .toggle-switch input:checked + .toggle-slider {
+        background: #2563eb !important;
+    }
+
+    html[data-theme="dark"] .danger-card,
+    html[data-bs-theme="dark"] .danger-card {
+        background: #171829 !important;
+        border-color: rgba(239, 68, 68, 0.35) !important;
+    }
+    html[data-theme="dark"] .danger-card .settings-card-header,
+    html[data-bs-theme="dark"] .danger-card .settings-card-header {
+        border-bottom-color: rgba(239, 68, 68, 0.25) !important;
+    }
+    html[data-theme="dark"] .danger-card .section-icon,
+    html[data-bs-theme="dark"] .danger-card .section-icon {
+        background: rgba(239, 68, 68, 0.18) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.35) !important;
+    }
+    html[data-theme="dark"] .danger-card-warning,
+    html[data-bs-theme="dark"] .danger-card-warning {
+        border-color: rgba(245, 158, 11, 0.35) !important;
+    }
+    html[data-theme="dark"] .danger-card-warning .section-icon,
+    html[data-bs-theme="dark"] .danger-card-warning .section-icon {
+        background: rgba(245, 158, 11, 0.18) !important;
+        color: #fbbf24 !important;
+        border-color: rgba(245, 158, 11, 0.35) !important;
+    }
+    html[data-theme="dark"] .danger-card-warning h5,
+    html[data-bs-theme="dark"] .danger-card-warning h5 {
+        color: #fbbf24 !important;
+    }
+    html[data-theme="dark"] .danger-card h5.text-danger-heading,
+    html[data-bs-theme="dark"] .danger-card h5.text-danger-heading {
+        color: #f87171 !important;
+    }
+    html[data-theme="dark"] .settings-alert-warning,
+    html[data-bs-theme="dark"] .settings-alert-warning {
+        background: rgba(245, 158, 11, 0.14) !important;
+        border-color: rgba(245, 158, 11, 0.35) !important;
+        color: #fde68a !important;
+    }
+    html[data-theme="dark"] .settings-alert-warning strong,
+    html[data-bs-theme="dark"] .settings-alert-warning strong {
+        color: #fef3c7 !important;
+    }
+    html[data-theme="dark"] .settings-alert-danger,
+    html[data-bs-theme="dark"] .settings-alert-danger {
+        background: rgba(239, 68, 68, 0.14) !important;
+        border-color: rgba(239, 68, 68, 0.35) !important;
+        color: #fecaca !important;
+    }
+    html[data-theme="dark"] .settings-alert-danger strong,
+    html[data-bs-theme="dark"] .settings-alert-danger strong {
+        color: #fee2e2 !important;
+    }
+
+    html[data-theme="dark"] .settings-code-box,
+    html[data-bs-theme="dark"] .settings-code-box {
+        background: #182238 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    html[data-theme="dark"] .settings-code-box:focus,
+    html[data-bs-theme="dark"] .settings-code-box:focus {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+    }
+    html[data-theme="dark"] .otp-channel-card,
+    html[data-bs-theme="dark"] .otp-channel-card {
+        background: #182238 !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    html[data-theme="dark"] .otp-channel-card:hover,
+    html[data-bs-theme="dark"] .otp-channel-card:hover {
+        background: #1e293b !important;
+        border-color: #38bdf8 !important;
+    }
+    html[data-theme="dark"] .settings-sub-box,
+    html[data-bs-theme="dark"] .settings-sub-box,
+    html[data-theme="dark"] .settings-sub-box-dashed,
+    html[data-bs-theme="dark"] .settings-sub-box-dashed,
+    html[data-theme="dark"] .settings-upload-box-dashed,
+    html[data-bs-theme="dark"] .settings-upload-box-dashed {
+        background: #182238 !important;
+        border-color: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    html[data-theme="dark"] .settings-google-icon,
+    html[data-bs-theme="dark"] .settings-google-icon {
+        background: #131d31 !important;
+        border-color: #334155 !important;
+    }
+    html[data-theme="dark"] .settings-modal-icon-circle,
+    html[data-bs-theme="dark"] .settings-modal-icon-circle {
+        background: #1e293b !important;
+        border: 1px solid #334155;
+    }
+    html[data-theme="dark"] .settings-otp-icon-circle,
+    html[data-bs-theme="dark"] .settings-otp-icon-circle {
+        background: rgba(56, 189, 248, 0.16) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    html[data-theme="dark"] .settings-img-preview,
+    html[data-bs-theme="dark"] .settings-img-preview {
+        border-color: #334155 !important;
     }
 </style>
 
@@ -421,7 +763,7 @@
                     </button>
 
 
-                    <hr class="my-2" style="border-color: #e5e7eb; opacity: 0.8;">
+                    <hr class="my-2">
 
                     <button class="nav-link nav-link-danger {{ $activeTab === 'manage'   ? 'active' : '' }}"
                             id="tab-manage" data-bs-toggle="tab" data-bs-target="#pane-manage"
@@ -545,7 +887,7 @@
                                                value="{{ old('birthdate', $user->birthdate ? $user->birthdate : '') }}"
                                                {{ trim(strtolower($user->status)) === 'active' ? 'readonly title=\'Locked: your birthdate has been verified by the admin.\'' : '' }}>
                                         @if(trim(strtolower($user->status)) === 'active')
-                                            <div class="mt-1" style="font-size:11px; color:#6b7280;">
+                                            <div class="mt-1 text-muted" style="font-size:11px;">
                                                 <i class="fa-solid fa-lock me-1"></i>Locked after admin verification.
                                             </div>
                                         @endif
@@ -691,7 +1033,7 @@
                                     <div class="col-md-6">
                                         <label class="form-label-sm" for="username">Username</label>
                                         <div class="input-group">
-                                            <span class="input-group-text bg-light border-0 rounded-start-3" style="border:1.5px solid #e5e7eb; border-right:none;">
+                                            <span class="input-group-text bg-light border-0 rounded-start-3 settings-input-addon is-left">
                                                 <i class="fa-solid fa-at text-muted" style="font-size:13px;"></i>
                                             </span>
                                             <input type="text" name="username" id="username"
@@ -701,7 +1043,7 @@
                                                    placeholder="your_username"
                                                    pattern="[a-zA-Z0-9_\-]+" title="Letters, numbers, _ and - only">
                                         </div>
-                                        <div class="mt-1" style="font-size:11px;color:#6b7280;">Letters, numbers, underscores and hyphens only.</div>
+                                        <div class="mt-1 text-muted" style="font-size:11px;">Letters, numbers, underscores and hyphens only.</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-sm" for="account_email">Email Address</label>
@@ -711,8 +1053,7 @@
                                                    style="border-right:none;"
                                                    value="{{ old('email', $user->email ?? '') }}"
                                                    placeholder="your@email.com">
-                                            <span class="input-group-text bg-light border-0 rounded-end-3"
-                                                  style="border:1.5px solid #e5e7eb; border-left:none;">
+                                            <span class="input-group-text bg-light border-0 rounded-end-3 settings-input-addon is-right">
                                                 @if($user->hasVerifiedEmail())
                                                     <span class="badge badge-verified rounded-pill py-1 px-2" style="font-size:10px;">
                                                         <i class="fa-solid fa-circle-check me-1"></i>Verified
@@ -748,14 +1089,14 @@
                             <h6 class="fw-bold mb-3" style="font-size:13px; color:var(--color-text-light); text-transform:uppercase; letter-spacing:0.5px;">
                                 Linked Accounts
                             </h6>
-                            <div class="d-flex align-items-center justify-content-between p-3 rounded-3" style="background:#f9fafb; border:1.5px solid #e5e7eb;">
+                            <div class="d-flex align-items-center justify-content-between p-3 rounded-3 settings-sub-box">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div style="width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;">
+                                    <div class="settings-google-icon">
                                         <i class="fa-brands fa-google" style="color:#EA4335;font-size:16px;"></i>
                                     </div>
                                     <div>
                                         <div class="fw-bold" style="font-size:14px;">Google</div>
-                                        <div style="font-size:12px;color:#6b7280;">
+                                        <div class="text-muted" style="font-size:12px;">
                                             @if($user->google_id)
                                                 Connected as {{ $user->email }}
                                             @elseif($user->hasVerifiedEmail() && str_ends_with(strtolower($user->email ?? ''), '@gmail.com'))
@@ -802,8 +1143,8 @@
                                             <input type="password" name="current_password" id="current_password"
                                                    class="form-control form-control-settings rounded-start-3"
                                                    style="border-right:none;" placeholder="Enter current password">
-                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3"
-                                                    style="border:1.5px solid #e5e7eb;border-left:none;cursor:pointer;"
+                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3 settings-input-addon is-right"
+                                                    style="cursor:pointer;"
                                                     onclick="togglePwd('current_password', this)">
                                                 <i class="fa-regular fa-eye text-muted" style="font-size:13px;"></i>
                                             </button>
@@ -819,8 +1160,8 @@
                                                    class="form-control form-control-settings rounded-start-3"
                                                    style="border-right:none;" placeholder="New password"
                                                    oninput="checkStrength(this.value)">
-                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3"
-                                                    style="border:1.5px solid #e5e7eb;border-left:none;cursor:pointer;"
+                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3 settings-input-addon is-right"
+                                                    style="cursor:pointer;"
                                                     onclick="togglePwd('password', this)">
                                                 <i class="fa-regular fa-eye text-muted" style="font-size:13px;"></i>
                                             </button>
@@ -829,9 +1170,9 @@
                                             <div class="strength-bar mt-1">
                                                 <div class="strength-fill" id="strengthFill"></div>
                                             </div>
-                                            <div id="strengthLabel" class="mt-1" style="font-size:11px;color:#6b7280;"></div>
+                                            <div id="strengthLabel" class="mt-1 text-muted" style="font-size:11px;"></div>
                                         </div>
-                                        <ul class="mt-2 ps-3 mb-0" style="font-size:11px;color:#6b7280;">
+                                        <ul class="mt-2 ps-3 mb-0 text-muted" style="font-size:11px;">
                                             <li id="req-len">At least 8 characters</li>
                                             <li id="req-upper">At least one uppercase letter</li>
                                             <li id="req-number">At least one number</li>
@@ -843,8 +1184,8 @@
                                             <input type="password" name="password_confirmation" id="password_confirmation"
                                                    class="form-control form-control-settings rounded-start-3"
                                                    style="border-right:none;" placeholder="Repeat new password">
-                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3"
-                                                    style="border:1.5px solid #e5e7eb;border-left:none;cursor:pointer;"
+                                            <button type="button" class="input-group-text bg-light border-0 rounded-end-3 settings-input-addon is-right"
+                                                    style="cursor:pointer;"
                                                     onclick="togglePwd('password_confirmation', this)">
                                                 <i class="fa-regular fa-eye text-muted" style="font-size:13px;"></i>
                                             </button>
@@ -880,13 +1221,13 @@
                         <div class="settings-card-body">
                             <form action="{{ route('resident.settings.security') }}" method="POST" id="twoFactorForm">
                                 @csrf
-                                <div class="d-flex align-items-center justify-content-between p-4 rounded-3" style="background:#f9fafb;border:1.5px solid #e5e7eb;">
+                                <div class="d-flex align-items-center justify-content-between p-4 rounded-3 settings-sub-box">
                                     <div>
                                         <div class="fw-bold mb-1" style="font-size:14px;">
                                             <i class="fa-solid fa-shield-halved me-2 text-primary"></i>
                                             Two-Factor Authentication (2FA)
                                         </div>
-                                        <div style="font-size:13px;color:#6b7280;">
+                                        <div class="text-muted" style="font-size:13px;">
                                             When enabled, you'll be asked to verify your identity with an OTP on each login.
                                         </div>
                                         <div class="mt-2">
@@ -908,7 +1249,7 @@
                                                    onchange="document.getElementById('twoFactorForm').submit()">
                                             <span class="toggle-slider"></span>
                                         </label>
-                                        <span style="font-size:11px;color:#6b7280;">
+                                        <span class="text-muted" style="font-size:11px;">
                                             {{ $user->two_factor_enabled ? 'ON' : 'OFF' }}
                                         </span>
                                     </div>
@@ -949,7 +1290,7 @@
                                                     <span class="badge badge-verified ms-2 rounded-pill px-2 py-1" style="font-size:10px;">This Device</span>
                                                 @endif
                                             </div>
-                                            <div style="font-size:12px;color:#6b7280;">
+                                            <div class="text-muted" style="font-size:12px;">
                                                 IP: {{ $session->ip_address ?? 'Unknown' }}
                                                 &bull; Last active: {{ $session->last_active_at->diffForHumans() }}
                                             </div>
@@ -1030,7 +1371,7 @@
 
                             {{-- Current ID Status --}}
                             @if($user->id_photo)
-                                <div class="p-3 rounded-3 mb-4" style="background:#f9fafb;border:1.5px solid #e5e7eb;">
+                                <div class="p-3 rounded-3 mb-4 settings-sub-box">
                                     <div class="row align-items-center">
                                         <div class="col-md-3 text-center mb-3 mb-md-0">
                                             @php
@@ -1039,8 +1380,8 @@
                                                     : route('resident.settings.file', ['type' => 'id_photo', 'filename' => basename(str_replace('\\', '/', $user->id_photo))]);
                                             @endphp
                                             <img src="{{ $residentIdPhotoUrl }}"
-                                                 alt="Valid ID" class="rounded-3 shadow-sm"
-                                                 style="max-width:100%;max-height:140px;object-fit:cover;border:2px solid #e5e7eb;">
+                                                 alt="Valid ID" class="rounded-3 shadow-sm settings-img-preview"
+                                                 style="max-width:100%;max-height:140px;object-fit:cover;">
                                         </div>
                                         <div class="col-md-9">
                                             <div class="mb-2">
@@ -1093,7 +1434,7 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="text-center py-4 mb-4" style="background:#f9fafb;border:1.5px dashed #d1d5db;border-radius:12px;">
+                                <div class="text-center py-4 mb-4 settings-sub-box-dashed">
                                     <i class="fa-regular fa-id-card fa-3x text-muted mb-3 d-block" style="opacity:0.4;"></i>
                                     <div class="fw-bold text-muted mb-1">No ID uploaded yet</div>
                                     <div class="text-muted small">Upload a valid government-issued ID to verify your identity</div>
@@ -1125,8 +1466,8 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label-sm" for="id_photo_input">ID Photo *</label>
-                                        <div class="d-flex align-items-center gap-3" id="idUploadArea"
-                                             style="padding:20px;background:#f9fafb;border:2px dashed #d1d5db;border-radius:12px;cursor:pointer;"
+                                        <div class="d-flex align-items-center gap-3 settings-upload-box-dashed" id="idUploadArea"
+                                             style="padding:20px;"
                                              onclick="document.getElementById('id_photo_input').click()">
                                             <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted"></i>
                                             <div>
@@ -1139,8 +1480,8 @@
                                         <input type="file" name="id_photo" id="id_photo_input" accept="image/*"
                                                class="d-none" required onchange="previewId(this)">
                                         <img id="idPreviewImg" src="" alt="ID Preview"
-                                             class="d-none mt-3 rounded-3 shadow-sm"
-                                             style="max-height:180px;max-width:100%;object-fit:contain;border:2px solid #e5e7eb;">
+                                             class="d-none mt-3 rounded-3 shadow-sm settings-img-preview"
+                                             style="max-height:180px;max-width:100%;object-fit:contain;">
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2 justify-content-end mt-3">
@@ -1197,9 +1538,9 @@
                     </div>
 
                     {{-- Deactivate Account --}}
-                    <div class="settings-card danger-card mb-4">
+                    <div class="settings-card danger-card danger-card-warning mb-4">
                         <div class="settings-card-header">
-                            <div class="section-icon" style="background:rgba(245,158,11,0.1);color:#d97706;">
+                            <div class="section-icon">
                                 <i class="fa-solid fa-pause-circle"></i>
                             </div>
                             <div>
@@ -1208,7 +1549,7 @@
                             </div>
                         </div>
                         <div class="settings-card-body">
-                            <div class="alert rounded-3 mb-3" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);color:#92400e;font-size:13px;">
+                            <div class="alert rounded-3 mb-3 settings-alert-warning">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
                                 <strong>Warning:</strong> Deactivating your account will prevent you from logging in and accessing services until the barangay reactivates it.
                             </div>
@@ -1224,12 +1565,12 @@
                         <div class="settings-card-header">
                             <div class="section-icon"><i class="fa-solid fa-trash"></i></div>
                             <div>
-                                <h5 style="color:#dc2626;">Delete Account</h5>
+                                <h5 class="text-danger-heading" style="color:#dc2626;">Delete Account</h5>
                                 <p>Permanently remove your account and all associated data.</p>
                             </div>
                         </div>
                         <div class="settings-card-body">
-                            <div class="alert rounded-3 mb-3" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#7f1d1d;font-size:13px;">
+                            <div class="alert rounded-3 mb-3 settings-alert-danger">
                                 <i class="fa-solid fa-skull-crossbones me-2"></i>
                                 <strong>This action is irreversible.</strong> All your data, document requests, and account information will be permanently deleted and cannot be recovered.
                             </div>
@@ -1259,8 +1600,7 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 py-4 justify-content-center flex-column text-center"
                  style="background:rgba(245,158,11,0.1);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm"
-                     style="width:60px;height:60px;background:#fff;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm settings-modal-icon-circle">
                     <i class="fa-solid fa-pause fs-4 text-warning"></i>
                 </div>
                 <h5 class="modal-title fw-bold mb-1" id="deactivateModalLabel">Deactivate Account?</h5>
@@ -1294,8 +1634,7 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 py-4 justify-content-center flex-column text-center"
                  style="background:rgba(239,68,68,0.1);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm"
-                     style="width:60px;height:60px;background:#fff;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-sm settings-modal-icon-circle">
                     <i class="fa-solid fa-trash fs-4 text-danger"></i>
                 </div>
                 <h5 class="modal-title fw-bold mb-1 text-danger" id="deleteModalLabel">Delete Account Permanently?</h5>
@@ -1342,7 +1681,7 @@
             
             {{-- STEP 1: CHANNEL CHOICE (Only displayed when user has BOTH email and phone registered) --}}
             <div id="settingsOtpChannelStep" class="modal-body text-center p-4 d-none">
-                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: #e8f0fe; color: #0b2e59; border-radius: 50%; font-size: 1.75rem;">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm settings-otp-icon-circle">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
 
@@ -1386,7 +1725,7 @@
             {{-- STEP 2: CODE ENTRY & VERIFICATION --}}
             <div id="settingsOtpCodeStep" class="modal-body text-center p-4">
                 
-                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 64px; height: 64px; background-color: #e8f0fe; color: #0b2e59; border-radius: 50%; font-size: 1.75rem;">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm settings-otp-icon-circle">
                     <i class="fa-solid fa-shield-halved" id="settingsOtpIcon"></i>
                 </div>
 
@@ -1507,9 +1846,12 @@
         const hasSymbol = /[^A-Za-z0-9]/.test(val);
 
         // Update checklist
-        reqLen.style.color   = hasLen   ? '#059669' : '#6b7280';
-        reqUpper.style.color = hasUpper ? '#059669' : '#6b7280';
-        reqNum.style.color   = hasNum   ? '#059669' : '#6b7280';
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const metColor = isDark ? '#4ade80' : '#059669';
+        const unmetColor = isDark ? '#94a3b8' : '#6b7280';
+        reqLen.style.color   = hasLen   ? metColor : unmetColor;
+        reqUpper.style.color = hasUpper ? metColor : unmetColor;
+        reqNum.style.color   = hasNum   ? metColor : unmetColor;
 
         if (hasLen)    score++;
         if (hasUpper)  score++;

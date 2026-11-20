@@ -450,6 +450,44 @@ html[data-theme="dark"] .modal .text-muted,
 html[data-bs-theme="dark"] .modal .text-muted {
     color: #94a3b8 !important;
 }
+
+.file-type-select {
+    background-color: #f0f7ff;
+}
+html[data-theme="dark"] .lifecycle-progress-fill,
+html[data-bs-theme="dark"] .lifecycle-progress-fill {
+    background: #3b82f6 !important;
+}
+html[data-theme="dark"] .stepper-step.active .stepper-circle,
+html[data-bs-theme="dark"] .stepper-step.active .stepper-circle {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.35) !important;
+}
+html[data-theme="dark"] .stepper-step.active .stepper-sublabel,
+html[data-bs-theme="dark"] .stepper-step.active .stepper-sublabel {
+    color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .stepper-step.completed .stepper-sublabel,
+html[data-bs-theme="dark"] .stepper-step.completed .stepper-sublabel {
+    color: #94a3b8 !important;
+}
+html[data-theme="dark"] .upload-zone .upload-icon,
+html[data-bs-theme="dark"] .upload-zone .upload-icon {
+    background: rgba(56, 189, 248, 0.16) !important;
+    color: #38bdf8 !important;
+}
+html[data-theme="dark"] .req-checklist li .check-icon.done,
+html[data-bs-theme="dark"] .req-checklist li .check-icon.done {
+    background: rgba(34, 197, 94, 0.18) !important;
+    color: #4ade80 !important;
+}
+html[data-theme="dark"] .file-type-select,
+html[data-bs-theme="dark"] .file-type-select {
+    background-color: #182238 !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
 </style>
 
 <div class="container py-4">
@@ -2089,7 +2127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </span>
                             <div class="d-inline-flex align-items-center gap-1">
                                 <label class="text-muted small mb-0" style="font-size:11px;"><i class="fa-solid fa-tag text-primary me-1"></i>Type:</label>
-                                <select class="form-select form-select-sm py-0 ps-2 pe-4 rounded-pill border-primary border-opacity-25" style="font-size:11.5px;height:24px;width:auto;display:inline-block;background-color:#f0f7ff;" onchange="updateFileDocType(${index}, this.value)">
+                                <select class="form-select form-select-sm py-0 ps-2 pe-4 rounded-pill border-primary border-opacity-25 file-type-select" style="font-size:11.5px;height:24px;width:auto;display:inline-block;" onchange="updateFileDocType(${index}, this.value)">
                                     ${optionsHtml}
                                 </select>
                             </div>
@@ -2219,7 +2257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${isImg && thumbUrl ? `
                                         <img src="${thumbUrl}" alt="Preview" style="width:100%;height:100%;object-fit:cover;">
                                     ` : `
-                                        <i class="fa-solid ${icon}${ext === 'pdf' ? 'text-danger' : 'text-primary'}" style="font-size:18px;"></i>
+                                        <i class="fa-solid ${icon} ${ext === 'pdf' ? 'text-danger' : 'text-primary'}" style="font-size:18px;"></i>
                                     `}
                                 </div>
                                 <div class="min-w-0 flex-grow-1">

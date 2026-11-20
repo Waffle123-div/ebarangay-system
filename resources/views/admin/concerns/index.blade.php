@@ -213,6 +213,17 @@
             color: #fde047 !important;
             border-color: rgba(245, 158, 11, 0.35) !important;
         }
+        .concern-id-badge {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .concern-id-badge,
+        html[data-bs-theme="dark"] .concern-id-badge {
+            background-color: #182238 !important;
+            color: #93c5fd !important;
+            border-color: #334155 !important;
+        }
         html[data-theme="dark"] .badge-cat-other {
             background-color: rgba(100, 116, 139, 0.18) !important;
             color: #cbd5e1 !important;
@@ -231,7 +242,7 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible show rounded-4 mb-4 shadow-sm border-0 d-flex align-items-center" role="alert" style="background-color: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534;">
+        <div class="alert alert-success alert-dismissible show rounded-4 mb-4 shadow-sm d-flex align-items-center" role="alert">
             <i class="fa-solid fa-circle-check me-2 fa-lg text-success"></i>
             <span class="fw-medium">{{ session('success') }}</span>
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -347,7 +358,7 @@
                             aria-label="View details for concern {{ $concern->concern_id }}">
                             {{-- Concern ID --}}
                             <td class="ps-4 py-3 text-nowrap">
-                                <span class="badge border font-monospace fw-bold px-2.5 py-1.5 rounded-3 shadow-xs" style="font-size: 12.5px; background-color: #f1f5f9; color: #1e293b; border-color: #cbd5e1 !important;">
+                                <span class="badge border font-monospace fw-bold px-2.5 py-1.5 rounded-3 shadow-xs concern-id-badge" style="font-size: 12.5px;">
                                     <i class="fa-solid fa-hashtag text-secondary me-0.5" style="font-size: 11px;"></i>{{ $concern->concern_id }}
                                 </span>
                             </td>
@@ -483,7 +494,7 @@
                     {{-- Header: Concern ID + Category + Status --}}
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom flex-wrap gap-1.5">
                         <div class="d-flex align-items-center gap-1.5 min-w-0">
-                            <span class="badge border font-monospace fw-bold px-2 py-1 rounded-3" style="font-size: 12px; background-color: #f1f5f9; color: #1e293b; border-color: #cbd5e1 !important;">
+                            <span class="badge border font-monospace fw-bold px-2 py-1 rounded-3 concern-id-badge" style="font-size: 12px;">
                                 <i class="fa-solid fa-hashtag text-secondary me-0.5"></i>{{ $concern->concern_id }}
                             </span>
                             <span class="badge rounded-pill px-2 py-0.5 border d-inline-flex align-items-center gap-1 fw-semibold {{ $catStyle['class'] }}" style="font-size: 10.5px;">
@@ -573,7 +584,7 @@
                                 <h5 class="modal-title fw-bold text-dark mb-0" id="manageConcernModalLabel{{ $concern->id }}" style="font-size: 1.15rem;">
                                     Concern Details
                                 </h5>
-                                <span class="badge border font-monospace px-2 py-0.5 rounded-3 fw-bold" style="font-size: 11.5px; background: #f1f5f9; color: #1e293b; border-color: #cbd5e1 !important;">
+                                <span class="badge border font-monospace px-2 py-0.5 rounded-3 fw-bold concern-id-badge" style="font-size: 11.5px;">
                                     <i class="fa-solid fa-hashtag text-secondary me-0.5"></i>{{ $concern->concern_id }}
                                 </span>
                                 <span class="{{ $modalStatusClass }}" style="font-size: 11px; padding: 2.5px 8px;">
@@ -787,7 +798,7 @@
                             <button type="button" class="btn btn-light border rounded-3 px-4 py-2 fw-semibold" data-bs-dismiss="modal">
                                 Close
                             </button>
-                            <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold" style="background-color: #0f2240; border-color: #0f2240;">
+                            <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold">
                                 <i class="fa-solid fa-save me-1.5"></i> Save Updates
                             </button>
                         </div>

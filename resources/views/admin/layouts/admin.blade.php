@@ -1413,17 +1413,35 @@
         }
 
         /* ── Accessible High-Contrast Typography ── */
-        html[data-theme="dark"] h1, html[data-bs-theme="dark"] h1,
-        html[data-theme="dark"] h2, html[data-bs-theme="dark"] h2,
-        html[data-theme="dark"] h3, html[data-bs-theme="dark"] h3,
-        html[data-theme="dark"] h4, html[data-bs-theme="dark"] h4,
-        html[data-theme="dark"] h5, html[data-bs-theme="dark"] h5,
-        html[data-theme="dark"] h6, html[data-bs-theme="dark"] h6,
-        html[data-theme="dark"] .text-dark, html[data-bs-theme="dark"] .text-dark,
-        html[data-theme="dark"] .fw-bold, html[data-bs-theme="dark"] .fw-bold,
-        html[data-theme="dark"] strong, html[data-bs-theme="dark"] strong,
-        html[data-theme="dark"] b, html[data-bs-theme="dark"] b {
+        html[data-theme="dark"] h1:not([class*="text-"]), html[data-bs-theme="dark"] h1:not([class*="text-"]),
+        html[data-theme="dark"] h2:not([class*="text-"]), html[data-bs-theme="dark"] h2:not([class*="text-"]),
+        html[data-theme="dark"] h3:not([class*="text-"]), html[data-bs-theme="dark"] h3:not([class*="text-"]),
+        html[data-theme="dark"] h4:not([class*="text-"]), html[data-bs-theme="dark"] h4:not([class*="text-"]),
+        html[data-theme="dark"] h5:not([class*="text-"]), html[data-bs-theme="dark"] h5:not([class*="text-"]),
+        html[data-theme="dark"] h6:not([class*="text-"]), html[data-bs-theme="dark"] h6:not([class*="text-"]),
+        html[data-theme="dark"] .text-dark:not(.badge):not(.btn),
+        html[data-bs-theme="dark"] .text-dark:not(.badge):not(.btn),
+        html[data-theme="dark"] .fw-bold:not([class*="text-"]):not(.btn):not(.badge):not(.status-badge):not(.dash-badge):not(.alert),
+        html[data-bs-theme="dark"] .fw-bold:not([class*="text-"]):not(.btn):not(.badge):not(.status-badge):not(.dash-badge):not(.alert) {
             color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .mobile-log-card,
+        html[data-bs-theme="dark"] .mobile-log-card {
+            background-color: #131d31 !important;
+            border-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        html[data-theme="dark"] .btn-close,
+        html[data-bs-theme="dark"] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        html[data-theme="dark"] .btn-light.bg-white,
+        html[data-bs-theme="dark"] .btn-light.bg-white,
+        html[data-theme="dark"] .btn-outline-secondary.bg-white,
+        html[data-bs-theme="dark"] .btn-outline-secondary.bg-white {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
         }
 
         html[data-theme="dark"] p, html[data-bs-theme="dark"] p,
